@@ -15,6 +15,7 @@ export default function Home() {
       <ResultsStatsSection />
       <FeaturesShowcase />
       <TestimonialsSlider />
+      
       <Footer />
     </main>
   );
