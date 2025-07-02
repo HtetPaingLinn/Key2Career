@@ -84,14 +84,14 @@ export const NavItems = ({
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-zinc-600 transition duration-200 hover:text-zinc-800 lg:flex lg:space-x-2",
+        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-base font-medium text-zinc-600 transition duration-200 hover:text-zinc-800 lg:flex lg:space-x-2",
         className
       )}>
       {items.map((item, idx) => (
         <a
           onMouseEnter={() => setHovered(idx)}
           onClick={onItemClick}
-          className="relative px-4 py-2 text-neutral-600 dark:text-neutral-300"
+          className="relative px-4 py-2 text-neutral-600 dark:text-neutral-300 text-base"
           key={`link-${idx}`}
           href={item.link}>
           {hovered === idx && (
@@ -237,11 +237,12 @@ export const NavbarLogo = () => {
   return (
     <a
       href="#"
-      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black">
-      <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
-        <span className="text-white font-semibold text-xs">K2</span>
-      </div>
-      <span className="font-semibold text-lg text-gray-900 dark:text-white">Key2Career</span>
+      className="relative z-20 mr-4 flex items-center text-sm font-normal text-black -ml-[50px]">
+      <img 
+        src="/mainlogo.png" 
+        alt="Key2Career Logo" 
+        className="w-[150px] h-[48px] object-contain p-0 m-0"
+      />
     </a>
   );
 };
@@ -253,9 +254,16 @@ export const NavbarButton = ({
   className,
   variant = "primary",
   ...props
+}: {
+  href?: string;
+  as?: React.ElementType;
+  children?: React.ReactNode;
+  className?: string;
+  variant?: "primary" | "secondary" | "dark" | "gradient";
+  [key: string]: any;
 }) => {
   const baseStyles =
-    "px-4 py-2 rounded-md bg-white button bg-white text-black text-sm font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center";
+    "px-4 py-2 rounded-md bg-white button bg-white text-black text-base font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center";
 
   const variantStyles = {
     primary:

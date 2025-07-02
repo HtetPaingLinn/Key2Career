@@ -6,8 +6,11 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-8 border-b border-white/20">
           <div className="flex items-center gap-3 mb-6 md:mb-0">
-            <div className="bg-white rounded p-2"><span className="block w-6 h-6 bg-black" /></div>
-            <span className="text-xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>Key2Career</span>
+            <img 
+              src="/footerlogo.png" 
+              alt="Key2Career Logo" 
+              className="w-[100px] h-[75px] object-contain"
+            />
           </div>
           <div className="flex-1 text-center md:text-left text-sm mb-6 md:mb-0">Key2Career's AI-powered tools help you land your dream job faster.</div>
           <div className="flex gap-2 justify-center md:justify-end">
