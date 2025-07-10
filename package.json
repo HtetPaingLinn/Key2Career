@@ -9,7 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-slot": "^1.2.3",
     "@tabler/icons-react": "^3.34.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotted-map": "^2.2.3",
     "framer-motion": "^12.23.0",
@@ -30,6 +34,7 @@
     "@tailwindcss/postcss": "^4.1.10",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "tailwindcss": "^4.1.10"
+    "tailwindcss": "^4.1.10",
+    "tw-animate-css": "^1.3.5"
   }
 }

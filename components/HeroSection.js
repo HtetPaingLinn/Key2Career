@@ -13,7 +13,7 @@ import {
   MobileNavToggle,
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const chainDots = [
   // Path 1
@@ -47,10 +47,65 @@ const navItems = [
   { name: 'Career Roadmap', link: '#' },
 ];
 
+function parseJwt(token) {
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
 export default function HeroSection() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [dropdown, setDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
+  const [profileKey, setProfileKey] = useState(0); // for re-render
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Always get JWT and user info on every render
+  let jwt = null;
+  let user = null;
+  if (typeof window !== 'undefined') {
+    jwt = localStorage.getItem('jwt');
+    if (jwt) user = parseJwt(jwt);
+    console.log('JWT token:', jwt);
+    console.log('Parsed user data:', user);
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdown(false);
+      }
+    }
+    if (dropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdown]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwt');
+    setDropdown(false);
+    setProfileKey((k) => k + 1); // force re-render
+  };
+
   return (
-    <section className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col items-center justify-center text-center relative overflow-hidden">
+    <section className="relative w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col items-center justify-center text-center overflow-hidden">
       {/* WorldMap as background */}
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-none opacity-40 flex items-center justify-center pt-20">
         <WorldMap dots={chainDots} simultaneous={true} />
@@ -66,8 +121,31 @@ export default function HeroSection() {
               <NavItems items={navItems} />
               {!visible && (
                 <div className="flex items-center gap-4 -mr-[130px]">
-                  <NavbarButton variant="secondary">Login</NavbarButton>
-                  <NavbarButton variant="primary">Sign up for free</NavbarButton>
+                  {mounted && jwt && user ? (
+                    <div className="relative mr-8 order-first" ref={dropdownRef} key={profileKey}>
+                      <button
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-200 text-purple-800 font-bold text-lg focus:outline-none"
+                        onClick={() => setDropdown((d) => !d)}
+                        aria-label="User menu"
+                      >
+                        {user.name ? user.name[0].toUpperCase() : <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/><path d="M4 20c0-2.21 3.582-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2"/></svg>}
+                      </button>
+                      {dropdown && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                          <div className="px-4 py-3 border-b border-gray-100">
+                            <div className="font-semibold text-gray-900">{user.name || user.username || user.email}</div>
+                          </div>
+                          <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => { setDropdown(false); window.location.href='/account'; }}>Account Settings</button>
+                          <button className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600" onClick={handleLogout}>Logout</button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <NavbarButton variant="secondary" href="/login">Login</NavbarButton>
+                      <NavbarButton variant="primary" href="/signup">Sign up for free</NavbarButton>
+                    </>
+                  )}
                 </div>
               )}
             </>
@@ -99,20 +177,37 @@ export default function HeroSection() {
             <div 
               className="flex w-full flex-col gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-neutral-700"
             >
-              <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
-                variant="primary"
-                className="w-full"
-              >
-                Login
-              </NavbarButton>
-              <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
-                variant="primary"
-                className="w-full"
-              >
-                Sign up for free
-              </NavbarButton>
+              {mounted && jwt && user ? (
+                <>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 font-semibold"
+                    onClick={() => { setIsMobileMenuOpen(false); window.location.href='/account'; }}
+                  >Account Settings</button>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 font-semibold"
+                    onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                  >Logout</button>
+                </>
+              ) : (
+                <>
+                  <NavbarButton
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    variant="primary"
+                    className="w-full"
+                  >
+                    Login
+                  </NavbarButton>
+                  <NavbarButton
+                    href="/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    variant="primary"
+                    className="w-full"
+                  >
+                    Sign up for free
+                  </NavbarButton>
+                </>
+              )}
             </div>
           </MobileNavMenu>
         </MobileNav>
