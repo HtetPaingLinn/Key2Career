@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   UserIcon, 
   CodeBracketIcon, 
@@ -19,9 +19,13 @@ import {
   AcademicCapIcon, 
   GlobeAltIcon, 
   PencilSquareIcon, 
-  Cog6ToothIcon 
+  Cog6ToothIcon,
+  XMarkIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { useUserSync } from "@/lib/useUserSync";
 
 const categories = [
   { name: "All", icon: GlobeAltIcon },
@@ -72,6 +76,11 @@ const templates = Array.from({ length: 32 }).map((_, i) => ({
 export default function ResumeTemplatesPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [search, setSearch] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // User sync functionality
+  const { isSyncing, syncError } = useUserSync('resume-templates');
 
   const filteredTemplates = templates.filter((t) =>
     (selectedCategory === "All" || t.category === selectedCategory) &&
@@ -80,6 +89,21 @@ export default function ResumeTemplatesPage() {
 
   // Pick 4 random unique indices for 'New' badge
   const newBadgeIndices = [0, 2, 5, 8]; // You can randomize or change these as needed
+
+  const openModal = (template) => {
+    setSelectedTemplate(template);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedTemplate(null);
+  };
+
+  const handleUseTemplate = (template) => {
+    // Navigate to resume builder with selected template
+    window.location.href = `/resume-builder?template=${template.id}`;
+  };
 
   return (
     <div className="min-h-screen flex font-sans" style={{ background: "var(--background)", color: "var(--foreground)" }}>
@@ -114,7 +138,6 @@ export default function ResumeTemplatesPage() {
           </nav>
           <div className="px-4 py-4 border-t shrink-0" style={{ borderColor: "#e5e7eb" }}>
             <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-700">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
               Help
             </button>
           </div>
@@ -141,12 +164,6 @@ export default function ResumeTemplatesPage() {
             <svg className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-2-2"/></svg>
           </div>
           <div className="flex items-center gap-3 ml-2">
-            <button className="rounded-full w-9 h-9 bg-gray-100 flex items-center justify-center hover:bg-blue-100">
-              <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            </button>
-            <button className="rounded-full w-9 h-9 bg-gray-100 flex items-center justify-center hover:bg-blue-100">
-              <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            </button>
             <div className="rounded-full w-9 h-9 bg-blue-100 flex items-center justify-center overflow-hidden">
               <Image src="/mainlogo.png" alt="Profile" width={32} height={32} />
             </div>
@@ -160,6 +177,19 @@ export default function ResumeTemplatesPage() {
               <p className="text-base text-gray-500">Filter by category or search for your perfect resume style.</p>
             </div>
           </div>
+          
+          {/* Sync Status */}
+          {isSyncing && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">Syncing user data...</p>
+            </div>
+          )}
+          
+          {syncError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">Sync error: {syncError}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-10 bg-blue-50 p-6 rounded-2xl border" style={{ borderColor: "#e5e7eb" }}>
             {filteredTemplates.map((template, idx) => (
               <div
@@ -177,6 +207,7 @@ export default function ResumeTemplatesPage() {
                   {/* Preview Button Overlay */}
                   <button
                     type="button"
+                    onClick={() => openModal(template)}
                     className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 absolute left-1/2 -translate-x-1/2 bottom-4 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 translate-y-4 transition-all duration-300"
                   >
                     Preview
@@ -198,6 +229,7 @@ export default function ResumeTemplatesPage() {
                   {/* Static Use Template Button */}
                   <button
                     type="button"
+                    onClick={() => handleUseTemplate(template)}
                     className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 mt-2"
                   >
                     Use Template
@@ -211,6 +243,122 @@ export default function ResumeTemplatesPage() {
           </div>
         </main>
       </div>
+
+      {/* Modal Preview */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop with blur effect */}
+          <div 
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
+            onClick={closeModal}
+          ></div>
+
+          {/* Modal content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden transform transition-all">
+            {/* Modal header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <Image src="/mainlogo.png" alt="Key2Career Logo" width={32} height={32} />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {selectedTemplate ? selectedTemplate.name : 'Template Preview'}
+                  </h2>
+                  {selectedTemplate && (
+                    <p className="text-sm text-gray-500">{selectedTemplate.category}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                className="rounded-full p-2 hover:bg-gray-100 transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            
+            {/* Modal body */}
+            {selectedTemplate && (
+              <div className="p-6">
+                <div className="flex flex-col lg:flex-row gap-8">
+                  {/* Template preview */}
+                  <div className="flex-1">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 shadow-sm">
+                      <div className="relative">
+                        <img
+                          src={selectedTemplate.thumbnail}
+                          alt={selectedTemplate.name}
+                          className="w-full h-auto object-cover rounded-lg shadow-md"
+                          style={{ 
+                            aspectRatio: '8.5/11', // A4 aspect ratio
+                            maxHeight: '600px',
+                            objectPosition: 'center'
+                          }}
+                        />
+                        {/* Add a subtle border to make it look like a page */}
+                        <div className="absolute inset-0 border-2 border-gray-300 rounded-lg pointer-events-none"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Template details */}
+                  <div className="lg:w-80 space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Template Features</h3>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span>Professional A4 format</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span>Clean, modern design</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span>Optimized for ATS systems</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span>Easy customization</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span>Print-ready format</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Perfect for</h3>
+                      <p className="text-sm text-gray-600 mb-3">
+                        This template is ideal for {selectedTemplate.category.toLowerCase()} positions, featuring a clean layout that highlights your skills and experience effectively.
+                      </p>
+                      <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                        {selectedTemplate.category}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-4 space-y-3">
+                      <button
+                        onClick={() => handleUseTemplate(selectedTemplate)}
+                        className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:ring-4 focus:ring-blue-300 focus:outline-none"
+                      >
+                        Use This Template
+                      </button>
+                      <button
+                        onClick={closeModal}
+                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors focus:ring-4 focus:ring-gray-300 focus:outline-none"
+                      >
+                        Continue Browsing
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
