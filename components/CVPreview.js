@@ -22,7 +22,7 @@ export default function CVPreview({ cvData }) {
   return (
     <div className="w-full h-full flex bg-gray-100 print:bg-white text-xs font-sans relative">
       {/* Left Sidebar */}
-      <aside className="w-1/3 min-w-[220px] max-w-[260px] bg-emerald-900 text-white flex flex-col p-5 print:bg-emerald-900 rounded-l-2xl shadow-lg">
+      <aside className="w-1/3 min-w-[280px] bg-emerald-900 text-white flex flex-col p-5 print:bg-emerald-900 rounded-l-2xl shadow-lg">
         {/* Profile */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-20 h-20 rounded-full bg-white overflow-hidden mb-3 border-4 border-emerald-700 shadow">

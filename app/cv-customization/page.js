@@ -482,9 +482,9 @@ export default function CVCustomizationPage() {
         </nav>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start lg:justify-start">
+        <div className="flex flex-row gap-5 justify-center">
           {/* Left Panel - Form Content */}
-          <div className="bg-white border border-gray-200 rounded-xl shadow p-6 max-w-xl w-full h-full overflow-y-auto font-sans lg:order-2 lg:ml-6">
+          <div className="bg-white border border-gray-200 rounded-xl shadow p-6 max-w-xl w-full h-full overflow-y-auto font-sans lg:order-1 lg:ml-0 lg:mr-6">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{cvSections[currentStep]?.title}</h2>
               <p className="text-sm text-gray-500 font-normal">{getSectionDescription(currentStep)}</p>
@@ -523,7 +523,7 @@ export default function CVCustomizationPage() {
           </div>
 
           {/* Right Panel - CV Preview */}
-          <div className="w-full flex justify-start lg:order-1 lg:mr-0">
+          <div className="w-full flex justify-start lg:order-2 lg:ml-6">
             <CVPreview cvData={cvData} />
           </div>
         </div>

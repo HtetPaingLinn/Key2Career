@@ -193,7 +193,10 @@ export default function ResumeBuilderPage() {
                 helps you create a professional CV that stands out
               </h1>
               <div className="flex flex-row gap-4 mb-10">
-                <button className="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold px-8 py-3 rounded-lg text-lg shadow-md transition">
+                <button
+                  className="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold px-8 py-3 rounded-lg text-lg shadow-md transition"
+                  onClick={() => router.push('/cv-customization')}
+                >
                   Build Your CV
                 </button>
                 <button className="border border-blue-200 text-blue-700 font-semibold px-8 py-3 rounded-lg text-lg bg-white hover:bg-blue-50 transition">
@@ -246,7 +249,7 @@ export default function ResumeBuilderPage() {
               <div className="text-xl md:text-2xl font-medium text-slate-600 mb-2">
                 Change the font, color<br/>and background combinations
               </div>
-              <a href="#" className="text-purple-700 font-semibold underline hover:text-purple-900 transition text-base mt-2">Browse Resume Templates <span aria-hidden="true">→</span></a>
+              <a href="/resume-templates" className="text-purple-700 font-semibold underline hover:text-purple-900 transition text-base mt-2">Browse Resume Templates <span aria-hidden="true">→</span></a>
             </div>
             {/* Feature 3 */}
             <div className="flex flex-col items-center">
