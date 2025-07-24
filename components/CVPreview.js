@@ -22,12 +22,12 @@ export default function CVPreview({ cvData }) {
   return (
     <div className="w-full h-full flex bg-gray-100 print:bg-white text-xs font-sans relative">
       {/* Left Sidebar */}
-      <aside className="w-1/3 min-w-[280px] bg-emerald-900 text-white flex flex-col p-5 print:bg-emerald-900 rounded-l-2xl shadow-lg">
+      <aside className="w-1/3 min-w-[250px] bg-emerald-900 text-white flex flex-col p-5 print:bg-emerald-900 rounded-l-2xl shadow-lg">
         {/* Profile */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-20 h-20 rounded-full bg-white overflow-hidden mb-3 border-4 border-emerald-700 shadow">
             {cvData.personalInfo?.imageUrl ? (
-              <img src={cvData.personalInfo.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+              <img src={cvData.personalInfo.imageUrl} alt="Profile" className="w-full h-full object-cover" crossOrigin="anonymous" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-emerald-900 font-bold text-2xl bg-emerald-100">
                 {cvData.personalInfo?.firstName?.[0] || ''}{cvData.personalInfo?.lastName?.[0] || ''}
@@ -42,51 +42,51 @@ export default function CVPreview({ cvData }) {
           </div>
         </div>
         {/* Contact Info */}
-        <div className="mb-5 space-y-2">
-          <div className="flex items-center gap-2 text-xs">
+        <div className="mb-5 space-y-2.5">
+          <div className="flex items-start gap-2 text-xs">
             <FontAwesomeIcon icon={faUser} className="w-3 h-3 text-emerald-200" />
-            <span>{cvData.personalInfo?.firstName} {cvData.personalInfo?.lastName}</span>
+            <span className='break-all whitespace-normal'>{cvData.personalInfo?.firstName} {cvData.personalInfo?.lastName}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-start gap-2 text-xs">
             <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 text-emerald-200" />
-            <span>{cvData.personalInfo?.email}</span>
+            <span className='break-all whitespace-normal'>{cvData.personalInfo?.email}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-start gap-2 text-xs">
             <FontAwesomeIcon icon={faPhone} className="w-3 h-3 text-emerald-200" />
-            <span>{cvData.personalInfo?.phone}</span>
+            <span className='break-all whitespace-normal'>{cvData.personalInfo?.phone}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-start gap-2 text-xs">
             <FontAwesomeIcon icon={faMapMarkerAlt} className="w-3 h-3 text-emerald-200" />
-            <span>{cvData.personalInfo?.address}</span>
+            <span className='break-all whitespace-normal'>{cvData.personalInfo?.address}</span>
           </div>
           {cvData.personalInfo?.dateOfBirth && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-start gap-2 text-xs">
               <FontAwesomeIcon icon={faUser} className="w-3 h-3 text-emerald-200" />
-              <span>Date of Birth: {cvData.personalInfo.dateOfBirth}</span>
+              <span className='break-all whitespace-normal'>Date of Birth: {cvData.personalInfo.dateOfBirth}</span>
             </div>
           )}
           {cvData.personalInfo?.nationality && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-start gap-2 text-xs">
               <FontAwesomeIcon icon={faGlobe} className="w-3 h-3 text-emerald-200" />
               <span>Nationality: {cvData.personalInfo.nationality}</span>
             </div>
           )}
           {cvData.personalInfo?.drivingLicense && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-start gap-2 text-xs">
               <FontAwesomeIcon icon={faCar} className="w-3 h-3 text-emerald-200" />
               <span>Driving License: {cvData.personalInfo.drivingLicense}</span>
             </div>
           )}
           {cvData.personalInfo?.website && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-start gap-2 text-xs">
               <FontAwesomeIcon icon={faGlobe} className="w-3 h-3 text-emerald-200" />
               <span>{cvData.personalInfo.website}</span>
             </div>
           )}
           {cvData.personalInfo?.linkedin && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-start gap-2 text-xs">
               <FontAwesomeIcon icon={faLinkedin} className="w-3 h-3 text-emerald-200" />
-              <span>{cvData.personalInfo.linkedin}</span>
+              <span className='break-all whitespace-normal'>{cvData.personalInfo.linkedin}</span>
             </div>
           )}
         </div>
@@ -392,7 +392,7 @@ export default function CVPreview({ cvData }) {
         )}
       </main>
       {/* Key2Career Signature */}
-      <div className="absolute bottom-2 right-4 flex items-center gap-1 text-[10px] text-emerald-300 opacity-80 select-none pointer-events-none z-50">
+      <div className="absolute bottom-2 right-4 flex items-center gap-1 text-[10px] text-emerald-300 opacity-80 select-none pointer-events-none z-50 print:hidden">
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle"><circle cx="10" cy="10" r="9" stroke="#10B981" strokeWidth="2" fill="none"/><path d="M6 10l2.5 2.5L14 7" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <span>Made with Key2Career</span>
       </div>

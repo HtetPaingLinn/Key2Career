@@ -54,6 +54,8 @@ import PublicationsSection from "@/components/cv/PublicationsSection";
 import AttachmentsSection from "@/components/cv/AttachmentsSection";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faBriefcase, faGraduationCap, faCogs, faGlobe, faProjectDiagram, faAward, faUsers } from '@fortawesome/free-solid-svg-icons';
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // Debounce utility
 function debounce(fn, delay) {
@@ -99,6 +101,8 @@ export default function CVCustomizationPage() {
   const { isSyncing, syncError } = useUserSync('cv-customization');
   const [userEmail, setUserEmail] = useState("");
   const isFirstLoad = useRef(true);
+  const previewRef = useRef();
+  const [exporting, setExporting] = useState(false);
 
   // Error feedback state
   const [saveError, setSaveError] = useState(null);
@@ -377,10 +381,47 @@ export default function CVCustomizationPage() {
     isFirstLoad.current = false;
   };
 
+  // PDF Export handler
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      if (typeof window === 'undefined') throw new Error('PDF export only works in the browser.');
+      const input = previewRef.current;
+      if (!input) throw new Error('Preview not found.');
+      // Use html2canvas to render the preview
+      const canvas = await html2canvas(input, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      // Create PDF (A4 size)
+      const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+      // Calculate width/height to fit A4
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      // Scale image to fit page
+      const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+      const pdfWidth = imgWidth * ratio;
+      const pdfHeight = imgHeight * ratio;
+      const x = (pageWidth - pdfWidth) / 2;
+      const y = 20; // top margin
+      pdf.addImage(imgData, "PNG", x, y, pdfWidth, pdfHeight);
+      pdf.save("Key2Career_CV.pdf");
+    } catch (e) {
+      console.error('PDF export error:', e);
+      alert("Failed to export PDF: " + (e.message || e));
+    }
+    setExporting(false);
+  };
+
+  // Print handler for CV preview only
+  const handlePrintCV = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 sticky top-0 z-40">
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 sticky top-0 z-40 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
@@ -394,10 +435,21 @@ export default function CVCustomizationPage() {
               <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 Save Draft
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                Export CV
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors relative"
+                onClick={handlePrintCV}
+              >
+                Print CV
               </button>
             </div>
+          </div>
+          {/* Print instructions (screen only) */}
+          <div className="mt-2 text-xs text-gray-500 print:hidden">
+            <strong>Tip:</strong> For best results, in the print dialog:
+            <ul className="list-disc ml-5">
+              <li>Enable <b>Background graphics</b> (Chrome/Edge/Firefox)</li>
+              <li>Disable <b>Headers and footers</b> (uncheck in print dialog)</li>
+            </ul>
           </div>
         </div>
       </header>
@@ -456,9 +508,9 @@ export default function CVCustomizationPage() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-0 sm:px-2 lg:px-4 py-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-2 lg:px-4 py-8 print:p-0">
         {/* Breadcrumb Navigation */}
-        <nav className="flex items-center text-xs text-gray-500 mb-6 font-sans" aria-label="Breadcrumb">
+        <nav className="flex items-center text-xs text-gray-500 mb-6 font-sans print:hidden" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
             <li className="inline-flex items-center">
               <FontAwesomeIcon icon={faUser} className="w-3 h-3 mr-1 text-gray-400" />
@@ -482,9 +534,9 @@ export default function CVCustomizationPage() {
         </nav>
 
         {/* Main Grid */}
-        <div className="flex flex-row gap-5 justify-center">
+        <div className="flex flex-row gap-5 justify-center print:block">
           {/* Left Panel - Form Content */}
-          <div className="bg-white border border-gray-200 rounded-xl shadow p-6 max-w-xl w-full h-full overflow-y-auto font-sans lg:order-1 lg:ml-0 lg:mr-6">
+          <div className="bg-white border border-gray-200 rounded-xl shadow p-6 max-w-xl w-full h-full overflow-y-auto font-sans lg:order-1 lg:ml-0 lg:mr-6 print:hidden">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{cvSections[currentStep]?.title}</h2>
               <p className="text-sm text-gray-500 font-normal">{getSectionDescription(currentStep)}</p>
@@ -523,11 +575,26 @@ export default function CVCustomizationPage() {
           </div>
 
           {/* Right Panel - CV Preview */}
-          <div className="w-full flex justify-start lg:order-2 lg:ml-6">
-            <CVPreview cvData={cvData} />
+          <div className="w-full flex justify-start lg:order-2 lg:ml-6 print:w-full print:block">
+            <div ref={previewRef} className="w-full print:w-full print:block">
+              <CVPreview cvData={cvData} />
+            </div>
           </div>
         </div>
       </div>
+      <style jsx global>{`
+        @media print {
+          body { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .print\:hidden { display: none !important; }
+          .print\:block { display: block !important; }
+          .print\:w-full { width: 100% !important; }
+          .print\:p-0 { padding: 0 !important; }
+        }
+        @page {
+          margin: 0;
+          size: auto;
+        }
+      `}</style>
     </div>
   );
 }

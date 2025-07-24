@@ -13,6 +13,9 @@ const config = {
   plugins: [
     require("tailwindcss-animated"),
   ],
+  experimental: {
+    colorRendering: 'css2',
+  },
 };
 
 export default config; 

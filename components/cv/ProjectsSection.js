@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { generateDescription, checkGrammar } from '../../lib/groq';
+// REMOVE: import { generateDescription, checkGrammar } from '../../lib/groq';
 
 export default function ProjectsSection({ data, onChange, onAdd, onRemove, onMove }) {
   const [aiPromptIdx, setAiPromptIdx] = useState(null);
@@ -36,8 +36,14 @@ export default function ProjectsSection({ data, onChange, onAdd, onRemove, onMov
       if (currentText) {
         prompt += `\n\nCurrent description: ${currentText}`;
       }
-      const desc = await generateDescription(prompt, context);
-      setAiPreview(cleanAIResponse(desc));
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'description', prompt, context }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.result) throw new Error(data.error || 'AI error');
+      setAiPreview(cleanAIResponse(data.result));
       setAiPreviewIdx(idx);
       setAiPromptIdx(null);
       setAiPrompt('');
@@ -51,8 +57,14 @@ export default function ProjectsSection({ data, onChange, onAdd, onRemove, onMov
     setGrammarLoading(true);
     setGrammarError('');
     try {
-      const corrected = await checkGrammar(text);
-      setGrammarPreview(corrected);
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'grammar', text }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.result) throw new Error(data.error || 'AI error');
+      setGrammarPreview(data.result);
       setGrammarIdx(idx);
     } catch (e) {
       setGrammarError('AI error. Try again.');
