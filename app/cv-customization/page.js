@@ -415,7 +415,8 @@ export default function CVCustomizationPage() {
 
   // Print handler for CV preview only
   const handlePrintCV = () => {
-    window.print();
+    // Navigate to resume templates page instead of printing
+    window.location.href = '/resume-templates';
   };
 
   return (
@@ -443,14 +444,7 @@ export default function CVCustomizationPage() {
               </button>
             </div>
           </div>
-          {/* Print instructions (screen only) */}
-          <div className="mt-2 text-xs text-gray-500 print:hidden">
-            <strong>Tip:</strong> For best results, in the print dialog:
-            <ul className="list-disc ml-5">
-              <li>Enable <b>Background graphics</b> (Chrome/Edge/Firefox)</li>
-              <li>Disable <b>Headers and footers</b> (uncheck in print dialog)</li>
-            </ul>
-          </div>
+
         </div>
       </header>
 

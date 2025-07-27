@@ -17,61 +17,87 @@ import {
   UsersIcon, 
   BriefcaseIcon, 
   AcademicCapIcon, 
-  GlobeAltIcon, 
-  PencilSquareIcon, 
+  GlobeAltIcon,
+  PencilSquareIcon,
   Cog6ToothIcon,
   XMarkIcon,
   ArrowLeftIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  SparklesIcon,
+  PaintBrushIcon,
+  MinusIcon,
+  MoonIcon,
+  DocumentIcon,
+  Square3Stack3DIcon,
+  StarIcon,
+  BoltIcon,
+  FireIcon,
+  ArrowTrendingUpIcon,
+  TrophyIcon,
+  ShieldExclamationIcon,
+  ClockIcon,
+  EyeSlashIcon,
+  CheckCircleIcon,
+  HeartIcon,
+  ScaleIcon,
+  ExclamationTriangleIcon,
+  ListBulletIcon,
+  SunIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { useUserSync } from "@/lib/useUserSync";
+import { useAuth } from "@/lib/useAuth";
+import { templateConfigs, templateCategories, getTemplatesByCategory, searchTemplates } from "@/lib/templateRegistry";
 
-const categories = [
-  { name: "All", icon: GlobeAltIcon },
-  { name: "Frontend Developer", icon: CodeBracketIcon },
-  { name: "Backend Developer", icon: CpuChipIcon },
-  { name: "Full Stack Developer", icon: PuzzlePieceIcon },
-  { name: "UI/UX Designer", icon: PencilSquareIcon },
-  { name: "Data Scientist", icon: BeakerIcon },
-  { name: "DevOps Engineer", icon: WrenchScrewdriverIcon },
-  { name: "Mobile Developer", icon: DevicePhoneMobileIcon },
-  { name: "QA Engineer", icon: ClipboardDocumentListIcon },
-  { name: "Product Manager", icon: BriefcaseIcon },
-  { name: "AI/ML Engineer", icon: ChartBarIcon },
-  { name: "Cloud Architect", icon: CloudIcon },
-  { name: "Cybersecurity Analyst", icon: ShieldCheckIcon },
-  { name: "Database Admin", icon: CubeIcon },
-  { name: "Game Developer", icon: PuzzlePieceIcon },
-  { name: "IT Support", icon: UsersIcon },
-  { name: "Network Engineer", icon: Cog6ToothIcon },
-  { name: "Business Analyst", icon: ChartBarIcon },
-  { name: "Project Manager", icon: ClipboardDocumentListIcon },
-  { name: "Technical Writer", icon: DocumentTextIcon },
-  { name: "System Administrator", icon: UserIcon }
-];
-
-const realThumbnails = [
-  "onyx.jpg",
-  "ditto.jpg",
-  "gengar.jpg",
-  "glalie.jpg",
-  "kakuna.jpg",
-  "azurill.jpg",
-  "chikorita.jpg",
-  "bronzor.jpg",
-  "leafish.jpg",
-  "nosepass.jpg",
-  "pikachu.jpg",
-  "rhyhorn.jpg"
-];
-
-const templates = Array.from({ length: 32 }).map((_, i) => ({
-  id: i + 1,
-  name: `Template ${i + 1}`,
-  category: categories[(i % (categories.length - 1)) + 1].name,
-  thumbnail: `/${realThumbnails[i % realThumbnails.length]}`
+// Use the template categories from the registry
+const categories = templateCategories.map(cat => ({
+  name: cat.name,
+  icon: (() => {
+    const iconMap = {
+      'All': GlobeAltIcon,
+      'Modern': SparklesIcon,
+      'Classic': AcademicCapIcon,
+      'Creative': PaintBrushIcon,
+      'Minimalist': MinusIcon,
+      'Dark': MoonIcon,
+      'Professional': BriefcaseIcon,
+      'Simple': DocumentIcon,
+      'Nature': StarIcon,
+      'Geometric': Square3Stack3DIcon,
+      'Elegant': StarIcon,
+      'Energetic': BoltIcon,
+      'Strong': FireIcon,
+      'Fire': FireIcon,
+      'Water': SunIcon,
+      'Growth': ArrowTrendingUpIcon,
+      'Advanced': CpuChipIcon,
+      'Mystical': SparklesIcon,
+      'Legendary': TrophyIcon,
+      'Phoenix': FireIcon,
+      'Dragon': ShieldExclamationIcon,
+      'Time': ClockIcon,
+      'Space': GlobeAltIcon,
+      'Shadow': EyeSlashIcon,
+      'Divine': StarIcon,
+      'Truth': CheckCircleIcon,
+      'Ideals': HeartIcon,
+      'Balance': ScaleIcon,
+      'Life': HeartIcon,
+      'Destruction': ExclamationTriangleIcon,
+      'Order': ListBulletIcon,
+      'Sun': SunIcon,
+      'Moon': MoonIcon,
+      'Prism': SparklesIcon,
+      'Sword': ShieldExclamationIcon,
+      'Shield': ShieldCheckIcon,
+      'Eternity': ArrowPathIcon,
+    };
+    return iconMap[cat.name] || GlobeAltIcon;
+  })()
 }));
+
+// Use the template configs from the registry
+const templates = templateConfigs;
 
 export default function ResumeTemplatesPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -79,13 +105,12 @@ export default function ResumeTemplatesPage() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // User sync functionality
-  const { isSyncing, syncError } = useUserSync('resume-templates');
+  // Authentication and user data
+  const { userEmail, cvData, isLoading, error, isAuthenticated, redirectToLogin } = useAuth();
 
-  const filteredTemplates = templates.filter((t) =>
-    (selectedCategory === "All" || t.category === selectedCategory) &&
-    t.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredTemplates = search 
+    ? searchTemplates(search).filter(t => selectedCategory === "All" || t.category === selectedCategory)
+    : getTemplatesByCategory(selectedCategory);
 
   // Pick 4 random unique indices for 'New' badge
   const newBadgeIndices = [0, 2, 5, 8]; // You can randomize or change these as needed
@@ -101,9 +126,54 @@ export default function ResumeTemplatesPage() {
   };
 
   const handleUseTemplate = (template) => {
-    // Navigate to resume builder with selected template
-    window.location.href = `/resume-builder?template=${template.id}`;
+    // Check if user is authenticated and has CV data
+    if (!isAuthenticated) {
+      alert('Please log in to use templates.');
+      redirectToLogin();
+      return;
+    }
+    
+    if (!cvData) {
+      alert('Please create your CV first by going to CV Customization.');
+      window.location.href = '/cv-customization';
+      return;
+    }
+    
+    // Navigate to template preview with selected template
+    window.location.href = `/template-preview?template=${template.id}`;
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <p className="font-bold">Authentication Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+          <button
+            onClick={redirectToLogin}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex font-sans" style={{ background: "var(--background)", color: "var(--foreground)" }}>
@@ -164,6 +234,11 @@ export default function ResumeTemplatesPage() {
             <svg className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-2-2"/></svg>
           </div>
           <div className="flex items-center gap-3 ml-2">
+            {isAuthenticated && userEmail && (
+              <div className="text-sm text-gray-600 mr-2">
+                Welcome, {userEmail}
+              </div>
+            )}
             <div className="rounded-full w-9 h-9 bg-blue-100 flex items-center justify-center overflow-hidden">
               <Image src="/mainlogo.png" alt="Profile" width={32} height={32} />
             </div>
@@ -178,18 +253,7 @@ export default function ResumeTemplatesPage() {
             </div>
           </div>
           
-          {/* Sync Status */}
-          {isSyncing && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">Syncing user data...</p>
-            </div>
-          )}
-          
-          {syncError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">Sync error: {syncError}</p>
-            </div>
-          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-10 bg-blue-50 p-6 rounded-2xl border" style={{ borderColor: "#e5e7eb" }}>
             {filteredTemplates.map((template, idx) => (
               <div
@@ -197,10 +261,10 @@ export default function ResumeTemplatesPage() {
                 className="rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col items-center group cursor-pointer border relative max-w-md w-full mx-auto"
                 style={{ background: "#fff", borderColor: "#e5e7eb" }}
               >
-                <div className="w-full bg-white flex items-center justify-center relative" style={{height: '300px'}}>
-                  <img
-                    src={template.thumbnail}
-                    alt={template.name}
+                            <div className="w-full bg-white flex items-center justify-center relative" style={{height: '300px'}}>
+                            <img
+                src={template.thumbnail}
+                alt={template.name}
                     className="w-full h-full object-contain"
                     style={{ maxHeight: '280px' }}
                   />
