@@ -269,6 +269,7 @@ const Agent = ({
           </div>
         </div>
       </div>
+      
 
       {messages.length > 0 && (
         <div className="transcript-border">

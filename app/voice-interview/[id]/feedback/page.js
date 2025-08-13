@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 import { Button } from "@/components/ui/button";
 import DisplayTechIcons from "@/components/voice-interview/DisplayTechIcons";
 
-import { getFeedbackByInterviewId } from "@/lib/actions/voice-general.action";
+import { getFeedbackByInterviewId, getFeedbackByInterviewIdFallback, fixFeedbackUserId } from "@/lib/actions/voice-general.action";
 import { getInterviewById } from "@/lib/actions/voice-general.action";
 import { checkOrCreateFirebaseUser } from "@/lib/actions/voice-auth.action";
 import { useAuth } from "@/lib/useAuth";
@@ -52,11 +52,57 @@ export default function FeedbackPage({ params }) {
         const interviewData = await getInterviewById(id);
         if (interviewData) {
           setInterview(interviewData);
+          console.log('Interview data:', interviewData);
+          console.log('Interview userId:', interviewData.userId);
+          console.log('Firebase user ID:', firebaseUser.id);
 
-          const feedbackData = await getFeedbackByInterviewId({
+          // Try multiple approaches to find feedback
+          let feedbackData = null;
+          
+          // Method 1: Search with Firebase user ID
+          feedbackData = await getFeedbackByInterviewId({
             interviewId: id,
             userId: firebaseUser.id,
           });
+          console.log('Method 1 - Firebase user ID search result:', feedbackData);
+          
+          // Method 2: If no feedback found, try with interview's userId
+          if (!feedbackData && interviewData.userId !== firebaseUser.id) {
+            console.log('Method 2 - Trying with interview userId:', interviewData.userId);
+            feedbackData = await getFeedbackByInterviewId({
+              interviewId: id,
+              userId: interviewData.userId,
+            });
+            console.log('Method 2 result:', feedbackData);
+          }
+          
+          // Method 3: Final fallback - search by interviewId only
+          if (!feedbackData) {
+            console.log('Method 3 - Using fallback search by interviewId only');
+            feedbackData = await getFeedbackByInterviewIdFallback(id);
+            console.log('Method 3 result:', feedbackData);
+          }
+          
+          // If feedback was found but with wrong userId, fix it automatically
+          if (feedbackData && feedbackData.userId !== firebaseUser.id) {
+            console.log('Feedback found with wrong userId, fixing automatically...');
+            console.log('Current feedback userId:', feedbackData.userId);
+            console.log('Correct userId:', firebaseUser.id);
+            
+            try {
+              const fixResult = await fixFeedbackUserId(feedbackData.id, firebaseUser.id);
+              if (fixResult.success) {
+                console.log('Successfully fixed feedback userId');
+                // Update the feedback object with the correct userId
+                feedbackData.userId = firebaseUser.id;
+              } else {
+                console.error('Failed to fix feedback userId:', fixResult.error);
+              }
+            } catch (fixError) {
+              console.error('Error fixing feedback userId:', fixError);
+            }
+          }
+          
           setFeedback(feedbackData);
         }
       } catch (error) {

@@ -18,7 +18,7 @@ const AnswerTextarea = ({ value, onChange, placeholder, disabled }) => (
     value={value}
     onChange={onChange}
     placeholder={placeholder}
-    className="w-full min-h-44 bg-gray-100 rounded p-4 text-sm mt-6 mb-2"
+    className="w-full min-h-44 bg-white border border-gray-300 rounded p-4 text-sm mt-6 mb-2"
     disabled={disabled}
   />
 );
@@ -110,7 +110,7 @@ const QuestionCard = ({
           </div>
         )}
       </div>
-
+        <br/>
       {isFinalSubmitted ? (
         <div className="bg-gray-50 p-4 rounded border text-sm text-gray-700">
           <p className="text-base font-semibold mb-2"><strong>Your submitted answer:</strong></p>

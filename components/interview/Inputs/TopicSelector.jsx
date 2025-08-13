@@ -88,19 +88,19 @@ const TopicSelector = ({ selectedTopics, onTopicsChange, label = "Topics to Focu
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+      <div className="flex flex-col gap-2 TopicSelector">
+        <label className="text-sm font-medium text-black">{label}</label>
         <div className="flex items-center justify-center p-4 border border-gray-300 rounded-lg">
           <SpinnerLoader />
-          <span className="ml-2 text-sm text-gray-600">Loading topics...</span>
+          <span className="ml-2 text-sm text-black">Loading topics...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="flex flex-col gap-2 TopicSelector">
+      <label className="text-sm font-medium text-black">{label}</label>
       
       {error && (
         <div className="text-red-500 text-sm mb-2">{error}</div>
@@ -109,7 +109,7 @@ const TopicSelector = ({ selectedTopics, onTopicsChange, label = "Topics to Focu
       {/* Show available topics as clickable chips for coding tests */}
       {isCodingTest && availableTopics.length > 0 && (
         <div className="mb-3">
-          <div className="text-xs text-gray-600 mb-2">Available topics (click to select):</div>
+          <div className="text-xs text-black mb-2">Available topics (click to select):</div>
           <div className="flex flex-wrap gap-2">
             {availableTopics.map((topic, index) => {
               const topicsArray = selectedTopics 
@@ -124,7 +124,7 @@ const TopicSelector = ({ selectedTopics, onTopicsChange, label = "Topics to Focu
                   className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                     isSelected
                       ? 'bg-blue-500 text-white border-blue-500'
-                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                      : 'bg-gray-100 text-black border-gray-300 hover:bg-gray-200'
                   }`}
                 >
                   {topic}
@@ -144,12 +144,12 @@ const TopicSelector = ({ selectedTopics, onTopicsChange, label = "Topics to Focu
             ? "Select from available topics above or type custom topics separated by commas (e.g., Arrays, Linked Lists, Trees)"
             : "Enter topics separated by commas (e.g., React, JavaScript, Node.js)"
         }
-        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-black"
         rows={3}
       />
       
       {isCodingTest && (
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-black">
           Note: For coding tests, only questions from our curated dataset topics will be available.
         </div>
       )}

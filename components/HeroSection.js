@@ -113,7 +113,7 @@ export default function HeroSection() {
       </div>
       
       {/* Resizable Navbar from shadcn/ui */}
-      <Navbar className="fixed top-0 left-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/50 shadow-sm">
+      <Navbar className="fixed top-0 left-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/50 shadow-sm navbar-text">
         {/* Desktop Navigation */}
         <NavBody>
           {({ visible }) => (
@@ -134,9 +134,9 @@ export default function HeroSection() {
                       {dropdown && (
                         <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                           <div className="px-4 py-3 border-b border-gray-100">
-                            <div className="font-semibold text-gray-900">{user.name || user.username || user.email}</div>
+                            <div className="font-semibold text-black">{user.name || user.username || user.email}</div>
                           </div>
-                          <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => { setDropdown(false); window.location.href='/account'; }}>Account Settings</button>
+                          <button className="w-full text-left px-4 py-2 hover:bg-gray-100 text-black" onClick={() => { setDropdown(false); window.location.href='/account'; }}>Account Settings</button>
                           <button className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600" onClick={handleLogout}>Logout</button>
                         </div>
                       )}
@@ -170,18 +170,18 @@ export default function HeroSection() {
                 key={`mobile-link-${idx}`}
                 href={item.link}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="relative text-neutral-600 dark:text-neutral-300 font-medium text-lg py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800"
+                className="relative text-black font-medium text-lg py-3 px-4 rounded-lg hover:bg-gray-100"
               >
                 <span className="block">{item.name}</span>
               </a>
             ))}
             <div 
-              className="flex w-full flex-col gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-neutral-700"
+              className="flex w-full flex-col gap-4 mt-6 pt-6 border-t border-gray-200"
             >
               {mounted && jwt && user ? (
                 <>
                   <button
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 font-semibold"
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 font-semibold text-black"
                     onClick={() => { setIsMobileMenuOpen(false); window.location.href='/account'; }}
                   >Account Settings</button>
                   <button

@@ -135,8 +135,9 @@ const CreateSessionForm = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="w-full p-4 flex flex-col">
-      <p className="text-sm text-slate-700 mb-4">
+    <div className="w-full p-4 flex flex-col CreateSessionForm">
+      <h2 className="text-xl font-bold text-black mb-2">Create New Session</h2>
+      <p className="text-sm text-black mb-4">
         Fill out a few quick details and unlock your personalized set of
         25 AI-generated interview questions!
       </p>
@@ -191,7 +192,7 @@ const CreateSessionForm = ({ onClose, onSuccess }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             disabled={isLoading}
           >
             Cancel

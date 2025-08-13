@@ -16,7 +16,7 @@ const RoleInfoHeader = ({
             <div className="flex-grow">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-medium">{role}</h2>
+                  <h2 className="text-2xl font-medium text-black">{role}</h2>
                   <p className="text-sm text-medium text-gray-900 mt-1">
                     {isCodingTest ? (
                       <>

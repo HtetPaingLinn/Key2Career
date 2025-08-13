@@ -30,7 +30,15 @@ const navItems = [
   { name: "Job Tracker", link: "#" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "#" },
-  { name: "Interview Q&A", link: "/interview-prep" },
+  { 
+    name: "Interview Q&A", 
+    link: "/interview-prep",
+    dropdown: [
+      { name: "Dashboard", link: "" },
+      { name: "Interview Practice", link: "" },
+      { name: "Coding Page", link: "" }
+    ]
+  },
   { name: "Career Roadmap", link: "#" },
 ];
 
@@ -319,27 +327,6 @@ export default function CodingTestPage() {
             </div>
           ) : sessions && sessions.length > 0 ? (
             <div className="space-y-6">
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">Coding Test Dashboard</h1>
-                <p className="text-lg text-gray-600">Practice coding problems and improve your programming skills</p>
-                
-                {/* Quick Navigation - swapped buttons */}
-                <div className="flex justify-center gap-4 mt-6">
-                  <button
-                    onClick={() => router.push('/interview-prep/coding-test')}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Coding Tests
-                  </button>
-                  <button
-                    onClick={() => router.push('/interview-prep/dashboard')}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Interview Questions
-                  </button>
-                </div>
-              </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pt-1 pb-6 px-4 md:px-0">
               {sessions.map((data, index) => (
                 <div key={data?._id} className="h-full flex flex-col">

@@ -32,7 +32,15 @@ const navItems = [
   { name: "Job Tracker", link: "#" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "#" },
-  { name: "Interview Q&A", link: "/interview-prep" },
+  { 
+    name: "Interview Q&A", 
+    link: "/interview-prep",
+    dropdown: [
+      { name: "Dashboard", link: "" },
+      { name: "Interview Practice", link: "" },
+      { name: "Coding Page", link: "" }
+    ]
+  },
   { name: "Career Roadmap", link: "#" },
 ];
 
@@ -461,6 +469,34 @@ const InterviewPrep = () => {
         isCodingTest={false}
       />
       
+      {/* Question Page Indicator */}
+      <div className="flex justify-end pr-8 mt-4">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2 border border-gray-200">
+          <span className="text-sm text-gray-600 font-medium">Page:</span>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((pageNum) => {
+              const isCurrentPage = pageNum === currentPage;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => {
+                    setCurrentPage(pageNum);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors cursor-pointer hover:opacity-80 ${
+                    isCurrentPage 
+                      ? 'bg-orange-600 text-white' 
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-row w-full">
         {/* left panel: Mini Map */}
         <div className="container w-1/4 max-h-[80vh] sticky flex flex-col items-center top-24">
@@ -490,11 +526,24 @@ const InterviewPrep = () => {
 
                         // Determine button styling based on answer status
                         const hasAnswer = q.userAnswer && q.userAnswer.trim() !== '';
-                        const buttonStyle = hasAnswer 
-                          ? "bg-green-500 text-white" 
-                          : isCurrentPage 
-                            ? "bg-blue-500 text-white" 
-                            : "bg-gray-200 text-gray-700";
+                        let buttonStyle;
+                        
+                        if (sessionData.isFinalSubmitted) {
+                          // After submission: green for correct, red for incorrect
+                          const isCorrect = q.userAnswer && q.userAnswer === q.answer;
+                          buttonStyle = isCorrect 
+                            ? "bg-green-500 text-white" 
+                            : "bg-red-500 text-white";
+                        } else {
+                          // Before submission: orange for current page, blue for answered questions, gray for others
+                          if (isCurrentPage) {
+                            buttonStyle = "bg-orange-500 text-white";
+                          } else if (hasAnswer) {
+                            buttonStyle = "bg-blue-500 text-white";
+                          } else {
+                            buttonStyle = "bg-gray-200 text-gray-700";
+                          }
+                        }
 
                         return (
                           <button
@@ -527,7 +576,7 @@ const InterviewPrep = () => {
           {sessionData?.questions && sessionData.questions.length > QUESTIONS_PER_PAGE && (
             <div className="flex items-center gap-2 mt-4">
               <button
-                className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+                className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
                 onClick={() => {
                   setCurrentPage((prev) => {
                     const newPage = Math.max(1, prev - 1);
@@ -544,7 +593,7 @@ const InterviewPrep = () => {
                 {currentPage} / {Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
               </span>
               <button
-                className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50"
+                className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
                 onClick={() => {
                   setCurrentPage((prev) => {
                     const nextPage = Math.min(prev + 1, Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE));
@@ -590,14 +639,13 @@ const InterviewPrep = () => {
 
             {/* Submit Section */}
             {!sessionData.isFinalSubmitted && !isTimerExpired && (
-              <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Ready to Submit?</h3>
-                <p className="text-gray-600 mb-4">
-                  Make sure you've answered all questions before submitting. You won't be able to change your answers after submission.
-                </p>
+              <div className="mt-8 flex justify-center">
                 <button
                   onClick={() => setShowSubmitConfirmation(true)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ 
+                    background: 'linear-gradient(to right, rgb(47, 114, 47), oklch(0.51 0.2 145.36))'
+                  }}
                 >
                   Submit Interview
                 </button>
@@ -606,12 +654,45 @@ const InterviewPrep = () => {
 
             {/* Feedback Section */}
             {sessionData.isFinalSubmitted && (
-              <div className="mt-8 p-6 bg-green-50 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Interview Completed!</h3>
-                <p className="text-gray-600 mb-4">
-                  Your interview has been submitted. You can view detailed feedback by clicking the button below.
-                </p>
-                <div className="flex gap-4">
+              <>
+                {/* Pagination Controls */}
+                {sessionData?.questions && sessionData.questions.length > QUESTIONS_PER_PAGE && (
+                  <div className="mt-8 flex justify-center items-center gap-2">
+                    <button
+                      className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
+                      onClick={() => {
+                        setCurrentPage((prev) => {
+                          const newPage = Math.max(1, prev - 1);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          return newPage;
+                        });
+                      }}
+                      disabled={currentPage === 1}
+                      aria-label="Previous Page"
+                    >
+                      ←
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      {currentPage} / {Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
+                    </span>
+                    <button
+                      className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
+                      onClick={() => {
+                        setCurrentPage((prev) => {
+                          const nextPage = Math.min(prev + 1, Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          return nextPage;
+                        });
+                      }}
+                      disabled={currentPage === Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
+                      aria-label="Next Page"
+                    >
+                      →
+                    </button>
+                  </div>
+                )}
+                
+                <div className="mt-8 flex justify-center gap-4">
                   <button
                     onClick={() => router.push(`/interview-prep/${sessionId}/feedback`)}
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -625,29 +706,7 @@ const InterviewPrep = () => {
                     Back to Dashboard
                   </button>
                 </div>
-
-                {/* User Feedback Input */}
-                <div className="mt-6 pt-6 border-t border-green-200">
-                  <h4 className="font-semibold mb-2">Share Your Experience (Optional)</h4>
-                  <textarea
-                    value={userFeedbackInput}
-                    onChange={(e) => setUserFeedbackInput(e.target.value)}
-                    placeholder="How was your interview experience? Any suggestions for improvement?"
-                    className="w-full p-3 border border-gray-300 rounded-lg resize-none"
-                    rows={3}
-                    disabled={userFeedbackSaved}
-                  />
-                  <div className="flex justify-end mt-2">
-                    <button
-                      onClick={handleSaveUserFeedback}
-                      disabled={isSavingUserFeedback || userFeedbackSaved || !userFeedbackInput.trim()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSavingUserFeedback ? "Saving..." : userFeedbackSaved ? "Feedback Saved" : "Save Feedback"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </>
             )}
           </div>
         </div>

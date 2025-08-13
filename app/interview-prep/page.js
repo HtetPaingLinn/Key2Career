@@ -21,7 +21,15 @@ const navItems = [
   { name: "Job Tracker", link: "#" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "#" },
-  { name: "Interview Q&A", link: "/interview-prep" },
+  { 
+    name: "Interview Q&A", 
+    link: "/interview-prep",
+    dropdown: [
+      { name: "Dashboard", link: "" },
+      { name: "Interview Practice", link: "" },
+      { name: "Coding Page", link: "" }
+    ]
+  },
   { name: "Career Roadmap", link: "#" },
 ];
 

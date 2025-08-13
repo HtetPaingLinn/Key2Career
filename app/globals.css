@@ -280,7 +280,82 @@ textarea:focus-visible {
   transition: all 0.3s ease-in-out;
 }
 
-/* Additional transition for sidebar content */
+/* Force navbar text to be black */
+.navbar-text,
+.navbar-text *,
+[data-navbar] *,
+.navbar * {
+  color: #000000 !important;
+}
+
+/* Ensure navigation links are visible */
+nav a,
+nav button,
+.navbar a,
+.navbar button {
+  color: #000000 !important;
+}
+
+/* Override any dark mode text colors for navbar */
+.navbar,
+.navbar *,
+[data-navbar],
+[data-navbar] * {
+  color: #000000 !important;
+}
+
+/* Force form text to be black */
+form,
+form *,
+.form-text,
+.form-text *,
+[data-form] *,
+.form * {
+  color: #000000 !important;
+}
+
+/* Ensure form labels are black */
+label,
+label *,
+.form-label,
+.form-label * {
+  color: #000000 !important;
+}
+
+/* Ensure form inputs have black text */
+input,
+textarea,
+select,
+input *,
+textarea *,
+select * {
+  color: #000000 !important;
+}
+
+/* Ensure form placeholders are visible */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #666666 !important;
+}
+
+/* Force all text in forms to be black */
+.CreateSessionForm,
+.CodingTestCreateForm,
+.Input,
+.TopicSelector,
+form,
+form * {
+  color: #000000 !important;
+}
+
+/* Ensure create session button text remains white */
+.CreateSessionForm button[type="submit"],
+.CreateSessionForm button[type="submit"] * {
+  color: #ffffff !important;
+}
+
+/* Additional transition for sidebar elements */
 [data-sidebar="content"] {
   transition: all 0.3s ease-in-out;
 }

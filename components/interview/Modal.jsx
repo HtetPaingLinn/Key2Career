@@ -24,15 +24,6 @@ const Modal = ({ isOpen, onClose, children, title, size = "md" }) => {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-          />
-
           {/* Modal */}
           <div className="flex min-h-full items-center justify-center p-4">
             <motion.div
@@ -40,7 +31,7 @@ const Modal = ({ isOpen, onClose, children, title, size = "md" }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className={`relative w-full ${getSizeClasses(size)} bg-white rounded-lg shadow-xl`}
+              className={`relative w-full ${getSizeClasses(size)} bg-white rounded-lg shadow-xl border border-gray-200`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

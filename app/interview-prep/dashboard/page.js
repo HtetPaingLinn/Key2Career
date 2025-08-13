@@ -25,12 +25,19 @@ import Modal from "@/components/interview/Modal";
 import CreateSessionForm from "@/components/interview/CreateSessionForm";
 import DeleteAlertContent from "@/components/interview/DeleteAlertContent";
 
-
 const navItems = [
   { name: "Job Tracker", link: "#" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "#" },
-  { name: "Interview Q&A", link: "/interview-prep" },
+  { 
+    name: "Interview Q&A", 
+    link: "/interview-prep",
+    dropdown: [
+      { name: "Dashboard", link: "" },
+      { name: "Interview Practice", link: "" },
+      { name: "Coding Page", link: "" }
+    ]
+  },
   { name: "Career Roadmap", link: "#" },
 ];
 
@@ -320,27 +327,6 @@ export default function InterviewDashboardPage() {
             </div>
           ) : sessions && sessions.length > 0 ? (
             <div className="space-y-6">
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">Interview Preparation Dashboard</h1>
-                <p className="text-lg text-gray-600">Practice interview questions and get AI-powered feedback</p>
-                
-                {/* Quick Navigation */}
-                <div className="flex justify-center gap-4 mt-6">
-                  <button
-                    onClick={() => router.push('/interview-prep/dashboard')}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Interview Questions
-                  </button>
-                  <button
-                    onClick={() => router.push('/interview-prep/coding-test')}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Coding Tests
-                  </button>
-                </div>
-              </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pt-1 pb-6 px-4 md:px-0">
               {sessions.map((data, index) => (
                 <div key={data?._id} className="h-full flex flex-col">
@@ -409,17 +395,6 @@ export default function InterviewDashboardPage() {
           <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm overflow-y-auto">
             <div className="min-h-screen flex items-center justify-center p-4">
               <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200">
-                <div className="flex justify-between items-center p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">Create New Session</h2>
-                  <button
-                    onClick={() => setOpenCreateModal(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
                 <CreateSessionForm
                   onClose={() => setOpenCreateModal(false)}
                   onSuccess={() => {
@@ -439,11 +414,13 @@ export default function InterviewDashboardPage() {
             setOpenDeleteAlert({ open: false, data: null });
           }}
           title="Delete Alert"
+          size="sm"
         >
-          <div className="w-[30vw]">
+          <div className="w-full p-2">
             <DeleteAlertContent
               content="Are you sure you want to delete this session detail?"
               onDelete={() => deleteSession(openDeleteAlert.data)}
+              onClose={() => setOpenDeleteAlert({ open: false, data: null })}
             />
           </div>
         </Modal>

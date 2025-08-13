@@ -30,7 +30,15 @@ const navItems = [
   { name: "Job Tracker", link: "#" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "#" },
-  { name: "Interview Q&A", link: "/interview-prep" },
+  { 
+    name: "Interview Q&A", 
+    link: "/interview-prep",
+    dropdown: [
+      { name: "Dashboard", link: "" },
+      { name: "Interview Practice", link: "" },
+      { name: "Coding Page", link: "" }
+    ]
+  },
   { name: "Career Roadmap", link: "#" },
 ];
 
@@ -468,23 +476,173 @@ const CodingTestSession = () => {
         description={sessionData.description}
         lastUpdated={moment(sessionData.updatedAt).format("Do MMM YYYY")}
       />
+      
+      {/* Question Page Indicator */}
+      <div className="flex justify-end pr-8 mt-4">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2 border border-gray-200">
+          <span className="text-sm text-gray-600 font-medium">Page:</span>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((pageNum) => {
+              const isCurrentPage = pageNum === currentPage;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => {
+                    setCurrentPage(pageNum);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors cursor-pointer hover:opacity-80 ${
+                    isCurrentPage 
+                      ? 'bg-orange-600 text-white' 
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 md:px-0 py-8 pt-8">
-        {/* Questions */}
-        <div className="space-y-6">
-          {currentQuestions.map((question, index) => (
-                            <QuestionCard
-                  key={question._id}
-                  questionId={question._id}
-                  question={question.question}
-                  answer={question.answer}
-                  userAnswer={question.userAnswer}
-                  isFinalSubmitted={sessionData.isFinalSubmitted}
-                  id={`question-card-${question._id}`}
-                  questionNumber={startIndex + index + 1}
-                  type={question.type}
-                  customApiEndpoint={API_PATHS.ACTUAL.ANSWER(question._id)}
+      <div className="flex flex-row w-full">
+        {/* left panel: Mini Map */}
+        <div className="container w-1/4 max-h-[80vh] sticky flex flex-col items-center top-24">
+          {/* Timer display */}
+          <Timer 
+            initialTime={timer}
+            onExpire={() => setIsTimerExpired(true)}
+            className="mb-4 mt-8"
+            isStopped={isTimerStopped}
+          />
+          {sessionData?.questions && sessionData.questions.length > 0 && (
+            <div className="bg-transparent rounded-lg p-4 mt-4">
+              <div className="flex flex-row flex-wrap gap-x-1">
+                {(() => {
+                  const questions = sessionData.questions;
+                  const columns = Math.ceil(questions.length / 5);
+                  const grouped = Array.from({ length: columns }, (_, colIdx) =>
+                    questions.slice(colIdx * 5, colIdx * 5 + 5)
+                  );
+
+                  return grouped.map((group, colIndex) => (
+                    <div key={colIndex} className="flex flex-col gap-y-1">
+                      {group.map((q, i) => {
+                        const idx = colIndex * 5 + i;
+                        const page = Math.floor(idx / QUESTIONS_PER_PAGE) + 1;
+                        const isCurrentPage = page === currentPage;
+
+                        // Determine button styling based on answer status
+                        const hasAnswer = q.userAnswer && q.userAnswer.trim() !== '';
+                        let buttonStyle;
+                        
+                        if (sessionData.isFinalSubmitted) {
+                          // After submission: green for correct, red for incorrect
+                          const isCorrect = q.userAnswer && q.userAnswer === q.answer;
+                          buttonStyle = isCorrect 
+                            ? "bg-green-500 text-white" 
+                            : "bg-red-500 text-white";
+                        } else {
+                          // Before submission: orange for current page, blue for answered questions, gray for others
+                          if (isCurrentPage) {
+                            buttonStyle = "bg-orange-500 text-white";
+                          } else if (hasAnswer) {
+                            buttonStyle = "bg-blue-500 text-white";
+                          } else {
+                            buttonStyle = "bg-gray-200 text-gray-700";
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={q._id}
+                            className={`w-8 h-8 text-xs font-medium rounded ${buttonStyle} hover:opacity-80 transition-opacity`}
+                            onClick={() => {
+                              setCurrentPage(page);
+                              setScrollToQuestionId(q._id);
+                              setTimeout(() => {
+                                const element = document.getElementById(`question-card-${q._id}`);
+                                if (element) {
+                                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                              }, 100);
+                            }}
+                            title={`Question ${idx + 1}${hasAnswer ? ' (Answered)' : ''}`}
+                          >
+                            {idx + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+          
+          {/* Pagination Controls */}
+          {sessionData?.questions && sessionData.questions.length > QUESTIONS_PER_PAGE && (
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
+                onClick={() => {
+                  setCurrentPage((prev) => {
+                    const newPage = Math.max(1, prev - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return newPage;
+                  });
+                }}
+                disabled={currentPage === 1}
+                aria-label="Previous Page"
+              >
+                &#8592;
+              </button>
+              <span className="text-sm text-gray-600">
+                {currentPage} / {Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
+              </span>
+              <button
+                className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
+                onClick={() => {
+                  setCurrentPage((prev) => {
+                    const nextPage = Math.min(prev + 1, Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return nextPage;
+                  });
+                }}
+                disabled={currentPage === Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
+                aria-label="Next Page"
+              >
+                &#8594;
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="w-full gap-4 mt-8 mb-10">
+          <div
+            className={`col-span-12 ${
+              false ? "md:col-span-7" : "md:col-span-8"
+            } `}
+          >
+            {/* Questions */}
+            {(() => {
+              if (!sessionData?.questions) return null;
+              const startIdx = (currentPage - 1) * QUESTIONS_PER_PAGE;
+              const endIdx = startIdx + QUESTIONS_PER_PAGE;
+              const paginatedQuestions = sessionData.questions.slice(startIdx, endIdx);
+              return paginatedQuestions.map((data, index) => (
+                <QuestionCard
+                  key={data._id}
+                  questionId={data._id}
+                  question={data.question}
+                  answer={data.answer}
+                  userAnswer={data.userAnswer}
+                  isFinalSubmitted={sessionData?.isFinalSubmitted}
+                  id={`question-card-${data._id}`}
+                  questionNumber={startIdx + index + 1}
+                  type={data.type}
+                  customApiEndpoint={API_PATHS.ACTUAL.ANSWER(data._id)}
                   onAnswerChange={(questionId, newAnswer) => {
                     setSessionData(prev => ({
                       ...prev,
@@ -494,93 +652,82 @@ const CodingTestSession = () => {
                     }));
                   }}
                 />
-          ))}
-        </div>
+              ));
+            })()}
 
-        {/* Pagination */}
-        {totalQuestions > QUESTIONS_PER_PAGE && (
-          <div className="flex justify-center items-center mt-8 space-x-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="px-4 py-1">
-              Page {currentPage} of {Math.ceil(totalQuestions / QUESTIONS_PER_PAGE)}
-            </span>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalQuestions / QUESTIONS_PER_PAGE), prev + 1))}
-              disabled={currentPage === Math.ceil(totalQuestions / QUESTIONS_PER_PAGE)}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        )}
-
-        {/* Submit Section */}
-        {!sessionData.isFinalSubmitted && !isTimerExpired && (
-          <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Ready to Submit?</h3>
-            <p className="text-gray-600 mb-4">
-              Make sure you've answered all questions before submitting. You won't be able to change your answers after submission.
-            </p>
-            <button
-              onClick={() => setShowSubmitConfirmation(true)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Submit Coding Test
-            </button>
-          </div>
-        )}
-
-        {/* Feedback Section */}
-        {sessionData.isFinalSubmitted && (
-          <div className="mt-8 p-6 bg-green-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Test Completed!</h3>
-            <p className="text-gray-600 mb-4">
-              Your coding test has been submitted. You can view detailed feedback by clicking the button below.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={() => router.push(`/interview-prep/coding-test/${sessionId}/feedback`)}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                View Feedback
-              </button>
-              <button
-                onClick={() => router.push('/interview-prep/coding-test')}
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Back to Tests
-              </button>
-            </div>
-
-            {/* User Feedback Input */}
-            <div className="mt-6 pt-6 border-t border-green-200">
-              <h4 className="font-semibold mb-2">Share Your Experience (Optional)</h4>
-              <textarea
-                value={userFeedbackInput}
-                onChange={(e) => setUserFeedbackInput(e.target.value)}
-                placeholder="How was your coding test experience? Any suggestions for improvement?"
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none"
-                rows={3}
-                disabled={userFeedbackSaved}
-              />
-              <div className="flex justify-end mt-2">
+            {/* Submit Section */}
+            {!sessionData.isFinalSubmitted && !isTimerExpired && (
+              <div className="mt-8 flex justify-center">
                 <button
-                  onClick={handleSaveUserFeedback}
-                  disabled={isSavingUserFeedback || userFeedbackSaved || !userFeedbackInput.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowSubmitConfirmation(true)}
+                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ 
+                    background: 'linear-gradient(to right, rgb(47, 114, 47), oklch(0.51 0.2 145.36))'
+                  }}
                 >
-                  {isSavingUserFeedback ? "Saving..." : userFeedbackSaved ? "Feedback Saved" : "Save Feedback"}
+                  Submit Coding Test
                 </button>
               </div>
-            </div>
+            )}
+
+            {/* Feedback Section */}
+            {sessionData.isFinalSubmitted && (
+              <>
+                {/* Pagination Controls */}
+                {sessionData?.questions && sessionData.questions.length > QUESTIONS_PER_PAGE && (
+                  <div className="mt-8 flex justify-center items-center gap-2">
+                    <button
+                      className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
+                      onClick={() => {
+                        setCurrentPage((prev) => {
+                          const newPage = Math.max(1, prev - 1);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          return newPage;
+                        });
+                      }}
+                      disabled={currentPage === 1}
+                      aria-label="Previous Page"
+                    >
+                      ←
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      {currentPage} / {Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
+                    </span>
+                    <button
+                      className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 text-black"
+                      onClick={() => {
+                        setCurrentPage((prev) => {
+                          const nextPage = Math.min(prev + 1, Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          return nextPage;
+                        });
+                      }}
+                      disabled={currentPage === Math.ceil(sessionData.questions.length / QUESTIONS_PER_PAGE)}
+                      aria-label="Next Page"
+                    >
+                      →
+                    </button>
+                  </div>
+                )}
+                
+                <div className="mt-8 flex justify-center gap-4">
+                  <button
+                    onClick={() => router.push(`/interview-prep/coding-test/${sessionId}/feedback`)}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    View Feedback
+                  </button>
+                  <button
+                    onClick={() => router.push('/interview-prep/coding-test')}
+                    className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Back to Tests
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Back to Top Button */}

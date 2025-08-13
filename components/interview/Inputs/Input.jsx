@@ -7,8 +7,8 @@ const Input = ({ value, onChange, label, placeholder, type }) => {
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
-  return <div>
-      <label className="text-[14px] font-semibold text-slate-800">{label}</label>
+  return <div className="Input">
+      <label className="text-[14px] font-semibold text-black">{label}</label>
 
       <div className="input-box">
         <input
@@ -16,7 +16,7 @@ const Input = ({ value, onChange, label, placeholder, type }) => {
             type == "password" ? (showPassword ? "text" : "password") : type
           }
           placeholder={placeholder}
-          className="w-full bg-gray-100 border-black border-[0.5px] mt-1 px-3 py-2 text-sm rounded-md outline-none placeholder-padded"
+          className="w-full bg-gray-100 border-black border-[0.5px] mt-1 px-3 py-2 text-sm rounded-md outline-none placeholder-padded text-black"
           value={value}
           onChange={(e) => onChange(e)}
         />

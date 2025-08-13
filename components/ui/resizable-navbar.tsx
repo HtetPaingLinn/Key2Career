@@ -11,9 +11,18 @@ import {
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface NavBodyProps {
+  children: React.ReactNode | ((props: { visible: boolean }) => React.ReactNode);
+  className?: string;
+  visible: boolean;
+}
+
 export const Navbar = ({
   children,
   className
+}: {
+  children: React.ReactNode;
+  className?: string;
 }) => {
   const ref = useRef(null);
   const { scrollY } = useScroll({
@@ -35,10 +44,12 @@ export const Navbar = ({
       ref={ref}
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
       className={cn("sticky inset-x-0 top-20 z-40 w-full", className)}>
-      {React.Children.map(children, (child) =>
-        React.isValidElement(child)
-          ? React.cloneElement(child, { visible })
-          : child)}
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child) && typeof child.type !== 'string') {
+          return React.cloneElement(child, { visible } as any);
+        }
+        return child;
+      })}
     </motion.div>
   );
 };
@@ -64,8 +75,8 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         minWidth: "800px",
       }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-6 lg:flex dark:bg-transparent",
-        visible && "bg-white/80 dark:bg-neutral-950/80",
+        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-6 lg:flex",
+        visible && "bg-white/80",
         className,
       )}
     >
@@ -78,30 +89,110 @@ export const NavItems = ({
   items,
   className,
   onItemClick
+}: {
+  items: Array<{ name: string; link: string; dropdown?: Array<{ name: string; link: string }> }>;
+  className?: string;
+  onItemClick?: () => void;
 }) => {
-  const [hovered, setHovered] = useState(null);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
+  const router = useRouter();
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  const handleItemClick = (item: any, idx: number) => {
+    if (item.dropdown) {
+      setDropdownOpen(dropdownOpen === idx ? null : idx);
+    } else {
+      // For Interview Q&A, always go to /interview-prep
+      if (item.name === "Interview Q&A") {
+        router.push('/interview-prep');
+      } else {
+        router.push(item.link);
+      }
+      onItemClick?.();
+    }
+  };
+
+  const getSmartLink = (itemName: string) => {
+    if (itemName === "Dashboard") {
+      // Dashboard goes to main interview prep page
+      return '/interview-prep';
+    } else if (itemName === "Interview Practice") {
+      // Always go to interview prep dashboard
+      return '/interview-prep/dashboard';
+    } else if (itemName === "Coding Page") {
+      // Always go to coding test page
+      return '/interview-prep/coding-test';
+    }
+    return itemName;
+  };
 
   return (
     <motion.div
-      onMouseLeave={() => setHovered(null)}
+      onMouseLeave={() => {
+        setHovered(null);
+        setDropdownOpen(null);
+      }}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-base font-medium text-zinc-600 transition duration-200 hover:text-zinc-800 lg:flex lg:space-x-2",
+        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-base font-medium text-black transition duration-200 hover:text-gray-800 lg:flex lg:space-x-2",
         className
       )}>
       {items.map((item, idx) => (
-        <a
-          onMouseEnter={() => setHovered(idx)}
-          onClick={onItemClick}
-          className="relative px-4 py-2 text-neutral-600 dark:text-neutral-300 text-base"
-          key={`link-${idx}`}
-          href={item.link}>
-          {hovered === idx && (
-            <motion.div
-              layoutId="hovered"
-              className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800" />
+        <div key={`link-${idx}`} className="relative">
+          <button
+            onMouseEnter={() => setHovered(idx)}
+            onClick={() => handleItemClick(item, idx)}
+            className="relative px-4 py-2 text-black hover:text-gray-800 text-base bg-transparent border-none cursor-pointer"
+          >
+            {hovered === idx && (
+              <motion.div
+                layoutId="hovered"
+                className="absolute inset-0 h-full w-full rounded-full bg-gray-100" />
+            )}
+            <span className="relative z-20 flex items-center gap-1">
+              {item.name}
+              {item.dropdown && (
+                <svg 
+                  className={`w-4 h-4 transition-transform ${dropdownOpen === idx ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </span>
+          </button>
+          
+          {/* Dropdown Menu */}
+          {item.dropdown && (
+            <AnimatePresence>
+              {dropdownOpen === idx && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                >
+                  {item.dropdown.map((dropdownItem, dropdownIdx) => (
+                    <button
+                      key={dropdownIdx}
+                      onClick={() => {
+                        const smartLink = getSmartLink(dropdownItem.name);
+                        router.push(smartLink);
+                        setDropdownOpen(null);
+                        onItemClick?.();
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      {dropdownItem.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
-          <span className="relative z-20">{item.name}</span>
-        </a>
+        </div>
       ))}
     </motion.div>
   );
@@ -111,6 +202,10 @@ export const MobileNav = ({
   children,
   className,
   visible
+}: {
+  children: React.ReactNode;
+  className?: string;
+  visible?: boolean;
 }) => {
   return (
     <motion.div
@@ -133,7 +228,7 @@ export const MobileNav = ({
       }}
       className={cn(
         "relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-transparent px-0 py-2 lg:hidden",
-        visible && "bg-white/80 dark:bg-neutral-950/80",
+        visible && "bg-white/80",
         className
       )}>
       {children}
@@ -144,6 +239,9 @@ export const MobileNav = ({
 export const MobileNavHeader = ({
   children,
   className
+}: {
+  children: React.ReactNode;
+  className?: string;
 }) => {
   return (
     <div
@@ -158,6 +256,11 @@ export const MobileNavMenu = ({
   className,
   isOpen,
   onClose
+}: {
+  children: React.ReactNode;
+  className?: string;
+  isOpen: boolean;
+  onClose: () => void;
 }) => {
   return (
     <AnimatePresence>
@@ -183,7 +286,7 @@ export const MobileNavMenu = ({
             ease: "easeOut"
           }}
           className={cn(
-            "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-xl bg-white border border-gray-200 px-6 py-8 shadow-lg dark:bg-neutral-950 dark:border-neutral-800",
+            "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-xl bg-white border border-gray-200 px-6 py-8 shadow-lg",
             className
           )}>
           {children}
@@ -196,11 +299,14 @@ export const MobileNavMenu = ({
 export const MobileNavToggle = ({
   isOpen,
   onClick
+}: {
+  isOpen: boolean;
+  onClick: () => void;
 }) => {
   return (
     <button
       onClick={onClick}
-      className="relative p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+      className="relative p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
     >
       <motion.div
         animate={{ rotate: isOpen ? 180 : 0 }}
@@ -215,7 +321,7 @@ export const MobileNavToggle = ({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
             >
-              <IconX className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <IconX className="w-5 h-5 text-gray-700" />
             </motion.div>
           ) : (
             <motion.div
@@ -225,7 +331,7 @@ export const MobileNavToggle = ({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
             >
-              <IconMenu2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <IconMenu2 className="w-5 h-5 text-gray-700" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -273,7 +379,7 @@ export const NavbarButton = ({
   const variantStyles = {
     primary:
       "shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
-    secondary: "bg-transparent shadow-none dark:text-white",
+    secondary: "bg-transparent shadow-none text-black",
     dark: "bg-black text-white shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
     gradient:
       "bg-gradient-to-b from-blue-500 to-blue-700 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]",

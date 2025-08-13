@@ -144,9 +144,9 @@ const CodingTestCreateForm = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="w-full p-4 flex flex-col">
+    <div className="w-full p-4 flex flex-col CodingTestCreateForm">
       <form onSubmit={handleAddSession} className="flex flex-col gap-3 w-full">
-        <p className="text-sm text-gray-600 mb-4">This will create a coding test using questions from our curated dataset. Only dataset topics are available for coding tests.</p>
+        <p className="text-sm text-black mb-4">This will create a coding test using questions from our curated dataset. Only dataset topics are available for coding tests.</p>
         
         {/* Validation Summary */}
         {Object.keys(validationErrors).length > 0 && (
@@ -225,7 +225,7 @@ const CodingTestCreateForm = ({ onClose, onSuccess }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             disabled={isLoading}
           >
             Cancel
