@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./roadmap-styles.css";
 
 export const metadata = {
   title: "Key2Career",

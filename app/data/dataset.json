@@ -1,0 +1,225 @@
+[
+    {
+      "id": 1,
+      "goal": "Frontend Developer",
+      "skills": {
+        "Internet": { "level": 1 },
+        "HTML": { "level": 2 },
+        "CSS": { "level": 3 },
+        "JavaScript": { "level": 4 },
+        "Git": { "level": 5 },
+        "VCS Hosting": {
+          "level": 6,
+          "tools": ["Github", "GitLab", "BitBucket"]
+        },
+        "Package Manager": {
+          "level": 7,
+          "tools": ["npm", "pnpm", "yarn"]
+        },
+        "TailwindCSS": { "level": 8 },
+        "Pick a Framework": {
+          "level": 9,
+          "tools": ["React", "Vue.js", "Angular"]
+        },
+        "CSS Preprocessors": {
+          "level": 10,
+          "tools": ["Sass", "PostCSS"]
+        },
+        "Module Bundlers": {
+          "level": 11,
+          "tools": ["Vite", "ESBuild"]
+        },
+        "Vitest": { "level": 12 },
+        "Authentication Strategies": { "level": 13 },
+        "Web Security Basics": {
+          "level": 14,
+          "tools": ["CORS", "HTTPS"]
+        },
+        "Typescript": { "level": 15 },
+        "SSR": {
+          "level": 16,
+          "tools": ["NextJS", "Astro", "react-router"]
+        },
+        "API Design": {
+          "level": 17,
+          "tools": ["REST", "JSON APIs", "CDN"]
+        },
+        "GraphQL": { "level": 18 },
+        "Mobile Apps": {
+          "level": 19,
+          "tools": ["React Native", "Flutter"]
+        },
+        "Linters & Formatters": {
+          "level": 20,
+          "tools": ["Prettier", "ESLint"]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "goal": "Backend Developer",
+      "skills": {
+        "Intranet": { "level": 1 },
+        "Core Languages": {
+          "level": 2,
+          "tools": ["JavaScript", "python", "C++"]
+        },
+        "Advanced Languages": {
+          "level": 3,
+          "tools": ["Java", "PHP", "C#"]
+        },
+        "JS & Python Frameworks": {
+          "level": 4,
+          "tools": ["Express", "Django", "Flask"]
+        },
+        "Git": { "level": 5 },
+        "VCS Hosting": {
+          "level": 6,
+          "tools": ["Github", "GitLab", "BitBucket"]
+        },
+        "Java & PHP Frameworks": {
+          "level": 7,
+          "tools": ["Spring", "Laravel", "Spring Boot"]
+        },
+        "Databases": {
+          "level": 8,
+          "tools": ["PostgreSQL", "MySQL", "SQLite"]
+        },
+        "Authentication": {
+          "level": 9,
+          "tools": ["JWT", "OAuth", "Token Authentication"]
+        },
+        "APIs": {
+          "level": 10,
+          "tools": ["REST", "CDN", "JSON APIs"]
+        },
+        "CI/CD": { "level": 11 },
+        "Web Security": {
+          "level": 12,
+          "tools": ["MD5", "SHA"]
+        },
+        "Testing": {
+          "level": 13,
+          "tools": ["Integration Test", "Unit Test", "Func Test"]
+        },
+        "Architecture": {
+          "level": 14,
+          "tools": ["Microservices", "Monolithic", "SOA"]
+        },
+        "Containerization": {
+          "level": 15,
+          "tools": ["Docker", "Kubernetes"]
+        },
+        "Kafka": { "level": 16 },
+        "ElasticSearch": { "level": 17 },
+        "Apache": { "level": 18 },
+        "WebSockets": { "level": 19 },
+        "Linters & Formatters": {
+          "level": 20,
+          "tools": ["Prettier", "ESLint"]
+        },
+        "NoSQL Databases": {
+          "level": 21,
+          "tools": ["MongoDB", "Firebase", "Redis"]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "goal": "Data Analyst",
+      "skills": {
+        "Excel & Spreadsheets": { "level": 1 },
+        "Statistics & Probability": { "level": 2 },
+        "SQL": { "level": 3 },
+        "Visual Analytics": {
+          "level": 4,
+          "tools": ["Tableau", "Power BI", "Looker"]
+        },
+        "Python": { "level": 5 },
+        "R": { "level": 6 },
+        "Data Cleaning": { "level": 7 },
+        "Business Intelligence": { "level": 8 },
+        "Reporting": { "level": 9 },
+        "Data Storytelling": { "level": 10 },
+        "A/B Testing": { "level": 11 },
+        "Predictive Analytics": { "level": 12 },
+        "Github": {
+          "level": 13
+        },
+        "Big Data Basics": {
+          "level": 14,
+          "tools": ["Hadoop", "Spark"]
+        }
+      }
+    },
+    {
+      "id": 4,
+      "goal": "Data Scientist",
+      "skills": {
+        "Math Fundamentals": {
+          "level": 1,
+          "tools": ["Algebra", "Calculus", "Statistics"]
+        },
+        "Programming Languages": {
+          "level": 2,
+          "tools": ["Python", "R"]
+        },
+        "Data Manipulation": {
+          "level": 3,
+          "tools": ["Pandas", "NumPy", "dplyr"]
+        },
+        "Data Visualization": {
+          "level": 4,
+          "tools": ["Matplotlib", "Seaborn", "Plotly"]
+        },
+        "Data Management": {
+          "level": 5,
+          "tools": ["SQL", "MongoDB"]
+        },
+        "Data Sanitization": {
+          "level": 6,
+          "tools": ["OpenRefine", "Pandas"]
+        },
+        "Scikit-learn": {
+          "level": 7
+        },
+        "Model Evaluation": {
+          "level": 8,
+          "tools": ["Cross Validation", "GridSearch", "ROC-AUC"]
+        },
+        "Supervised Learning": {
+          "level": 9,
+          "tools": ["Linear Regression", "Decision Trees", "Random Forest"]
+        },
+        "Unsupervised Learning": {
+          "level": 10,
+          "tools": ["K-Means", "PCA", "Hierarchical Clustering"]
+        },
+        "NLP": {
+          "level": 11,
+          "tools": ["NLTK", "spaCy"]
+        },
+        "Deep Learning": {
+          "level": 12,
+          "tools": ["TensorFlow", "Keras", "PyTorch"]
+        },
+        "Big Data": {
+          "level": 13,
+          "tools": ["Hadoop", "Spark"]
+        },
+        "Deployment": {
+          "level": 14,
+          "tools": ["Flask", "FastAPI", "Docker"]
+        },
+        "Github": {
+          "level": 15
+        },
+        "Storytelling": {
+          "level": 16,
+          "tools": ["PowerPoint", "Dash", "Streamlit"]
+        }
+      }
+    }
+    
+]
+  
