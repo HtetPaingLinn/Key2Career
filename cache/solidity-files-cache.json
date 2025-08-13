@@ -1,0 +1,40 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "D:\\UIT\\Fourth Year First Sem\\Advanced Database Management Systems\\For Lab\\Key2Career\\contracts\\DocRegistry.sol": {
+      "lastModificationDate": 1754814632997,
+      "contentHash": "9f3c3d614b73ca9e266cb92510288970",
+      "sourceName": "contracts/DocRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "DocRegistry"
+      ]
+    }
+  }
+}

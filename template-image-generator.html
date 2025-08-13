@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Template Image Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .template { margin: 20px; display: inline-block; }
+    canvas { border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Template Image Generator</h1>
+  <p>Right-click on each template and "Save image as..." to download the JPG files.</p>
+  
+  
+    <div class="template">
+      <h3>charizard.jpg</h3>
+      <canvas id="canvas-charizard" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-charizard');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNlYTU4MGMiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiNlYTU4MGMiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNlYTU4MGMiPgogICAgQ2hhcml6YXJkCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZWE1ODBjIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjZWE1ODBjIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiNlYTU4MGMiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iI2VhNTgwYyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjZWE1ODBjIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>blastoise.jpg</h3>
+      <canvas id="canvas-blastoise" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-blastoise');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMwZTc0OTAiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMwZTc0OTAiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMwZTc0OTAiPgogICAgQmxhc3RvaXNlCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMGU3NDkwIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjMGU3NDkwIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiMwZTc0OTAiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzBlNzQ5MCIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjMGU3NDkwIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>venusaur.jpg</h3>
+      <canvas id="canvas-venusaur" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-venusaur');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM2NWEzMGQiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM2NWEzMGQiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM2NWEzMGQiPgogICAgVmVudXNhdXIKICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2NWEzMGQiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiM2NWEzMGQiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iIzY1YTMwZCIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjNjVhMzBkIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiM2NWEzMGQiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>mewtwo.jpg</h3>
+      <canvas id="canvas-mewtwo" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-mewtwo');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM2ZDI4ZDkiPgogICAgTWV3dHdvCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNmQyOGQ5IiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjNmQyOGQ5IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzZkMjhkOSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjNmQyOGQ5IiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>mew.jpg</h3>
+      <canvas id="canvas-mew" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-mew');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNiZTE4NWQiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiNiZTE4NWQiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNiZTE4NWQiPgogICAgTWV3CiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjYmUxODVkIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjYmUxODVkIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiNiZTE4NWQiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iI2JlMTg1ZCIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjYmUxODVkIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>lugia.jpg</h3>
+      <canvas id="canvas-lugia" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-lugia');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM0MzM4Y2EiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM0MzM4Y2EiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM0MzM4Y2EiPgogICAgTHVnaWEKICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM0MzM4Y2EiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiM0MzM4Y2EiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iIzQzMzhjYSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjNDMzOGNhIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiM0MzM4Y2EiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>ho-oh.jpg</h3>
+      <canvas id="canvas-ho-oh" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-ho-oh');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNiZTEyM2MiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiNiZTEyM2MiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNiZTEyM2MiPgogICAgSG8tb2gKICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNiZTEyM2MiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiNiZTEyM2MiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iI2JlMTIzYyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjYmUxMjNjIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiNiZTEyM2MiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>rayquaza.jpg</h3>
+      <canvas id="canvas-rayquaza" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-rayquaza');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMxNjY1MzQiPgogICAgUmF5cXVhemEKICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjMTY2NTM0IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>dialga.jpg</h3>
+      <canvas id="canvas-dialga" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-dialga');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMxZTQwYWYiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMxZTQwYWYiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMxZTQwYWYiPgogICAgRGlhbGdhCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMWU0MGFmIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjMWU0MGFmIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiMxZTQwYWYiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzFlNDBhZiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjMWU0MGFmIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>palkia.jpg</h3>
+      <canvas id="canvas-palkia" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-palkia');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM1ODFjODciPgogICAgUGFsa2lhCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzU4MWM4NyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>giratina.jpg</h3>
+      <canvas id="canvas-giratina" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-giratina');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzNzQxNTEiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMzNzQxNTEiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMzNzQxNTEiPgogICAgR2lyYXRpbmEKICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzNzQxNTEiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiMzNzQxNTEiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iIzM3NDE1MSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjMzc0MTUxIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiMzNzQxNTEiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>arceus.jpg</h3>
+      <canvas id="canvas-arceus" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-arceus');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM5MjQwMGUiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM5MjQwMGUiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM5MjQwMGUiPgogICAgQXJjZXVzCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOTI0MDBlIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjOTI0MDBlIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM5MjQwMGUiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzkyNDAwZSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjOTI0MDBlIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>reshiram.jpg</h3>
+      <canvas id="canvas-reshiram" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-reshiram');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmOGZhZmMiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiNmOGZhZmMiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNmOGZhZmMiPgogICAgUmVzaGlyYW0KICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNmOGZhZmMiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiNmOGZhZmMiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iI2Y4ZmFmYyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjZjhmYWZjIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiNmOGZhZmMiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>zekrom.jpg</h3>
+      <canvas id="canvas-zekrom" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-zekrom');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMwZjE3MmEiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMwZjE3MmEiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMwZjE3MmEiPgogICAgWmVrcm9tCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMGYxNzJhIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjMGYxNzJhIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiMwZjE3MmEiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzBmMTcyYSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjMGYxNzJhIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>kyurem.jpg</h3>
+      <canvas id="canvas-kyurem" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-kyurem');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM1MjUyNWIiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM1MjUyNWIiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM1MjUyNWIiPgogICAgS3l1cmVtCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTI1MjViIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjNTI1MjViIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM1MjUyNWIiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzUyNTI1YiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjNTI1MjViIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>xerneas.jpg</h3>
+      <canvas id="canvas-xerneas" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-xerneas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMxNjY1MzQiPgogICAgWGVybmVhcwogIDwvdGV4dD4KICAKICA8IS0tIFRlbXBsYXRlIHR5cGUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC43Ij4KICAgIFRlbXBsYXRlCiAgPC90ZXh0PgogIAogIDwhLS0gRGVjb3JhdGl2ZSBlbGVtZW50cyAtLT4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIxNSIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iNTAiIHI9IjEwIiBmaWxsPSIjMTY2NTM0IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjI1MCIgcj0iMTIiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjI1MCIgcj0iOCIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC4zIi8+Cjwvc3ZnPg==';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>yveltal.jpg</h3>
+      <canvas id="canvas-yveltal" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-yveltal');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM5OTFiMWIiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM5OTFiMWIiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM5OTFiMWIiPgogICAgWXZlbHRhbAogIDwvdGV4dD4KICAKICA8IS0tIFRlbXBsYXRlIHR5cGUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5MWIxYiIgb3BhY2l0eT0iMC43Ij4KICAgIFRlbXBsYXRlCiAgPC90ZXh0PgogIAogIDwhLS0gRGVjb3JhdGl2ZSBlbGVtZW50cyAtLT4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIxNSIgZmlsbD0iIzk5MWIxYiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iNTAiIHI9IjEwIiBmaWxsPSIjOTkxYjFiIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjI1MCIgcj0iMTIiIGZpbGw9IiM5OTFiMWIiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjI1MCIgcj0iOCIgZmlsbD0iIzk5MWIxYiIgb3BhY2l0eT0iMC4zIi8+Cjwvc3ZnPg==';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>zygarde.jpg</h3>
+      <canvas id="canvas-zygarde" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-zygarde');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMxNjY1MzQiPgogICAgWnlnYXJkZQogIDwvdGV4dD4KICAKICA8IS0tIFRlbXBsYXRlIHR5cGUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC43Ij4KICAgIFRlbXBsYXRlCiAgPC90ZXh0PgogIAogIDwhLS0gRGVjb3JhdGl2ZSBlbGVtZW50cyAtLT4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIxNSIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iNTAiIHI9IjEwIiBmaWxsPSIjMTY2NTM0IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjI1MCIgcj0iMTIiIGZpbGw9IiMxNjY1MzQiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjI1MCIgcj0iOCIgZmlsbD0iIzE2NjUzNCIgb3BhY2l0eT0iMC4zIi8+Cjwvc3ZnPg==';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>solgaleo.jpg</h3>
+      <canvas id="canvas-solgaleo" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-solgaleo');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNhMTYyMDciIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiNhMTYyMDciIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNhMTYyMDciPgogICAgU29sZ2FsZW8KICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNhMTYyMDciIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiNhMTYyMDciIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iI2ExNjIwNyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjYTE2MjA3IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiNhMTYyMDciIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>lunala.jpg</h3>
+      <canvas id="canvas-lunala" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-lunala');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM1ODFjODciPgogICAgTHVuYWxhCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzU4MWM4NyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>necrozma.jpg</h3>
+      <canvas id="canvas-necrozma" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-necrozma');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM2ZDI4ZDkiPgogICAgTmVjcm96bWEKICA8L3RleHQ+CiAgCiAgPCEtLSBUZW1wbGF0ZSB0eXBlIC0tPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuNyI+CiAgICBUZW1wbGF0ZQogIDwvdGV4dD4KICAKICA8IS0tIERlY29yYXRpdmUgZWxlbWVudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjM1MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iIzZkMjhkOSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIyNTAiIHI9IjEyIiBmaWxsPSIjNmQyOGQ5IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNTAiIHI9IjgiIGZpbGw9IiM2ZDI4ZDkiIG9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4=';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>zacian.jpg</h3>
+      <canvas id="canvas-zacian" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-zacian');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMxZTQwYWYiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiMxZTQwYWYiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiMxZTQwYWYiPgogICAgWmFjaWFuCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMWU0MGFmIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjMWU0MGFmIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiMxZTQwYWYiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzFlNDBhZiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjMWU0MGFmIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>zamazenta.jpg</h3>
+      <canvas id="canvas-zamazenta" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-zamazenta');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM5OTFiMWIiIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM5OTFiMWIiIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM5OTFiMWIiPgogICAgWmFtYXplbnRhCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOTkxYjFiIiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjOTkxYjFiIiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM5OTFiMWIiIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzk5MWIxYiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjOTkxYjFiIiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+    <div class="template">
+      <h3>eternatus.jpg</h3>
+      <canvas id="canvas-eternatus" width="400" height="300"></canvas>
+      <script>
+        (function() {
+          const canvas = document.getElementById('canvas-eternatus');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMSIvPgogIDxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMiIgcng9IjgiLz4KICAKICA8IS0tIFRlbXBsYXRlIG5hbWUgLS0+CiAgPHRleHQgeD0iMjAwIiB5PSIxMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiM1ODFjODciPgogICAgRXRlcm5hdHVzCiAgPC90ZXh0PgogIAogIDwhLS0gVGVtcGxhdGUgdHlwZSAtLT4KICA8dGV4dCB4PSIyMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjciPgogICAgVGVtcGxhdGUKICA8L3RleHQ+CiAgCiAgPCEtLSBEZWNvcmF0aXZlIGVsZW1lbnRzIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjE1IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjMiLz4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiM1ODFjODciIG9wYWNpdHk9IjAuMyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjUwIiByPSIxMiIgZmlsbD0iIzU4MWM4NyIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iMjUwIiByPSI4IiBmaWxsPSIjNTgxYzg3IiBvcGFjaXR5PSIwLjMiLz4KPC9zdmc+';
+        })();
+      </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,407 @@
+/* Voice Interview Specific Styles */
+/* This file contains styles only for voice interview components */
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+  to { width: var(--progress-width); }
+}
+
+/* Animation Classes */
+.voice-interview .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+.voice-interview .animate-slideInUp { animation: slideInUp 0.6s ease-out; }
+.voice-interview .animate-slideInLeft { animation: slideInLeft 0.6s ease-out; }
+.voice-interview .animate-slideInRight { animation: slideInRight 0.6s ease-out; }
+.voice-interview .animate-scaleIn { animation: scaleIn 0.6s ease-out; }
+.voice-interview .animate-progress { animation: progressFill 1s ease-out forwards; }
+
+/* Button Styles */
+.voice-interview .btn-call {
+  display: inline-block;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: white;
+  transition: all 0.3s ease;
+  background-color: #10b981;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  min-width: 8rem;
+  transform: scale(1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-interview .btn-call:hover {
+  background-color: #059669;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+}
+
+.voice-interview .btn-call:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.voice-interview .btn-disconnect {
+  display: inline-block;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: white;
+  transition: all 0.3s ease;
+  background-color: #ef4444;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  min-width: 8rem;
+  transform: scale(1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-interview .btn-disconnect:hover {
+  background-color: #dc2626;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+}
+
+.voice-interview .btn-disconnect:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.voice-interview .btn-primary {
+  width: fit-content;
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  min-height: 3rem;
+  transition: all 0.3s ease;
+  transform: scale(1);
+  border: 0;
+  background: rgba(59, 130, 246, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+
+.voice-interview .btn-primary:hover {
+  background: rgba(59, 130, 246, 0.9);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Layout Components */
+.voice-interview .call-view {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .voice-interview .call-view {
+    flex-direction: column;
+  }
+}
+
+.voice-interview .call-view h3 {
+  text-align: center;
+  color: #3b82f6;
+  margin-top: 1.5rem;
+  font-weight: 600;
+}
+
+.voice-interview .card-interviewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  height: 450px;
+  background: linear-gradient(to bottom right, #dbeafe, #bfdbfe);
+  border-radius: 1rem;
+  border: 1px solid #93c5fd;
+  flex: 1;
+  width: 100%;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 640px) {
+  .voice-interview .card-interviewer {
+    flex-basis: 50%;
+  }
+}
+
+.voice-interview .avatar {
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
+  border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  position: relative;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.voice-interview .avatar .animate-speak {
+  position: absolute;
+  display: inline-flex;
+  width: 83.333333%;
+  height: 83.333333%;
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.4);
+  opacity: 0.75;
+}
+
+.voice-interview .card-border {
+  border: 1px solid #e5e7eb;
+  padding: 0.125rem;
+  border-radius: 1rem;
+  flex: 1;
+  width: 100%;
+  height: 450px;
+}
+
+@media (min-width: 640px) {
+  .voice-interview .card-border {
+    flex-basis: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .voice-interview .card-border {
+    display: none;
+  }
+}
+
+.voice-interview .card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 1rem;
+  min-height: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.voice-interview .transcript-border {
+  border: 1px solid #e5e7eb;
+  padding: 0.125rem;
+  border-radius: 1rem;
+  width: 100%;
+}
+
+.voice-interview .transcript {
+  background-color: white;
+  border-radius: 1rem;
+  min-height: 4rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.voice-interview .transcript p {
+  font-size: 1.125rem;
+  text-align: center;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* Interview Card Styles */
+.voice-interview .card-interview {
+  border-radius: 1rem;
+  min-height: 100%;
+  height: 400px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  gap: 1rem;
+  justify-content: space-between;
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  margin: 0;
+}
+
+.voice-interview .card-interview:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.voice-interview .badge-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.voice-interview .badge-behavioral,
+.voice-interview .badge-mixed,
+.voice-interview .badge-technical {
+  background-color: oklch(0.74 0.11 231.79 / 0.57);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.voice-interview .tech-tooltip {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 0.5rem;
+  display: none;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  color: white;
+  background-color: #374151;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.voice-interview .group:hover .tech-tooltip {
+  display: flex;
+}
+
+.voice-interview .interviews-section {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 2rem;
+  width: 100%;
+  margin-bottom: 3rem;
+  align-items: start;
+  justify-items: center;
+}
+
+@media (min-width: 768px) {
+  .voice-interview .interviews-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .voice-interview .interviews-section {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3rem;
+  }
+}
+
+.voice-interview .card-cta {
+  display: flex;
+  flex-direction: row;
+  border-radius: 1.5rem;
+  padding: 5rem;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  background-color: #f9f9f9;
+}
+
+@media (max-width: 640px) {
+  .voice-interview .card-cta {
+    padding: 2rem;
+  }
+}
+
+.voice-interview .card-cta:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Utility Classes */
+.voice-interview .flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom scrollbar for voice interview sections */
+.voice-interview ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.voice-interview ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.voice-interview ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.voice-interview ::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Focus states for accessibility */
+.voice-interview input:focus,
+.voice-interview textarea:focus,
+.voice-interview select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Hover effects */
+.voice-interview .hover-lift {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.voice-interview .hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
