@@ -9,8 +9,8 @@ export async function POST(request) {
   const { type, role, level, techstack, amount, userid, jwtToken } = await request.json();
 
   try {
-    // Get the Firebase user ID from JWT token
-    let firebaseUserId = userid; // fallback to original userid
+    // Get the Firebase user ID from JWT token (PRIORITY 1)
+    let firebaseUserId = null;
     
     if (jwtToken) {
       try {
@@ -21,16 +21,44 @@ export async function POST(request) {
           const userSnapshot = await db.collection("users").where("email", "==", tokenData.email).get();
           if (!userSnapshot.empty) {
             firebaseUserId = userSnapshot.docs[0].id; // Get document ID
-            console.log("Found Firebase user ID:", firebaseUserId, "for email:", tokenData.email);
+            console.log("Found Firebase user ID from JWT:", firebaseUserId, "for email:", tokenData.email);
           } else {
             console.warn("User not found in Firebase users collection for email:", tokenData.email);
           }
         }
       } catch (error) {
-        console.error("Error getting Firebase user ID:", error);
-        // Continue with original userid as fallback
+        console.error("Error parsing JWT token:", error);
       }
     }
+    
+    // If JWT method failed, try to find user by email from userid (PRIORITY 2)
+    if (!firebaseUserId && userid) {
+      try {
+        // Check if userid might be an email
+        if (userid.includes('@')) {
+          const userSnapshot = await db.collection("users").where("email", "==", userid).get();
+          if (!userSnapshot.empty) {
+            firebaseUserId = userSnapshot.docs[0].id;
+            console.log("Found Firebase user ID from userid (email):", firebaseUserId);
+          }
+        }
+      } catch (error) {
+        console.error("Error searching by userid as email:", error);
+      }
+    }
+    
+    // Final fallback - use original userid (PRIORITY 3)
+    if (!firebaseUserId) {
+      firebaseUserId = userid;
+      console.warn("Using original userid as fallback:", userid);
+    }
+    
+    if (!firebaseUserId) {
+      throw new Error("Could not determine user ID from JWT token or userid parameter");
+    }
+
+    console.log("Final Firebase user ID to be used:", firebaseUserId);
+
     const { text: questions } = await generateText({
       model: google("gemini-2.0-flash-001"),
       prompt: `Prepare questions for a job interview.

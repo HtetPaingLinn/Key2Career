@@ -210,10 +210,14 @@ const Agent = ({
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
+      // Get JWT token for authentication
+      const jwtToken = localStorage.getItem('jwt');
+      
       await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, {
         variableValues: {
           username: userName,
           userid: userId,
+          jwtToken: jwtToken, // Pass JWT token to VAPI workflow
         },
       });
     } else {
@@ -272,6 +276,7 @@ const Agent = ({
           </div>
         </div>
       </div>
+      
       
 
       {messages.length > 0 && (

@@ -336,10 +336,9 @@ export default function VoiceInterviewHome() {
               </div>
             </section>
 
-            {/* Your Interviews Section - Hidden for now
             <section className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Your Interviews</h2>
-              
+              <br/>
               <div className="interviews-section">
                 {hasPastInterviews ? (
                   userInterviews?.map((interview) => (
@@ -368,7 +367,7 @@ export default function VoiceInterviewHome() {
                 )}
               </div>
             </section>
-            */}
+           
 
             {/* Available Interviews Section */}
             <section className="mb-6">
