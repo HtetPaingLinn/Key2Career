@@ -1,0 +1,254 @@
+[
+  {
+    "id": 1,
+    "company": "Arasaka",
+    "title": "Senior Neural Interface Designer",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/549e3d50309266ae98a2a227892055235f2344cd?width=76",
+    "tags": ["Gig Economy", "Elite Level", "Remote Ops", "Black Market Project"],
+    "salary": 250,
+    "location": "Westbrook, Night City",
+    "applicants": 25,
+    "responsibilities": [
+      "Engineer and deploy neural link interfaces",
+      "Perform braindance user studies",
+      "Develop neural wireframes and prototypes"
+    ],
+    "required_skills": ["Neural Interface Design", "Braindance Research", "Neural Mapping", "Prototype Augmentation"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Cybernetics", "Master's degree in Neural Design"] },
+      { "experience": ["2+ years in Neural Interface Design", "3+ years in Braindance Research"] }
+    ],
+    "created_at": "2025-08-03T08:35:59.409719Z"
+  },
+  {
+    "id": 2,
+    "company": "Militech",
+    "title": "Junior Cyberdeck Interface Specialist",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/14eb911a9f82e69728263892fdf27f96ebbe02d4?width=76",
+    "tags": ["Full Contract", "Rookie Level"],
+    "salary": 150,
+    "location": "City Center, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Assist in cyberdeck interface tasks",
+      "Support elite designers",
+      "Aid in ICE-breaker usability tests"
+    ],
+    "required_skills": ["Interface Fundamentals", "Daemon Sketching Tools", "Net Communication"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Cybernetics or related field"] },
+      { "experience": ["0–1 year of relevant netrunning experience"] }
+    ],
+    "created_at": "2025-08-03T08:40:00.000000Z"
+  },
+  {
+    "id": 3,
+    "company": "Kang Tao",
+    "title": "Senior Holo-Animation Engineer",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/b4ae4a8af94358f574fe20d9736aed038f23eab2?width=76",
+    "tags": ["Gig Economy", "Elite Level"],
+    "salary": 260,
+    "location": "Remote Ops",
+    "applicants": 0,
+    "responsibilities": [
+      "Fabricate holo-animations and motion projections",
+      "Collaborate with black ops teams",
+      "Enforce corp branding in virtual spaces"
+    ],
+    "required_skills": ["Holo Effects", "Projection Principles", "Virtual Storyboarding"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Holo-Engineering, Cyber Design, or related field"] },
+      { "experience": ["3+ years in holo-animation"] }
+    ],
+    "created_at": "2025-08-03T08:45:00.000000Z"
+  },
+  {
+    "id": 4,
+    "company": "Zetatech",
+    "title": "Braindance Experience Architect",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/d865519110b56398cda22cad4c5ec7254ca158b3?width=74",
+    "tags": ["Full Contract", "Mid-Tier Level"],
+    "salary": 120,
+    "location": "Watson, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Architect user neural workflows",
+      "Execute usability scans on implants",
+      "Interface with code slingers for deployment"
+    ],
+    "required_skills": ["Braindance Design", "Neural Flows", "Wireframing Implants", "User Neural Testing"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Neural Design or HCI Augmentation"] },
+      { "experience": ["2–4 years in braindance architecture"] }
+    ],
+    "created_at": "2025-08-03T08:50:00.000000Z"
+  },
+  {
+    "id": 5,
+    "company": "Tsunami Defense Systems",
+    "title": "Chrome Aesthetic Fabricator",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/1da362b2d69d7dc8dfa6a73359f548f97b56357d?width=76",
+    "tags": ["Gig Economy", "Elite Level"],
+    "salary": 300,
+    "location": "Heywood, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Fabricate visual augmentations for corp propaganda",
+      "Design digital and physical chrome collateral",
+      "Adhere to mega-corp aesthetic protocols"
+    ],
+    "required_skills": ["Chrome Fabrication", "Augmentation Suite Tools", "Corp Branding"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Aesthetic Cyber Design"] },
+      { "experience": ["3+ years in chrome fabrication"] }
+    ],
+    "created_at": "2025-08-03T08:55:00.000000Z"
+  },
+  {
+    "id": 6,
+    "company": "Kiroshi Opticals",
+    "title": "Visual Augmentation Artist",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/1af958d5691fa496a46974041139ee4fe1f5ee99?width=74",
+    "tags": ["Gig Economy", "Remote Ops"],
+    "salary": 140,
+    "location": "Pacifica, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Sculpt optic elements and icons",
+      "Maintain visual chrome consistency",
+      "Interface with neural teams"
+    ],
+    "required_skills": ["Optic Icon Design", "Chrome Illustrator", "Attention to Nano-Details"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Optic Design or related"] },
+      { "experience": ["2+ years in visual augmentation"] }
+    ],
+    "created_at": "2025-08-03T09:00:00.000000Z"
+  },
+  {
+    "id": 7,
+    "company": "Biotechnica",
+    "title": "Netrunner UI Coder",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/7f21f1b4c658a1f63b7a8dfc5ff2db86?width=76",
+    "tags": ["Full Contract", "Mid-Tier Level", "Remote Ops"],
+    "salary": 200,
+    "location": "Santo Domingo, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Deploy net interface components",
+      "Ensure adaptive neural design",
+      "Collaborate with interface architects"
+    ],
+    "required_skills": ["Net Code", "ICE Styles", "Daemon Script", "Virtual Framework"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Net Architecture or related"] },
+      { "experience": ["2–5 years in netrunning development"] }
+    ],
+    "created_at": "2025-08-03T09:05:00.000000Z"
+  },
+  {
+    "id": 8,
+    "company": "Petrochem",
+    "title": "Cyberware Product Innovator",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/29b7a2cf1b8b9260d6b9bb5b0fc8f872?width=76",
+    "tags": ["Gig Economy", "Elite Level"],
+    "salary": 280,
+    "location": "Badlands Outskirts, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Innovate end-to-end augmentation experiences",
+      "Prototype and test cyber features",
+      "Interface with fixers and techies"
+    ],
+    "required_skills": ["Augmentation Innovation", "Prototype Hacking", "User Implant Testing"],
+    "Qualifications": [
+      { "education": ["Bachelor's or Master's in Cyberware Design"] },
+      { "experience": ["3+ years in cyber product innovation"] }
+    ],
+    "created_at": "2025-08-03T09:10:00.000000Z"
+  },
+  {
+    "id": 9,
+    "company": "Trauma Team",
+    "title": "Optic Illusion Creator",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/99b1aa9a1b5dc3e0c6e239ef2f3d92cf?width=76",
+    "tags": ["Black Market Contract", "Mid-Tier Level"],
+    "salary": 180,
+    "location": "Combat Zone, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Create visual deceptions for digital ops",
+      "Adapt corp illusions for shadow campaigns",
+      "Support extraction teams"
+    ],
+    "required_skills": ["Illusion Creation", "Optic Manipulator", "Reality Editor"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Visual Deception or Cyber Arts"] },
+      { "experience": ["2–3 years in optic illusions"] }
+    ],
+    "created_at": "2025-08-03T09:15:00.000000Z"
+  },
+  {
+    "id": 10,
+    "company": "Night Corp",
+    "title": "MegaCorp Vision Director",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/7743a92d51db0d8415b07bbcc2e80db0?width=76",
+    "tags": ["Full Contract", "Elite Level"],
+    "salary": 350,
+    "location": "City Center, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Lead dystopian creative vision",
+      "Oversee augmentation teams",
+      "Establish chrome standards"
+    ],
+    "required_skills": ["Corp Leadership", "Visionary Direction", "Mega Strategy"],
+    "Qualifications": [
+      { "education": ["Bachelor's or Master's in Dystopian Design"] },
+      { "experience": ["5+ years in mega-corp leadership"] }
+    ],
+    "created_at": "2025-08-03T09:20:00.000000Z"
+  },
+  {
+    "id": 11,
+    "company": "Arasaka",
+    "title": "Narrative Implant Writer",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/34fa98d1c6d8df3f9152a2b193f0c31e?width=76",
+    "tags": ["Gig Economy", "Remote Ops"],
+    "salary": 170,
+    "location": "Westbrook, Night City",
+    "applicants": 0,
+    "responsibilities": [
+      "Script and implant user-facing narratives",
+      "Ensure tone and style in brain implants",
+      "Collaborate with neural experience teams"
+    ],
+    "required_skills": ["Narrative Implantation", "Mind Writing", "Dystopian Storytelling"],
+    "Qualifications": [
+      { "education": ["Bachelor's degree in Neural Writing, Propaganda, or Design"] },
+      { "experience": ["2+ years in narrative implantation"] }
+    ],
+    "created_at": "2025-08-03T09:25:00.000000Z"
+  },
+  {
+    "id": 12,
+    "company": "Militech",
+    "title": "Augmentation System Architect",
+    "logoUrl": "https://api.builder.io/api/v1/image/assets/TEMP/baf23f6595d48d015d7cb70a627b7c2b?width=76",
+    "tags": ["Full Contract", "Elite Level", "Remote Ops", "Shadow Project", "Black Market Contract"],
+    "salary": 310,
+    "location": "Remote Ops",
+    "applicants": 0,
+    "responsibilities": [
+      "Construct and maintain augmentation system components",
+      "Integrate with combat frameworks",
+      "Ensure scalability in chrome ecosystems"
+    ],
+    "required_skills": ["Aug System Design", "Combat Frameworks", "Chrome Libraries"],
+    "Qualifications": [
+      { "education": ["Bachelor's in Cyber Architecture or Aug Design"] },
+      { "experience": ["3+ years in augmentation systems"] }
+    ],
+    "created_at": "2025-08-03T09:30:00.000000Z"
+  }
+]

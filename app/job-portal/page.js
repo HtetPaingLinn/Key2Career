@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavbarLogo, NavbarButton } from "@/components/ui/resizable-navbar";
 import { useRouter } from "next/navigation";
@@ -41,6 +41,18 @@ export default function JobBoard() {
   // Saved dropdown state
   const [savedOpen, setSavedOpen] = useState(false);
   const savedDropdownRef = useRef(null);
+  // Track logo load failures to show placeholder icon
+  const [badLogoIds, setBadLogoIds] = useState(new Set());
+  const ORG_PLACEHOLDER_SVG = "data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'>\
+  <rect fill='%23111827' rx='16' width='80' height='80'/>\
+  <g fill='%23ffffff'>\
+    <rect x='24' y='26' width='32' height='28' rx='2'/>\
+    <rect x='30' y='32' width='6' height='16' rx='1'/>\
+    <rect x='44' y='32' width='6' height='16' rx='1'/>\
+    <rect x='26' y='56' width='28' height='4' rx='2'/>\
+  </g>\
+</svg>";
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     function handleClickOutside(event) {
@@ -74,7 +86,8 @@ export default function JobBoard() {
     };
   }, [savedOpen]);
   // Search and saved jobs state
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // debounced/effective query
+  const [searchQueryInput, setSearchQueryInput] = useState(""); // raw input
   const [savedIds, setSavedIds] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -92,6 +105,11 @@ export default function JobBoard() {
       localStorage.setItem('savedJobIds', JSON.stringify(savedIds));
     } catch {}
   }, [savedIds]);
+  // Debounce search input -> effective query
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchQueryInput), 250);
+    return () => clearTimeout(t);
+  }, [searchQueryInput]);
   // Always get JWT and user info on every render (same approach as resume-builder)
   let jwt = null;
   let user = null;
@@ -116,275 +134,319 @@ export default function JobBoard() {
     // Delay clearing selectedJob until after animation (200ms)
     setTimeout(() => setSelectedJob(null), 220);
   };
-  // Job cards data extracted from the original cards
-  const jobsData = [
-    {
-      id: 1,
-      company: "Arasaka",
-      title: "Senior Neural Interface Designer",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/549e3d50309266ae98a2a227892055235f2344cd?width=76",
-      tags: ["Gig Economy", "Elite Level", "Remote Ops", "Black Market Project"],
-      salary: 250,
-      location: "Westbrook, Night City",
-      applicants: 25,
-      responsibilities: [
-        "Engineer and deploy neural link interfaces",
-        "Perform braindance user studies",
-        "Develop neural wireframes and prototypes"
-      ],
-      required_skills: ["Neural Interface Design", "Braindance Research", "Neural Mapping", "Prototype Augmentation"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Cybernetics", "Master's degree in Neural Design"] },
-        { experience: ["2+ years in Neural Interface Design", "3+ years in Braindance Research"] }
-      ],
-      created_at: "2025-08-03T08:35:59.409719Z"
-    },
-    {
-      id: 2,
-      company: "Militech",
-      title: "Junior Cyberdeck Interface Specialist",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/14eb911a9f82e69728263892fdf27f96ebbe02d4?width=76",
-      tags: ["Full Contract", "Rookie Level"],
-      salary: 150,
-      location: "City Center, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Assist in cyberdeck interface tasks",
-        "Support elite designers",
-        "Aid in ICE-breaker usability tests"
-      ],
-      required_skills: ["Interface Fundamentals", "Daemon Sketching Tools", "Net Communication"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Cybernetics or related field"] },
-        { experience: ["0–1 year of relevant netrunning experience"] }
-      ],
-      created_at: "2025-08-03T08:40:00.000000Z"
-    },
-    {
-      id: 3,
-      company: "Kang Tao",
-      title: "Senior Holo-Animation Engineer",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/b4ae4a8af94358f574fe20d9736aed038f23eab2?width=76",
-      tags: ["Gig Economy", "Elite Level"],
-      salary: 260,
-      location: "Remote Ops",
-      applicants: 0,
-      responsibilities: [
-        "Fabricate holo-animations and motion projections",
-        "Collaborate with black ops teams",
-        "Enforce corp branding in virtual spaces"
-      ],
-      required_skills: ["Holo Effects", "Projection Principles", "Virtual Storyboarding"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Holo-Engineering, Cyber Design, or related field"] },
-        { experience: ["3+ years in holo-animation"] }
-      ],
-      created_at: "2025-08-03T08:45:00.000000Z"
-    },
-    {
-      id: 4,
-      company: "Zetatech",
-      title: "Braindance Experience Architect",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/d865519110b56398cda22cad4c5ec7254ca158b3?width=74",
-      tags: ["Full Contract", "Mid-Tier Level"],
-      salary: 120,
-      location: "Watson, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Architect user neural workflows",
-        "Execute usability scans on implants",
-        "Interface with code slingers for deployment"
-      ],
-      required_skills: ["Braindance Design", "Neural Flows", "Wireframing Implants", "User Neural Testing"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Neural Design or HCI Augmentation"] },
-        { experience: ["2–4 years in braindance architecture"] }
-      ],
-      created_at: "2025-08-03T08:50:00.000000Z"
-    },
-    {
-      id: 5,
-      company: "Tsunami Defense Systems",
-      title: "Chrome Aesthetic Fabricator",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/1da362b2d69d7dc8dfa6a73359f548f97b56357d?width=76",
-      tags: ["Gig Economy", "Elite Level"],
-      salary: 300,
-      location: "Heywood, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Fabricate visual augmentations for corp propaganda",
-        "Design digital and physical chrome collateral",
-        "Adhere to mega-corp aesthetic protocols"
-      ],
-      required_skills: ["Chrome Fabrication", "Augmentation Suite Tools", "Corp Branding"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Aesthetic Cyber Design"] },
-        { experience: ["3+ years in chrome fabrication"] }
-      ],
-      created_at: "2025-08-03T08:55:00.000000Z"
-    },
-    {
-      id: 6,
-      company: "Kiroshi Opticals",
-      title: "Visual Augmentation Artist",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/1af958d5691fa496a46974041139ee4fe1f5ee99?width=74",
-      tags: ["Gig Economy", "Remote Ops"],
-      salary: 140,
-      location: "Pacifica, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Sculpt optic elements and icons",
-        "Maintain visual chrome consistency",
-        "Interface with neural teams"
-      ],
-      required_skills: ["Optic Icon Design", "Chrome Illustrator", "Attention to Nano-Details"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Optic Design or related"] },
-        { experience: ["2+ years in visual augmentation"] }
-      ],
-      created_at: "2025-08-03T09:00:00.000000Z"
-    },
-    {
-      id: 7,
-      company: "Biotechnica",
-      title: "Netrunner UI Coder",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/7f21f1b4c658a1f63b7a8dfc5ff2db86?width=76",
-      tags: ["Full Contract", "Mid-Tier Level", "Remote Ops"],
-      salary: 200,
-      location: "Santo Domingo, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Deploy net interface components",
-        "Ensure adaptive neural design",
-        "Collaborate with interface architects"
-      ],
-      required_skills: ["Net Code", "ICE Styles", "Daemon Script", "Virtual Framework"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Net Architecture or related"] },
-        { experience: ["2–5 years in netrunning development"] }
-      ],
-      created_at: "2025-08-03T09:05:00.000000Z"
-    },
-    {
-      id: 8,
-      company: "Petrochem",
-      title: "Cyberware Product Innovator",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/29b7a2cf1b8b9260d6b9bb5b0fc8f872?width=76",
-      tags: ["Gig Economy", "Elite Level"],
-      salary: 280,
-      location: "Badlands Outskirts, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Innovate end-to-end augmentation experiences",
-        "Prototype and test cyber features",
-        "Interface with fixers and techies"
-      ],
-      required_skills: ["Augmentation Innovation", "Prototype Hacking", "User Implant Testing"],
-      Qualifications: [
-        { education: ["Bachelor's or Master's in Cyberware Design"] },
-        { experience: ["3+ years in cyber product innovation"] }
-      ],
-      created_at: "2025-08-03T09:10:00.000000Z"
-    },
-    {
-      id: 9,
-      company: "Trauma Team",
-      title: "Optic Illusion Creator",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/99b1aa9a1b5dc3e0c6e239ef2f3d92cf?width=76",
-      tags: ["Black Market Contract", "Mid-Tier Level"],
-      salary: 180,
-      location: "Combat Zone, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Create visual deceptions for digital ops",
-        "Adapt corp illusions for shadow campaigns",
-        "Support extraction teams"
-      ],
-      required_skills: ["Illusion Creation", "Optic Manipulator", "Reality Editor"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Visual Deception or Cyber Arts"] },
-        { experience: ["2–3 years in optic illusions"] }
-      ],
-      created_at: "2025-08-03T09:15:00.000000Z"
-    },
-    {
-      id: 10,
-      company: "Night Corp",
-      title: "MegaCorp Vision Director",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/7743a92d51db0d8415b07bbcc2e80db0?width=76",
-      tags: ["Full Contract", "Elite Level"],
-      salary: 350,
-      location: "City Center, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Lead dystopian creative vision",
-        "Oversee augmentation teams",
-        "Establish chrome standards"
-      ],
-      required_skills: ["Corp Leadership", "Visionary Direction", "Mega Strategy"],
-      Qualifications: [
-        { education: ["Bachelor's or Master's in Dystopian Design"] },
-        { experience: ["5+ years in mega-corp leadership"] }
-      ],
-      created_at: "2025-08-03T09:20:00.000000Z"
-    },
-    {
-      id: 11,
-      company: "Arasaka",
-      title: "Narrative Implant Writer",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/34fa98d1c6d8df3f9152a2b193f0c31e?width=76",
-      tags: ["Gig Economy", "Remote Ops"],
-      salary: 170,
-      location: "Westbrook, Night City",
-      applicants: 0,
-      responsibilities: [
-        "Script and implant user-facing narratives",
-        "Ensure tone and style in brain implants",
-        "Collaborate with neural experience teams"
-      ],
-      required_skills: ["Narrative Implantation", "Mind Writing", "Dystopian Storytelling"],
-      Qualifications: [
-        { education: ["Bachelor's degree in Neural Writing, Propaganda, or Design"] },
-        { experience: ["2+ years in narrative implantation"] }
-      ],
-      created_at: "2025-08-03T09:25:00.000000Z"
-    },
-    {
-      id: 12,
-      company: "Militech",
-      title: "Augmentation System Architect",
-      logoUrl: "https://api.builder.io/api/v1/image/assets/TEMP/baf23f6595d48d015d7cb70a627b7c2b?width=76",
-      tags: ["Full Contract", "Elite Level", "Remote Ops", "Shadow Project", "Black Market Contract"],
-      salary: 310,
-      location: "Remote Ops",
-      applicants: 0,
-      responsibilities: [
-        "Construct and maintain augmentation system components",
-        "Integrate with combat frameworks",
-        "Ensure scalability in chrome ecosystems"
-      ],
-      required_skills: ["Aug System Design", "Combat Frameworks", "Chrome Libraries"],
-      Qualifications: [
-        { education: ["Bachelor's in Cyber Architecture or Aug Design"] },
-        { experience: ["3+ years in augmentation systems"] }
-      ],
-      created_at: "2025-08-03T09:30:00.000000Z"
-    }
-  ];
   
-  
-  // Facets and filter state
-  const allTypes = Array.from(new Set(jobsData.flatMap(j => j.tags.filter(t => ["Full Contract", "Gig Economy", "Black Market Contract"].includes(t)))));
-  const allLevels = Array.from(new Set(jobsData.flatMap(j => j.tags.filter(t => ["Rookie Level", "Mid-Tier Level", "Elite Level"].includes(t)))));
-  const allCompanies = Array.from(new Set(jobsData.map(j => j.company)));
-  const minSalary = Math.min(...jobsData.map(j => j.salary));
-  const maxSalary = Math.max(...jobsData.map(j => j.salary));
+  // Jobs from API and facets
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const [filterTypes, setFilterTypes] = useState([]); // values from allTypes
+  // Job categories mapped to API endpoints
+  const JOB_CATEGORIES = [
+    { key: 'BackendDev', label: 'Backend Developer', path: 'http://localhost:8080/api/jobs/BackendDev' },
+    { key: 'SE', label: 'Software Engineer', path: 'http://localhost:8080/api/jobs/SE' },
+    { key: 'AiMlDs', label: 'AI/ML/Data Science', path: 'http://localhost:8080/api/jobs/AiMlDs' },
+    { key: 'WebDev', label: 'Web Developer', path: 'http://localhost:8080/api/jobs/WebDev' },
+    { key: 'MobiDev', label: 'Mobile Developer', path: 'http://localhost:8080/api/jobs/MobiDev' },
+    { key: 'DevOpsCloud', label: 'DevOps & Cloud', path: 'http://localhost:8080/api/jobs/DevOpsCloud' },
+    { key: 'Cybersecurity', label: 'Cybersecurity', path: 'http://localhost:8080/api/jobs/Cybersecurity' },
+    { key: 'GameDev', label: 'Game Developer', path: 'http://localhost:8080/api/jobs/GameDev' },
+    { key: 'UiUx', label: 'UI/UX', path: 'http://localhost:8080/api/jobs/UiUx' },
+    { key: 'EmbeddedIO', label: 'Embedded/IoT', path: 'http://localhost:8080/api/jobs/EmbeddedIO' },
+    { key: 'ItSupport', label: 'IT Support', path: 'http://localhost:8080/api/jobs/ItSupport' },
+    { key: 'QATesting', label: 'QA & Testing', path: 'http://localhost:8080/api/jobs/QATesting' },
+    { key: 'CSTeacher', label: 'CS Teacher', path: 'http://localhost:8080/api/jobs/CSTeacher' },
+    { key: 'DBWarehouse', label: 'DB/Warehouse', path: 'http://localhost:8080/api/jobs/DBWarehouse' },
+    { key: 'FrontendDev', label: 'Frontend Developer', path: 'http://localhost:8080/api/jobs/FrontendDev' },
+    { key: 'Networking', label: 'Networking', path: 'http://localhost:8080/api/jobs/Networking' },
+    { key: 'SystemEng', label: 'System Engineer', path: 'http://localhost:8080/api/jobs/SystemEng' },
+    { key: 'Data.Analytics', label: 'Data Analytics', path: 'http://localhost:8080/api/jobs/Data.Analytics' },
+    { key: 'Blockchain', label: 'Blockchain', path: 'http://localhost:8080/api/jobs/Blockchain' },
+    { key: 'TechnicalWriter', label: 'Technical Writer', path: 'http://localhost:8080/api/jobs/TechnicalWriter' },
+    { key: 'FullStackDev', label: 'Full Stack Developer', path: 'http://localhost:8080/api/jobs/FullStackDev' },
+    { key: 'ERP', label: 'ERP', path: 'http://localhost:8080/api/jobs/ERP' },
+    { key: 'ITPjManager', label: 'IT Project Manager', path: 'http://localhost:8080/api/jobs/ITPjManager' },
+    { key: 'OtherSpecialized', label: 'Other Specialized', path: 'http://localhost:8080/api/jobs/OtherSpecialized' },
+    // Newly added special categories
+    { key: 'WorkFromHome', label: 'Work From Home', path: 'http://localhost:8080/api/jobs/WorkFromHome' },
+    { key: 'Intern', label: 'Intern', path: 'http://localhost:8080/api/jobs/Intern' },
+    { key: 'Freelance', label: 'Freelance', path: 'http://localhost:8080/api/jobs/Freelance' },
+  ];
+  const [selectedCategories, setSelectedCategories] = useState(() => JOB_CATEGORIES.map(c => c.key));
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchJobs = async () => {
+      if (!selectedCategories.length) { setJobs([]); return; }
+      setLoading(true);
+      setError(null);
+      try {
+        // fetch all selected categories in parallel
+        const catMap = new Map(JOB_CATEGORIES.map(c => [c.key, c]));
+        const selected = selectedCategories.map(k => catMap.get(k)).filter(Boolean);
+        const responses = await Promise.all(selected.map(async (c) => {
+          const r = await fetch(c.path);
+          if (!r.ok) throw new Error(`Failed to fetch ${c.key} (${r.status})`);
+          const json = await r.json();
+          return Array.isArray(json) ? json : [];
+        }));
+        const merged = [].concat(...responses);
+        const normalized = merged.map((d, idx) => {
+          const parseSalary = (v) => {
+            if (v == null) return 0;
+            if (typeof v === 'number') return v;
+            const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+            return isNaN(n) ? 0 : n;
+          };
+          const safeArray = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+          const company = d.org_name || d.orgEmail || "";
+          const rawSalaryStr = typeof d.salary_mmk === 'string' ? d.salary_mmk : '';
+          const isNegotiable = (typeof d.salary_mmk === 'string' && /nego/i.test(d.salary_mmk)) || (rawSalaryStr.trim().length > 0 && !/\d/.test(rawSalaryStr));
+          return {
+            // Preserve old fields for UI while also keeping original API fields
+            // company,
+            // title: d.job_title || "",
+            // logoUrl: d.logoUrl || "https://via.placeholder.com/48?text=JB",
+            // salary_raw: d.salary_mmk,
+            // location: d.address || "",
+            // applicants: d.applicants ?? 0,
+            // required_skills: safeArray(d.tech_skill),
+            // Qualifications: d.qualification ? [{ education: safeArray(d.qualification) }] : [],
+            // created_at: d.posted_date || new Date().toISOString(),
+            // Original API fields (pass-through)
+            id: d.id ?? `${company}-${d.job_title || 'job'}-${idx}`,
+            orgEmail: (typeof d.orgEmail === 'string' && d.orgEmail.trim().length > 0) ? d.orgEmail.trim() : "[OrgEmail]",
+            org_name: (typeof d.org_name === 'string' && d.org_name.trim().length > 0) ? d.org_name.trim() : "[OrgName]",
+            job_title: (typeof d.job_title === 'string' && d.job_title.trim().length > 0) ? d.job_title.trim() : "[JobTitle]",
+            job_field: safeArray(d.job_field),
+            job_level: (typeof d.job_level === 'string' && d.job_level.trim().length > 0) ? d.job_level.trim() : "[JobLevel]",
+            working_type: (typeof d.working_type === 'string' && d.working_type.trim().length > 0) ? d.working_type.trim() : "[WorkingType]",
+            tags: safeArray(d.tag).length ? safeArray(d.tag) : safeArray(d.job_field),
+            work_time: d.work_time,
+            address: (typeof d.address === 'string' && d.address.trim().length > 0) ? d.address.trim() : "[Address]",
+            cv_email: (typeof d.cv_email === 'string' && d.cv_email.trim().length > 0) ? d.cv_email.trim() : "[CVEmail]",
+            contact_ph_number: (typeof d.contact_ph_number === 'string' && d.contact_ph_number.trim().length > 0) ? d.contact_ph_number.trim() : "[ContactPhNumber]",
+            responsibilities: safeArray(d.responsibility),
+            qualification: safeArray(d.qualification),
+            // Keep numeric salary for filtering; preserve raw and negotiable flag for display/filtering
+            salary_mmk: parseSalary(d.salary_mmk),
+            salary_raw: d.salary_mmk,
+            negotiable: isNegotiable,
+            required_number: (typeof d.required_number === 'string' && d.required_number.trim().length > 0) ? d.required_number.trim() : "[RequiredNumber]",
+            tech_skill: safeArray(d.tech_skill),
+            due_date: (typeof d.due_date === 'string' && d.due_date.trim().length > 0) ? d.due_date.trim() : "[DueDate]",
+            posted_date: (typeof d.posted_date === 'string' && d.posted_date.trim().length > 0) ? d.posted_date.trim() : "[PostedDate]",
+          };
+        });
+        // de-duplicate by id to avoid duplicates across categories
+        const seen = new Set();
+        const dedup = [];
+        for (const j of normalized) {
+          if (seen.has(j.id)) continue;
+          seen.add(j.id);
+          dedup.push(j);
+        }
+        if (!cancelled) setJobs(dedup);
+      } catch (e) {
+        if (!cancelled) setError(e.message || "Failed to load jobs");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchJobs();
+    return () => { cancelled = true; };
+  }, [selectedCategories]);
+
+  // Derived facets from jobs
+  const allLevels = Array.from(new Set(jobs.map(j => j.job_level).filter(Boolean)));
+  const allCompanies = Array.from(new Set(jobs.map(j => j.org_name).filter(Boolean)));
+
+  // Helpers for search and save (must be before preSalaryFilteredJobs)
+  const normalizeText = (s) => (s || "").toString().toLowerCase();
+  const tokenize = (q) => normalizeText(q).split(/[^a-z0-9+#.]+/i).filter(Boolean);
+  // Highlighting helpers (use across card and modal)
+  const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const queryTokens = useMemo(() => tokenize(searchQuery), [searchQuery]);
+  const highlightText = (text, tokens) => {
+    if (!text || !tokens || tokens.length === 0) return text;
+    const uniq = Array.from(new Set(tokens.filter(Boolean)));
+    if (uniq.length === 0) return text;
+    const pattern = new RegExp('(' + uniq.map(escapeRegExp).join('|') + ')', 'gi');
+    const parts = String(text).split(pattern);
+    return parts.map((part, idx) => (
+      pattern.test(part)
+        ? <span key={idx} className="bg-yellow-200 rounded-sm px-0.5">{part}</span>
+        : <span key={idx}>{part}</span>
+    ));
+  };
+  const jobSearchBlob = (job) => {
+    // Combine key searchable fields into one normalized blob
+    const parts = [
+      job.job_title,
+      job.org_name,
+      ...(job.tags || []),
+      ...(job.tech_skill || []),
+      ...(job.responsibilities || []),
+      job.job_level,
+      job.working_type,
+      job.address,
+    ];
+    return normalizeText(parts.filter(Boolean).join(" \n "));
+  };
+  const titleTokens = (title) => normalizeText(title).split(/[^a-z0-9+#.]+/i).filter(Boolean);
+  const orderedProximityBoost = (title, tokens) => {
+    // Boost when tokens appear in order and close in the title
+    const tt = titleTokens(title);
+    if (!tt.length || tokens.length < 2) return 0;
+    // map token -> all positions in title
+    const pos = tokens.map(tk => tt.map((w,i)=> w.includes(tk) ? i : -1).filter(i=>i>=0));
+    if (pos.some(arr => arr.length === 0)) return 0;
+    // greedy small-window heuristic
+    let bestSpan = Infinity;
+    for (const i0 of pos[0]) {
+      let prev = i0; let ok = true;
+      for (let k=1;k<pos.length;k++) {
+        const nextPos = pos[k].find(i => i >= prev); // maintain order
+        if (nextPos == null) { ok = false; break; }
+        prev = nextPos;
+      }
+      if (ok) bestSpan = Math.min(bestSpan, prev - i0);
+    }
+    if (!isFinite(bestSpan)) return 0;
+    // smaller span -> larger boost (cap at 80)
+    return Math.max(0, 80 - bestSpan * 10);
+  };
+  const daysSince = (iso) => {
+    try {
+      const d = new Date(iso);
+      return Math.max(0, (Date.now() - d.getTime()) / (1000*60*60*24));
+    } catch {
+      return 9999;
+    }
+  };
+  const scoreJob = (job, q) => {
+    const s = (q || "").trim();
+    if (!s) return 0;
+    const phrase = normalizeText(s);
+    const tokens = tokenize(s);
+    if (!tokens.length) return 0;
+    // Field weights
+    const title = normalizeText(job.job_title);
+    const company = normalizeText(job.org_name);
+    const tags = (job.tags || []).map(normalizeText);
+    const skills = (job.tech_skill || []).map(normalizeText);
+    const resp = (job.responsibilities || []).map(normalizeText);
+    const level = normalizeText(job.job_level);
+    const work = normalizeText(job.working_type);
+    const address = normalizeText(job.address);
+
+    let score = 0;
+    // Phrase match boosts
+    if (title.includes(phrase)) score += 50;
+    if (company.includes(phrase)) score += 25;
+    if (tags.some(t=>t.includes(phrase))) score += 20;
+    if (skills.some(t=>t.includes(phrase))) score += 18;
+    if (resp.some(t=>t.includes(phrase))) score += 10;
+
+    // All-token presence quick boosts
+    const blob = jobSearchBlob(job);
+    const allInTitle = tokens.every(tk => title.includes(tk));
+    const allInBlob = tokens.every(tk => blob.includes(tk));
+    if (allInTitle) score += 60; else if (allInBlob) score += 20;
+
+    // Ordered proximity in title
+    score += orderedProximityBoost(job.job_title || "", tokens);
+
+    // Token matches
+    const countMatches = (hay, w) => {
+      for (const tk of tokens) {
+        if (!tk) continue;
+        if (hay.includes(tk)) score += w;
+        // prefix boost
+        else if (hay.startsWith(tk)) score += Math.floor(w/2);
+      }
+    };
+    tokens.forEach(tk => {
+      if (title.startsWith(tk)) score += 12;
+      if (company.startsWith(tk)) score += 8;
+    });
+    countMatches(title, 10);
+    countMatches(company, 6);
+    tags.forEach(t => countMatches(t, 5));
+    skills.forEach(t => countMatches(t, 5));
+    resp.forEach(t => countMatches(t, 2));
+    countMatches(level, 3);
+    countMatches(work, 3);
+    countMatches(address, 2);
+
+    // Recency boost (max ~30)
+    const days = daysSince(job.posted_date);
+    score += Math.max(0, 30 - Math.min(60, days));
+
+    // Saved jobs slight boost
+    if (isSaved(job.id)) score += 10;
+
+    return score;
+  };
+  const isSaved = (id) => savedIds.includes(id);
+  const toggleSave = (id) => {
+    setSavedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+  const matchesQuery = (job, q) => {
+    const s = (q || "").trim();
+    if (!s) return true;
+    const tokens = tokenize(s);
+    if (!tokens.length) return true;
+    // Require ALL tokens to appear somewhere across searchable fields
+    const blob = jobSearchBlob(job);
+    return tokens.every(tk => blob.includes(tk));
+  };
+
+  // Filter states used to compute pre-salary set
   const [filterLevels, setFilterLevels] = useState([]); // values from allLevels
   const [filterCompanies, setFilterCompanies] = useState([]); // values from allCompanies
   const [remoteOnly, setRemoteOnly] = useState(false); // true -> tag must include "Remote Ops"
+  const [includeNegotiable, setIncludeNegotiable] = useState(true);
+
+  // Compute the set of jobs shown BEFORE applying salary filter
+  const preSalaryFilteredJobs = jobs.filter(j => {
+    // remote
+    if (remoteOnly && !(/remote/i.test(j.working_type || ""))) return false;
+    // levels
+    if (filterLevels.length > 0 && !filterLevels.includes(j.job_level || "")) return false;
+    // companies
+    if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+    // negotiable toggle (exclude negotiable when off)
+    if (!includeNegotiable && j.negotiable) return false;
+    // saved only toggle
+    if (showSavedOnly && !isSaved(j.id)) return false;
+    // keyword match
+    if (!matchesQuery(j, searchQuery)) return false;
+    return true;
+  });
+
+  // Slider bounds based on shown jobs (excluding salary filter)
+  const salaryPool = preSalaryFilteredJobs
+    .filter(j => !j.negotiable && (j.salary_mmk || 0) > 0)
+    .map(j => j.salary_mmk || 0);
+  const minSalary = salaryPool.length ? Math.min(...salaryPool) : 0;
+  const maxSalary = salaryPool.length ? Math.max(...salaryPool) : 0;
+
+  // Salary range state depends on computed bounds
   const [salaryRange, setSalaryRange] = useState([minSalary, maxSalary]);
+  const [userAdjustedSalary, setUserAdjustedSalary] = useState(false);
+
+  // Sync slider to new bounds unless user has adjusted it; otherwise clamp within bounds
+  useEffect(() => {
+    if (!userAdjustedSalary) {
+      setSalaryRange([minSalary, maxSalary]);
+      return;
+    }
+    setSalaryRange(([lo, hi]) => {
+      const clampedLo = Math.max(minSalary, Math.min(lo, maxSalary));
+      const clampedHi = Math.max(minSalary, Math.min(hi, maxSalary));
+      return clampedLo <= clampedHi ? [clampedLo, clampedHi] : [minSalary, maxSalary];
+    });
+  }, [minSalary, maxSalary, userAdjustedSalary]);
 
   const toggleInArray = (arr, value, setter) => {
     setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
@@ -398,55 +460,66 @@ export default function JobBoard() {
 
   const handleMinSalaryChange = (v) => {
     const val = Number(v);
+    setUserAdjustedSalary(true);
     setSalaryRange(([_, hi]) => clampSalary(val, hi));
   };
   const handleMaxSalaryChange = (v) => {
     const val = Number(v);
+    setUserAdjustedSalary(true);
     setSalaryRange(([lo, _]) => clampSalary(lo, val));
   };
 
+  // Collapsible filter sections state
+  const [openFilters, setOpenFilters] = useState({
+    salary: true,
+    category: false,
+    level: false,
+    work: false,
+    companies: false,
+  });
+  const toggleFilterOpen = (key) => {
+    setOpenFilters((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const clearAllFilters = () => {
-    setFilterTypes([]);
+    setSelectedCategories([]);
     setFilterLevels([]);
     setFilterCompanies([]);
     setRemoteOnly(false);
+    setIncludeNegotiable(true);
     setSalaryRange([minSalary, maxSalary]);
+    setUserAdjustedSalary(false);
   };
-  // Helpers for search and save
-  const isSaved = (id) => savedIds.includes(id);
-  const toggleSave = (id) => {
-    setSavedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  };
-  const matchesQuery = (job, q) => {
-    const s = q.trim().toLowerCase();
-    if (!s) return true;
-    const haystacks = [
-      job.title,
-      job.company,
-      ...(job.tags || []),
-      ...(job.required_skills || []),
-      ...(job.responsibilities || []),
-    ].join("\n").toLowerCase();
-    return haystacks.includes(s);
-  };
+  // Helpers for search and save (moved above)
 
-  const filteredJobs = jobsData.filter(j => {
-    // salary
-    if (j.salary < salaryRange[0] || j.salary > salaryRange[1]) return false;
+  let filteredJobs = jobs.filter(j => {
+    // salary: negotiable passes when included; otherwise enforce numeric range
+    if (!(includeNegotiable && j.negotiable)) {
+      if ((j.salary_mmk || 0) < salaryRange[0] || (j.salary_mmk || 0) > salaryRange[1]) return false;
+    }
     // remote
-    if (remoteOnly && !j.tags.includes("Remote Ops")) return false;
-    // types
-    if (filterTypes.length > 0 && !filterTypes.some(t => j.tags.includes(t))) return false;
+    if (remoteOnly && !(/remote/i.test(j.working_type || ""))) return false;
     // levels
-    if (filterLevels.length > 0 && !filterLevels.some(l => j.tags.includes(l))) return false;
+    if (filterLevels.length > 0 && !filterLevels.includes(j.job_level || "")) return false;
     // companies
-    if (filterCompanies.length > 0 && !filterCompanies.includes(j.company)) return false;
+    if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
     // saved only toggle
     if (showSavedOnly && !isSaved(j.id)) return false;
     // keyword match
     if (!matchesQuery(j, searchQuery)) return false;
     return true;
   });
+
+  // Rank results for best relevance
+  if ((searchQuery || "").trim()) {
+    filteredJobs = filteredJobs
+      .map(j => ({ j, s: scoreJob(j, searchQuery) }))
+      .sort((a,b) => b.s - a.s)
+      .map(x => x.j);
+  } else {
+    // default sort by recency desc if available
+    filteredJobs = filteredJobs.sort((a,b) => new Date(b.posted_date).getTime() - new Date(a.posted_date).getTime());
+  }
 
   // Cyclic background colors for job cards
   const cardBgColors = ['#FFE1CB', '#D5F6ED', '#E2DBF9', '#E0F3FF', '#FBE2F3', '#ECEFF5'];
@@ -461,15 +534,26 @@ export default function JobBoard() {
     }
   };
 
+  // Utility: format a number like 3500000 to 3,500,000 and append MMK.
+  const formatMMKNumber = (value) => {
+    if (value == null) return '0MMK';
+    const num = typeof value === 'number' ? value : parseInt(String(value).replace(/[^0-9]/g, ''), 10);
+    if (isNaN(num)) return typeof value === 'string' ? value : '0MMK';
+    const withCommas = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return `${withCommas}MMK`;
+  };
+
   // Component to render individual job card using the new design
-  const JobCard = ({ job, bgColor, onDetails }) => (
+  const JobCard = ({ job, bgColor, onDetails }) => {
+    console.log('JobCard job:', job);
+    return (
     <div className="flex-[1_1_320px] min-w-[280px] bg-white rounded-[26px] border-[3px] border-gray-200 p-1.5 flex flex-col">
       {/* Map-like region wrapper */}
       <div className="rounded-[20px] p-4" style={{ backgroundColor: bgColor }}>
         {/* Header with date and bookmark */}
         <div className="flex justify-between items-center mb-4">
           <div className="bg-white rounded-full px-3 py-1">
-            <span className="text-gray-800 text-sm font-medium">{formatDate(job.created_at)}</span>
+            <span className="text-gray-800 text-sm font-medium">{formatDate(job.posted_date)}</span>
           </div>
           <button
             type="button"
@@ -491,7 +575,7 @@ export default function JobBoard() {
         </div>
 
         {/* Company name */}
-        <div className="text-gray-900 text-sm font-semibold mb-2">{job.company}</div>
+        <div className="text-gray-900 text-sm font-semibold mb-2">{highlightText(job.org_name, queryTokens)}</div>
 
         {/* Job title and logo row */}
         <div className="flex items-center justify-between mb-6">
@@ -507,17 +591,23 @@ export default function JobBoard() {
                 textOverflow: 'ellipsis',
               }}
             >
-              {job.title}
+              {highlightText(job.job_title, queryTokens)}
             </h3>
           </div>
           
           {/* Company logo - 25% width */}
           <div className="flex-shrink-0 flex justify-end" style={{flexBasis: '25%'}}>
-            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
-              <img 
-                src={job.logoUrl}
-                alt={job.company}
-                className="w-10 h-10 rounded-lg"
+            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center overflow-hidden">
+              <img
+                src={(job.logoUrl && !badLogoIds.has(job.id)) ? job.logoUrl : ORG_PLACEHOLDER_SVG}
+                alt={job.org_name || 'Organization'}
+                className="w-10 h-10 rounded-lg object-cover"
+                onError={() => setBadLogoIds(prev => {
+                  const next = new Set(prev);
+                  next.add(job.id);
+                  return next;
+                })}
+                referrerPolicy="no-referrer"
               />
             </div>
           </div>
@@ -525,9 +615,9 @@ export default function JobBoard() {
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-1 min-h-[106px] content-end">
-          {job.tags.map((tag, index) => (
+          {(job.tags || []).map((tag, index) => (
             <span key={index} className="text-gray-800 px-3 py-1 border-1 border-gray-500 rounded-full text-sm">
-              {tag}
+              {highlightText(tag, queryTokens)}
             </span>
           ))}
         </div>
@@ -537,8 +627,18 @@ export default function JobBoard() {
       <div className="mt-auto px-4 py-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-gray-900 text-md font-semibold">${job.salary}/hr</div>
-            <div className="text-gray-400 text-sm">{job.location}</div>
+            <div className="text-gray-900 text-md font-semibold">
+              {(() => {
+                const raw = job.salary_raw ?? job.salary_mmk;
+                if (typeof raw === 'string') {
+                  const digits = raw.replace(/[^0-9]/g, '');
+                  return digits.length ? formatMMKNumber(parseInt(digits, 10)) : raw;
+                }
+                if (typeof raw === 'number') return formatMMKNumber(raw);
+                return formatMMKNumber(job.salary_mmk || 0);
+              })()}
+            </div>
+            <div className="text-gray-400 text-sm">{highlightText(job.address, queryTokens)}</div>
           </div>
           <button onClick={() => onDetails?.(job)} className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 cursor-pointer transition-colors">
             Details
@@ -546,7 +646,8 @@ export default function JobBoard() {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   // Modal Component - Apple-like UI with smooth transitions
 
@@ -620,14 +721,14 @@ export default function JobBoard() {
                     <div className="w-14 h-14 sm:w-16 sm:h-16 bg-black rounded-xl flex items-center justify-center">
                       <img
                         src={job.logoUrl}
-                        alt={job.company}
+                        alt={job.org_name}
                         className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
-                          {job.company}
+                          {highlightText(job.org_name, queryTokens)}
                         </h2>
                         <span className="text-gray-300">•</span>
                         <p
@@ -640,13 +741,13 @@ export default function JobBoard() {
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          {job.title}
+                          {highlightText(job.job_title, queryTokens)}
                         </p>
                       </div>
                       <div className="mt-1 flex items-center gap-3 text-sm text-gray-500 flex-wrap">
-                        <span>{job.location}</span>
+                        <span>{highlightText(job.address, queryTokens)}</span>
                         <span>·</span>
-                        <span>{new Date(job.created_at).toLocaleDateString()}</span>
+                        <span>{new Date(job.posted_date).toLocaleDateString()}</span>
                         <span>·</span>
                         <span>{applicantsText}</span>
                       </div>
@@ -729,60 +830,66 @@ export default function JobBoard() {
                       </h4>
                       <ul className="list-disc pl-6 space-y-1 text-gray-700">
                         {job.responsibilities.map((item, idx) => (
-                          <li key={idx}>{item}</li>
+                          <li key={idx}>{highlightText(item, queryTokens)}</li>
                         ))}
                       </ul>
                     </div>
                   )}
   
                   {/* Required Skills */}
-                  {job.required_skills?.length > 0 && (
+                  {(job.tech_skill && job.tech_skill.length > 0) && (
                     <div className="mb-6">
                       <h4 className="text-gray-900 font-semibold mb-2">
                         Required skills
                       </h4>
                       <ul className="list-disc pl-6 space-y-1 text-gray-700">
-                        {job.required_skills.map((skill, idx) => (
-                          <li key={idx}>{skill}</li>
+                        {job.tech_skill.map((skill, idx) => (
+                          <li key={idx}>{highlightText(skill, queryTokens)}</li>
                         ))}
                       </ul>
                     </div>
                   )}
-  
+
                   {/* Qualifications */}
-                  {job.Qualifications?.length > 0 && (
+                  {(Array.isArray(job.qualification) && job.qualification.length > 0) && (
                     <div>
                       <h4 className="text-gray-900 font-semibold mb-2">
                         Qualifications
                       </h4>
-                      {job.Qualifications.map((q, idx) => (
-                        <div key={idx} className="mb-3">
-                          {q.education && (
-                            <>
-                              <div className="text-gray-800 font-medium">
-                                Education
-                              </div>
-                              <ul className="text-gray-700 list-disc pl-6 space-y-1">
-                                {q.education.map((e, i) => (
-                                  <li key={i}>{e}</li>
-                                ))}
-                              </ul>
-                            </>
-                          )}
-                          {q.experience && (
-                            <>
-                              <div className="text-gray-800 font-medium mt-2">
-                                Experience
-                              </div>
-                              <ul className="text-gray-700 list-disc pl-6 space-y-1">
-                                {q.experience.map((e, i) => (
-                                  <li key={i}>{e}</li>
-                                ))}
-                              </ul>
-                            </>
-                          )}
-                        </div>
-                      ))}
+                      {typeof job.qualification[0] === 'string' ? (
+                        <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                          {job.qualification.map((item, idx) => (
+                            <li key={idx}>{highlightText(item, queryTokens)}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        job.qualification.map((q, idx) => (
+                          <div key={idx} className="mb-3">
+                            {q.education && (
+                              <>
+                                <p className="text-gray-800 font-medium mb-1">Education</p>
+                                <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                                  {q.education.map((item, i) => (
+                                    <li key={i}>{highlightText(item, queryTokens)}</li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                            {q.experience && (
+                              <>
+                                <div className="text-gray-800 font-medium mt-2">
+                                  Experience
+                                </div>
+                                <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                                  {q.experience.map((e, i) => (
+                                    <li key={i}>{highlightText(e, queryTokens)}</li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </motion.div>
@@ -807,8 +914,8 @@ export default function JobBoard() {
           <div className="w-full max-w-xl relative">
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchQueryInput}
+              onChange={(e) => setSearchQueryInput(e.target.value)}
               placeholder="Search jobs by title, company, skill..."
               className="w-full pl-11 pr-4 py-2.5 rounded-full border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/80 placeholder:text-slate-400"
             />
@@ -818,10 +925,10 @@ export default function JobBoard() {
                 <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            {searchQuery && (
+            {searchQueryInput && (
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={() => setSearchQueryInput("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center"
                 aria-label="Clear search"
                 title="Clear search"
@@ -885,7 +992,9 @@ export default function JobBoard() {
                   </button>
                 </div>
                 <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-hide-scrollbar="true" style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
-                  {(([... (savedIds.length ? jobsData.filter(j=>savedIds.includes(j.id)) : jobsData).slice(0,3)])).map((job) => (
+                  {(() => { const items = jobs.filter(j => savedIds.includes(j.id)).slice(0,3); return items.length === 0 ? (
+                    <div className="text-sm text-slate-500 text-center py-6">No saved jobs</div>
+                  ) : items.map((job) => (
                     <div
                       key={job.id}
                       className="w-full border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-slate-50"
@@ -895,12 +1004,22 @@ export default function JobBoard() {
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowSavedOnly(true); setSavedOpen(false); } }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                          <img src={job.logoUrl} alt={job.company} className="w-7 h-7 rounded" />
+                        <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <img
+                            src={(job.logoUrl && !badLogoIds.has(job.id)) ? job.logoUrl : ORG_PLACEHOLDER_SVG}
+                            alt={job.org_name || 'Organization'}
+                            className="w-7 h-7 rounded object-cover"
+                            onError={() => setBadLogoIds(prev => {
+                              const next = new Set(prev);
+                              next.add(job.id);
+                              return next;
+                            })}
+                            referrerPolicy="no-referrer"
+                          />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs text-slate-600 font-medium truncate">{job.company}</div>
-                          <div className="text-sm text-slate-900 font-semibold truncate">{job.title}</div>
+                          <div className="text-xs text-slate-600 font-medium truncate">{job.org_name}</div>
+                          <div className="text-sm text-slate-900 font-semibold truncate">{job.job_title}</div>
                         </div>
                         <div className="flex items-center gap-3">
                           <button
@@ -912,7 +1031,7 @@ export default function JobBoard() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )); })()}
                 </div>
               </div>
             )}
@@ -977,101 +1096,273 @@ export default function JobBoard() {
               data-hide-scrollbar="true"
               style={{ overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none', flex: '1 1 auto' }}
             >
-            {/* Salary Range */}
+            {/* Salary Range (Dropdown) */}
             <div className="pb-5 mb-5 border-b border-slate-200">
-              <div className="text-slate-600 text-sm font-medium mb-3">Salary range (per hour)</div>
-              <div className="px-1">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={minSalary}
-                    max={maxSalary}
-                    value={salaryRange[0]}
-                    onChange={(e) => handleMinSalaryChange(e.target.value)}
-                    className="w-full accent-indigo-700"
-                  />
-                  <input
-                    type="range"
-                    min={minSalary}
-                    max={maxSalary}
-                    value={salaryRange[1]}
-                    onChange={(e) => handleMaxSalaryChange(e.target.value)}
-                    className="w-full accent-indigo-700"
-                  />
+              <button
+                type="button"
+                onClick={() => toggleFilterOpen('salary')}
+                className="w-full flex items-start justify-between text-slate-700"
+                aria-expanded={openFilters.salary}
+              >
+                <div className="flex-1 text-left">
+                  <div className="text-slate-700 text-base font-semibold">Salary range (MMK)</div>
+                  <div className="text-xs text-slate-500 text-left">{formatMMKNumber(salaryRange[0])} - {formatMMKNumber(salaryRange[1])}</div>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                  <span>${salaryRange[0]}</span>
-                  <span>${salaryRange[1]}</span>
+                <svg
+                  className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.salary ? 'rotate-180' : ''}`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <AnimatePresence initial={false}>
+                {openFilters.salary && (
+                  <motion.div
+                    key="salary-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 px-1">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min={minSalary}
+                          max={maxSalary}
+                          value={salaryRange[0]}
+                          onChange={(e) => handleMinSalaryChange(e.target.value)}
+                          className="w-full accent-indigo-700"
+                        />
+                        <input
+                          type="range"
+                          min={minSalary}
+                          max={maxSalary}
+                          value={salaryRange[1]}
+                          onChange={(e) => handleMaxSalaryChange(e.target.value)}
+                          className="w-full accent-indigo-700"
+                        />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                        <span>{formatMMKNumber(salaryRange[0])}</span>
+                        <span>{formatMMKNumber(salaryRange[1])}</span>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
+                        <div className="text-xs text-slate-600">
+                          <div className="font-medium text-slate-700">Include negotiable salaries</div>
+                          <div className="text-[11px]">When on, jobs marked as Negotiable are shown regardless of range.</div>
+                        </div>
+                        <label className="inline-flex items-center cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={includeNegotiable}
+                            onChange={(e)=>setIncludeNegotiable(e.target.checked)}
+                          />
+                          <div className={"w-10 h-6 rounded-full relative transition-colors duration-200 ease-out " + (includeNegotiable ? "bg-indigo-600" : "bg-slate-300") }>
+                            <div className={"absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-200 ease-out " + (includeNegotiable ? "translate-x-4" : "translate-x-0") } />
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Job categories (multiple) */}
+            <div className="pb-5 mb-5 border-b border-slate-200">
+              <button
+                type="button"
+                onClick={() => toggleFilterOpen('category')}
+                className="w-full flex items-start justify-between text-slate-700 mb-1"
+                aria-expanded={openFilters.category}
+              >
+                <div className="flex-1 text-left">
+                  <div className="text-slate-700 text-base font-semibold">Job category</div>
+                  <div className="text-xs text-slate-500 text-left">
+                    {selectedCategories.length
+                      ? `${selectedCategories.length} selected`
+                      : 'None selected'}
+                  </div>
                 </div>
-              </div>
+                <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.category ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
+              </button>
+              <AnimatePresence initial={false}>
+                {openFilters.category && (
+                  <motion.div
+                    key="category-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 0.61, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">Select categories</span>
+                        {selectedCategories.length === JOB_CATEGORIES.length ? (
+                          <button
+                            type="button"
+                            className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
+                            onClick={() => setSelectedCategories([])}
+                          >
+                            Uncheck all
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
+                            onClick={() => setSelectedCategories(JOB_CATEGORIES.map(c => c.key))}
+                          >
+                            Check all
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        {JOB_CATEGORIES.map((c) => (
+                          <label key={c.key} className="flex items-center gap-3 text-sm text-slate-700">
+                            <input
+                              type="checkbox"
+                              className="accent-indigo-700 rounded"
+                              checked={selectedCategories.includes(c.key)}
+                              onChange={() => toggleInArray(selectedCategories, c.key, setSelectedCategories)}
+                            />
+                            <span>{c.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Job Type */}
+            {/* Seniority Level (Dropdown) */}
             <div className="pb-5 mb-5 border-b border-slate-200">
-              <div className="text-slate-600 text-sm font-medium mb-3">Job type</div>
-              <div className="space-y-2">
-                {allTypes.map((t) => (
-                  <label key={t} className="flex items-center gap-3 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      className="accent-indigo-700 rounded"
-                      checked={filterTypes.includes(t)}
-                      onChange={() => toggleInArray(filterTypes, t, setFilterTypes)}
-                    />
-                    <span>{t}</span>
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleFilterOpen('level')}
+                className="w-full flex items-start justify-between text-slate-700 mb-1"
+                aria-expanded={openFilters.level}
+              >
+                <div className="flex-1 text-left">
+                  <div className="text-slate-700 text-base font-semibold">Seniority level</div>
+                  <div className="text-xs text-slate-500 text-left">{filterLevels.length ? `${filterLevels.length} selected` : 'Any'}</div>
+                </div>
+                <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.level ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
+              </button>
+              <AnimatePresence initial={false}>
+                {openFilters.level && (
+                  <motion.div
+                    key="level-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 0.61, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 mt-2">
+                      {allLevels.map((l) => (
+                        <label key={l} className="flex items-center gap-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            className="accent-indigo-700 rounded"
+                            checked={filterLevels.includes(l)}
+                            onChange={() => toggleInArray(filterLevels, l, setFilterLevels)}
+                          />
+                          <span>{l}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Seniority Level */}
+            {/* Work Setup (Dropdown) */}
             <div className="pb-5 mb-5 border-b border-slate-200">
-              <div className="text-slate-600 text-sm font-medium mb-3">Seniority level</div>
-              <div className="space-y-2">
-                {allLevels.map((l) => (
-                  <label key={l} className="flex items-center gap-3 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      className="accent-indigo-700 rounded"
-                      checked={filterLevels.includes(l)}
-                      onChange={() => toggleInArray(filterLevels, l, setFilterLevels)}
-                    />
-                    <span>{l}</span>
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleFilterOpen('work')}
+                className="w-full flex items-start justify-between text-slate-700 mb-1"
+                aria-expanded={openFilters.work}
+              >
+                <div className="flex-1 text-left">
+                  <div className="text-slate-700 text-base font-semibold">Work setup</div>
+                  <div className="text-xs text-slate-500 text-left">{remoteOnly ? 'Remote only' : 'Any'}</div>
+                </div>
+                <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.work ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
+              </button>
+              <AnimatePresence initial={false}>
+                {openFilters.work && (
+                  <motion.div
+                    key="work-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2">
+                      <label className="flex items-center gap-3 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          className="accent-indigo-700 rounded"
+                          checked={remoteOnly}
+                          onChange={(e) => setRemoteOnly(e.target.checked)}
+                        />
+                        <span>Remote only</span>
+                      </label>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Work Setup */}
-            <div className="pb-5 mb-5 border-b border-slate-200">
-              <div className="text-slate-600 text-sm font-medium mb-3">Work setup</div>
-              <label className="flex items-center gap-3 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  className="accent-indigo-700 rounded"
-                  checked={remoteOnly}
-                  onChange={(e) => setRemoteOnly(e.target.checked)}
-                />
-                <span>Remote only</span>
-              </label>
-            </div>
-
-            {/* Companies */}
+            {/* Companies (Dropdown) */}
             <div className="pb-1">
-              <div className="text-slate-600 text-sm font-medium mb-3">Companies</div>
-              <div className="space-y-2">
-                {allCompanies.slice(0, 6).map((c) => (
-                  <label key={c} className="flex items-center gap-3 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      className="accent-indigo-700 rounded"
-                      checked={filterCompanies.includes(c)}
-                      onChange={() => toggleInArray(filterCompanies, c, setFilterCompanies)}
-                    />
-                    <span>{c}</span>
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleFilterOpen('companies')}
+                className="w-full flex items-start justify-between text-slate-700 mb-1"
+                aria-expanded={openFilters.companies}
+              >
+                <div className="flex-1 text-left">
+                  <div className="text-slate-700 text-base font-semibold">Companies</div>
+                  <div className="text-xs text-slate-500 text-left">{filterCompanies.length ? `${filterCompanies.length} selected` : 'Any'}</div>
+                </div>
+                <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.companies ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
+              </button>
+              <AnimatePresence initial={false}>
+                {openFilters.companies && (
+                  <motion.div
+                    key="companies-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 0.61, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 mt-2">
+                      {allCompanies.slice(0, 6).map((c) => (
+                        <label key={c} className="flex items-center gap-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            className="accent-indigo-700 rounded"
+                            checked={filterCompanies.includes(c)}
+                            onChange={() => toggleInArray(filterCompanies, c, setFilterCompanies)}
+                          />
+                          <span>{c}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             </div>
           </div>
@@ -1094,16 +1385,26 @@ export default function JobBoard() {
             data-hide-scrollbar="true"
             style={{ overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            <div className="flex flex-wrap gap-6 items-stretch">
-              {filteredJobs.map((job, index) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  bgColor={cardBgColors[index % cardBgColors.length]}
-                  onDetails={openJobModal}
-                />
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-full text-slate-500">Loading jobs…</div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full text-red-500">{error}</div>
+            ) : selectedCategories.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-slate-500">Select at least one job category to fetch jobs.</div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-slate-500">No jobs found. Try adjusting filters.</div>
+            ) : (
+              <div className="flex flex-wrap gap-6 items-stretch">
+                {filteredJobs.map((job, index) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    bgColor={cardBgColors[index % cardBgColors.length]}
+                    onDetails={openJobModal}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
