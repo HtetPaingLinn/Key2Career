@@ -118,6 +118,7 @@ export default function VoiceInterviewCreatePage() {
                 Tell our AI what kind of interview you want to practice and it will generate personalized questions for you.
               </p>
             </div>
+            <br/><br/><br/>
 
             <Agent
               userName={user.email.split('@')[0]} // Use email prefix as name

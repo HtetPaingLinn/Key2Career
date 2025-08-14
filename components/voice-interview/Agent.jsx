@@ -243,13 +243,16 @@ const Agent = ({
         {/* AI Interviewer Card */}
         <div className="card-interviewer">
           <div className="avatar">
-            <Image
-              src="/ai-avatar.png"
-              alt="profile-image"
-              width={65}
-              height={54}
-              className="object-cover"
-            />
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover rounded-full"
+            >
+              <source src="/voice1.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
             {isSpeaking && <span className="animate-speak" />}
           </div>
           <h3>Interviewer</h3>
