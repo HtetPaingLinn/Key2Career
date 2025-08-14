@@ -146,12 +146,13 @@ const CodingTestCreateForm = ({ onClose, onSuccess }) => {
   return (
     <div className="w-full p-4 flex flex-col CodingTestCreateForm">
       <form onSubmit={handleAddSession} className="flex flex-col gap-3 w-full">
+        <h2 className="text-xl font-bold text-black mb-2">Create New Coding Test</h2>
         <p className="text-sm text-black mb-4">This will create a coding test using questions from our curated dataset. Only dataset topics are available for coding tests.</p>
         
         {/* Validation Summary */}
         {Object.keys(validationErrors).length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-2">
-            <div className="text-red-800 text-sm font-medium mb-2">Please fix the following errors:</div>
+            <div className="text-red-800 text-sm font-medium mb-2">Make sure to fill all the fields correctly.</div>
             <ul className="text-red-700 text-xs space-y-1">
               {Object.values(validationErrors).map((error, index) => (
                 <li key={index} className="flex items-center">
@@ -211,17 +212,17 @@ const CodingTestCreateForm = ({ onClose, onSuccess }) => {
         {error && <p className="text-red-500 text-sm py-2">{error}</p>}
 
         <div className="flex justify-center gap-3 mt-4">
-          <button
-            type="submit"
-            disabled={isLoading || !isFormValid}
-            className="px-6 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
-            style={{ 
-              background: 'linear-gradient(to right, rgb(47, 114, 47), oklch(0.51 0.2 145.36))'
-            }}
-          >
-            {isLoading && <SpinnerLoader />}
-            {isLoading ? "Creating..." : "Create Test"}
-          </button>
+        <button
+          type="submit"
+          disabled={isLoading || !isFormValid}
+          className="px-6 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+          style={{ 
+            background: 'linear-gradient(to right, rgb(47, 114, 47), oklch(0.51 0.2 145.36))'
+          }}
+        >
+          {isLoading && <SpinnerLoader />}
+          {isLoading ? "Creating..." : "Create Test"}
+        </button>
           <button
             type="button"
             onClick={onClose}

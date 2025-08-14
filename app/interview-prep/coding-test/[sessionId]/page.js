@@ -419,13 +419,13 @@ const CodingTestSession = () => {
               {!visible && (
                 <div className="flex items-center gap-4 -mr-[130px]">
                   <div className="flex items-center space-x-4">
-                    {/* Timer */}
+                    {/* Timer
                     <Timer 
                       initialTime={timer}
                       onExpire={() => setIsTimerExpired(true)}
                       isStopped={isTimerStopped}
                       className="text-center text-sm"
-                    />
+                    /> */}
                     
                     {mounted && jwt && user ? (
                       <div className="relative" key={profileKey}>
@@ -482,7 +482,7 @@ const CodingTestSession = () => {
         <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2 border border-gray-200">
           <span className="text-sm text-gray-600 font-medium">Page:</span>
           <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((pageNum) => {
+            {Array.from({ length: Math.ceil(totalQuestions / QUESTIONS_PER_PAGE) }, (_, i) => i + 1).map((pageNum) => {
               const isCurrentPage = pageNum === currentPage;
               return (
                 <button

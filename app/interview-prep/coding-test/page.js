@@ -395,7 +395,7 @@ export default function CodingTestPage() {
           <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm overflow-y-auto">
             <div className="min-h-screen flex items-center justify-center p-4">
               <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200">
-                <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                {/* <div className="flex justify-between items-center p-6 border-b border-gray-200">
                   <h2 className="text-xl font-semibold text-gray-900">Create New Coding Test</h2>
                   <button
                     onClick={() => setOpenCreateModal(false)}
@@ -405,7 +405,7 @@ export default function CodingTestPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                </div>
+                </div> */}
                 <CodingTestCreateForm
                   onClose={() => setOpenCreateModal(false)}
                   onSuccess={() => {
@@ -424,14 +424,11 @@ export default function CodingTestPage() {
           onClose={() => {
             setOpenDeleteAlert({ open: false, data: null });
           }}
-          title="Delete Alert"
         >
-          <div className="w-[30vw]">
-            <DeleteAlertContent
-              content="Are you sure you want to delete this coding test session?"
-              onDelete={() => deleteSession(openDeleteAlert.data)}
-            />
-          </div>
+          <DeleteAlertContent
+            content="Are you sure you want to delete this coding test session?"
+            onDelete={() => deleteSession(openDeleteAlert.data)}
+          />
         </Modal>
       </div>
     </div>
