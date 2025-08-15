@@ -186,6 +186,7 @@ export function AppSidebar({ ...props }) {
         <SidebarFooter>
           <NavUser user={adminData} />
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
       <AdminManagementModal
         open={adminModalOpen}

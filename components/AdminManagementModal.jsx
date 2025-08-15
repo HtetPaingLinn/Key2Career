@@ -36,25 +36,27 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
       const requestData = {
         name: name,
         email: email,
-        password: password
+        password: password,
       };
-      const token = localStorage.getItem('jwt');
+      const token = localStorage.getItem("jwt");
       if (!token) {
         setError("You must be logged in to perform this action");
         return;
       }
       const res = await fetch("http://localhost:8080/api/admin/addAdmin", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}`
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify(requestData),
       });
       if (res.status === 403) {
-        setError("Access denied. Please make sure you have the necessary permissions.");
+        setError(
+          "Access denied. Please make sure you have the necessary permissions."
+        );
         return;
       }
       if (res.ok) {
@@ -84,7 +86,7 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
         }
       }
     } catch (err) {
-      console.error('Error during admin creation:', err);
+      console.error("Error during admin creation:", err);
       if (err instanceof Error) {
         setError(`Network error: ${err.message}`);
       } else {
@@ -96,7 +98,10 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
   };
 
   return (
-    <Dialog open={open ?? isDialogOpen} onOpenChange={onOpenChange ?? setIsDialogOpen}>
+    <Dialog
+      open={open ?? isDialogOpen}
+      onOpenChange={onOpenChange ?? setIsDialogOpen}
+    >
       {triggerButton && <DialogTrigger asChild>{triggerButton}</DialogTrigger>}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -131,13 +136,13 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
             </div>
             <div className="grid gap-3">
               <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
+              <Input
+                id="password"
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required 
+                required
               />
             </div>
             <div className="flex flex-col gap-3">
@@ -146,9 +151,7 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
               </Button>
             </div>
             {error && (
-              <div className="text-red-500 text-sm text-center">
-                {error}
-              </div>
+              <div className="text-red-500 text-sm text-center">{error}</div>
             )}
             {success && (
               <div className="text-green-500 text-sm text-center">

@@ -24,6 +24,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarRail,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -186,6 +187,7 @@ export function AppSidebar({ ...props }) {
         <SidebarFooter>
           <NavUser user={adminData} />
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
       <AdminManagementModal
         open={adminModalOpen}
