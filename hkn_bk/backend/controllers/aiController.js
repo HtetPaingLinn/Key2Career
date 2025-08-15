@@ -4,10 +4,18 @@ const {
   questionAnswerPrompt,
   feedbackPrompt,
   checkAnswerPrompt,
+  areQuestionsSimilar,
+  filterSimilarQuestions
 } = require("../utils/prompts");
 const pdfParse = require("pdf-parse");
-const { extractSkillsFromText, extractRoleFromText, extractDescriptionFromText, extractProjectsFromText } = require("../utils/prompts");
+const prompts = require("../utils/prompts");
+const { extractSkillsFromText, extractRoleFromText, extractDescriptionFromText, extractProjectsFromText } = prompts;
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+
+// Check if Gemini API key is configured
+if (!process.env.GEMINI_API_KEY) {
+  console.error('GEMINI_API_KEY environment variable is not set. Please add it to your .env file.');
+}
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -17,24 +25,50 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const generateInterviewQuestions = async (req, res) => {
   try {
     let { role, experience, topicsToFocus, numberOfQuestions, pdf, description, projects, sessionId } = req.body;
-    const numQuestions = numberOfQuestions || 5;
-    if (!role || !experience || !topicsToFocus || !numQuestions) {
+    // Always generate exactly 25 questions
+    const numQuestions = 25;
+    if (!role || !experience || !topicsToFocus) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Check for existing questions if sessionId is provided
+    // Check for existing questions across ALL user sessions to prevent duplication
     let existingQuestions = [];
-    if (sessionId) {
-      try {
-        const Session = require("../models/Session");
-        const session = await Session.findById(sessionId).populate('questions');
-        if (session && session.questions) {
-          existingQuestions = session.questions.map(q => q.question.toLowerCase().trim());
+    try {
+      const Session = require("../models/Session");
+      const Question = require("../models/Question");
+      
+      // Handle case where user might not be authenticated (for test endpoint)
+      if (req.user && req.user._id) {
+        // Get all sessions for the current user
+        const userSessions = await Session.find({ user: req.user._id }).populate('questions');
+      
+      // Extract all questions from all user sessions to prevent duplication
+      for (const session of userSessions) {
+        if (session.questions && Array.isArray(session.questions)) {
+          for (const question of session.questions) {
+            if (question.question) {
+              // Store question text and normalize for comparison
+              const normalizedQuestion = question.question.toLowerCase().trim();
+              existingQuestions.push(normalizedQuestion);
+            }
+          }
         }
+      }
+      
+      console.log(`Found ${existingQuestions.length} existing questions across all user sessions`);
+      
+      // Remove duplicates and limit to prevent prompt size issues
+      existingQuestions = [...new Set(existingQuestions)].slice(0, 20);
+      
+              // Additional filtering to remove similar questions using similarity detection
+        if (existingQuestions.length > 0) {
+          existingQuestions = filterSimilarQuestions(existingQuestions, 0.6);
+          console.log(`After similarity filtering: ${existingQuestions.length} unique questions`);
+        }
+      }
       } catch (error) {
         console.log("Could not fetch existing questions:", error.message);
       }
-    }
 
     // Extract data from PDF if provided
     let pdfSkills = [], pdfRole = null, pdfDescription = null, pdfProjects = [];
@@ -85,11 +119,11 @@ const generateInterviewQuestions = async (req, res) => {
     const finalDescription = description || pdfDescription || "";
     const finalProjects = (projects && projects.length) ? projects : pdfProjects;
 
-    // Compose prompt for balanced questions
+    // Compose prompt for balanced questions with enhanced duplication prevention
     let prompt;
     if (existingQuestions.length > 0) {
-      // Include existing questions in prompt to avoid repetition
-      const existingQuestionsText = existingQuestions.slice(0, 10).join('\n- '); // Limit to first 10 for prompt size
+      // Include existing questions in prompt to avoid repetition across all sessions
+      const existingQuestionsText = existingQuestions.join('\n- ');
       prompt = questionAnswerPrompt(
         finalRole,
         experience,
@@ -106,6 +140,14 @@ const generateInterviewQuestions = async (req, res) => {
       );
     }
 
+    // Check if API key is available before making the request
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        message: "AI service not configured. Please set GEMINI_API_KEY environment variable.",
+        error: "Missing API key configuration"
+      });
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-lite",
       contents: prompt,
@@ -116,7 +158,30 @@ const generateInterviewQuestions = async (req, res) => {
       .replace(/^```json\s*/, "")
       .replace(/```$/, "")
       .trim();
-    let data = JSON.parse(cleanedText);
+    
+    let data;
+    try {
+      data = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError.message);
+      console.error('Raw response:', rawText.substring(0, 500));
+      
+      // Try to fix common JSON issues
+      let fixedText = cleanedText
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+        .replace(/\\(?!["\\/bfnrt])/g, '\\\\') // Fix unescaped backslashes
+        .replace(/\n/g, '\\n') // Escape newlines
+        .replace(/\r/g, '\\r') // Escape carriage returns
+        .replace(/\t/g, '\\t'); // Escape tabs
+      
+      try {
+        data = JSON.parse(fixedText);
+        console.log('Successfully parsed after fixing JSON issues');
+      } catch (secondError) {
+        console.error('Still failed to parse after fixes:', secondError.message);
+        throw new Error(`Failed to parse AI response: ${parseError.message}`);
+      }
+    }
 
     // Fallback: If type is missing, classify in code (simple heuristic)
     data = data.map(q => {
@@ -129,6 +194,89 @@ const generateInterviewQuestions = async (req, res) => {
       }
       return q;
     });
+
+    // Post-generation check: Filter out questions that are too similar to existing ones
+    if (existingQuestions.length > 0) {
+      const filteredData = data.filter(newQuestion => {
+        const isSimilar = existingQuestions.some(existingQuestion => 
+          areQuestionsSimilar(newQuestion.question, existingQuestion, 0.6)
+        );
+        if (isSimilar) {
+          console.log(`Filtered out similar question: ${newQuestion.question.substring(0, 100)}...`);
+        }
+        return !isSimilar;
+      });
+      
+      data = filteredData;
+      console.log(`Questions after duplication filtering: ${data.length}`);
+    }
+
+    // Ensure we have exactly 25 questions
+    if (data.length !== 25) {
+      console.log(`Generated ${data.length} questions, need exactly 25. Attempting to regenerate...`);
+      
+      // If we have too few questions, try to generate more
+      if (data.length < 25) {
+        const additionalQuestionsNeeded = 25 - data.length;
+        console.log(`Need ${additionalQuestionsNeeded} more questions`);
+        
+        try {
+          // Generate additional questions with stricter duplication prevention
+          const additionalPrompt = questionAnswerPrompt(
+            finalRole,
+            experience,
+            combinedTopics,
+            additionalQuestionsNeeded,
+            existingQuestions.join('\n- ') + '\n- ' + data.map(q => q.question).join('\n- ')
+          );
+          
+          const additionalResponse = await ai.models.generateContent({
+            model: "gemini-2.0-flash-lite",
+            contents: additionalPrompt,
+          });
+          
+          let additionalRawText = additionalResponse.text;
+          const additionalCleanedText = additionalRawText
+            .replace(/^```json\s*/, "")
+            .replace(/```$/, "")
+            .trim();
+          
+          let additionalData;
+          try {
+            additionalData = JSON.parse(additionalCleanedText);
+          } catch (parseError) {
+            console.error('Failed to parse additional questions:', parseError.message);
+            additionalData = [];
+          }
+          
+          // Filter additional questions for similarity
+          const filteredAdditional = additionalData.filter(newQuestion => {
+            const isSimilar = existingQuestions.some(existingQuestion => 
+              areQuestionsSimilar(newQuestion.question, existingQuestion, 0.6)
+            ) || data.some(existingQuestion => 
+              areQuestionsSimilar(newQuestion.question, existingQuestion.question, 0.6)
+            );
+            return !isSimilar;
+          });
+          
+          // Add additional questions to reach 25
+          data = [...data, ...filteredAdditional.slice(0, additionalQuestionsNeeded)];
+          console.log(`Added ${Math.min(filteredAdditional.length, additionalQuestionsNeeded)} additional questions`);
+        } catch (error) {
+          console.error('Failed to generate additional questions:', error.message);
+        }
+      }
+      
+      // If we still don't have 25, truncate or pad as needed
+      if (data.length > 25) {
+        data = data.slice(0, 25);
+        console.log(`Truncated to exactly 25 questions`);
+      } else if (data.length < 25) {
+        console.log(`Warning: Only ${data.length} questions available after all attempts`);
+      }
+    }
+
+    console.log(`Final question count: ${data.length}`);
 
     res.status(200).json(data);
   } catch (error) {
@@ -294,6 +442,15 @@ const checkAnswerWithAI = async (req, res) => {
     });
     
     const prompt = checkAnswerPrompt(question, userAnswer, correctAnswer);
+    
+    // Check if API key is available
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        message: "AI service not configured. Please set GEMINI_API_KEY environment variable.",
+        error: "Missing API key configuration"
+      });
+    }
+    
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-lite",
       contents: prompt,

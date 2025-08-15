@@ -326,7 +326,7 @@ export default function VoiceInterviewHome() {
                   Practice real interview questions with our AI voice assistant and get instant feedback to improve your skills.
                 </p>
 
-                <Button asChild className="max-sm:w-full w-fit text-lg px-8 py-3" style={{
+                <Button asChild className="max-sm:w-full w-fit text-lg px-8 py-3 font-bold" style={{
                   background: 'rgb(40 168 255 / 57%)',
                   color: 'black',
                   border: 'none'
@@ -393,6 +393,138 @@ export default function VoiceInterviewHome() {
                     <p className="text-gray-600">There are no interviews available right now</p>
                   </div>
                 )}
+              </div>
+            </section>
+
+            {/* Voice Interview Portfolio Section */}
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Voice Interview Technology Portfolio</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Portfolio Card 1 - AI Voice Agent */}
+                <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden">
+                  <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                    <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">AI Voice Agent Technology</h3>
+                    <p className="text-gray-600 mb-4">Advanced AI-powered voice agents that conduct realistic interviews with natural conversation flow and intelligent responses.</p>
+                    <div className="flex items-center text-sm text-blue-600">
+                      <span className="font-medium">Vapi.ai Powered</span>
+                      <span className="mx-2">•</span>
+                      <span>Hana & Sarah</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Portfolio Card 2 - Speech Recognition */}
+                <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden">
+                  <div className="h-48 bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center">
+                    <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18.5a6.5 6.5 0 006.5-6.5v-3a6.5 6.5 0 00-13 0v3a6.5 6.5 0 006.5 6.5zM12 2v3M12 23v-3M16 6H8M8 18h8" />
+                    </svg>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Real-time Speech Recognition</h3>
+                    <p className="text-gray-600 mb-4">State-of-the-art speech-to-text technology with Deepgram Nova 2 for accurate, real-time transcription during interviews providing American English Accent now.</p>
+                    <div className="flex items-center text-sm text-green-600">
+                      <span className="font-medium">Deepgram Nova 2</span>
+                      <span className="mx-2">•</span>
+                      <span>99.9% Accuracy</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Portfolio Card 3 - Interview Analytics */}
+                <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden">
+                  <div className="h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                    <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Interview Performance Analytics</h3>
+                    <p className="text-gray-600 mb-4">Comprehensive feedback and analytics system that provides detailed insights into interview performance and areas for improvement.</p>
+                    <div className="flex items-center text-sm text-orange-600">
+                      <span className="font-medium">AI Feedback</span>
+                      <span className="mx-2">•</span>
+                      <span>Performance Metrics</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* About Voice Interview Section */}
+            <section className="mb-12">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 border border-blue-100">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6">About Our Voice Interview System</h2>
+                    <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+                      Our AI-powered voice interview system revolutionizes interview preparation by providing a realistic, interactive experience that mimics actual job interviews. Using cutting-edge voice technology and natural language processing, we help candidates build confidence and improve their interview skills.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                        <span className="text-gray-700">AI Voice Agents (Hana & Sarah)</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                        <span className="text-gray-700">Real-time Speech Recognition</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                        <span className="text-gray-700">Instant AI Feedback & Analysis</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
+                        <span className="text-gray-700">Personalized Interview Scenarios</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-2">Our Mission</h3>
+                        <p className="text-gray-600">
+                          To democratize interview preparation by making professional voice interview practice accessible, engaging, and effective for everyone through AI technology.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute -top-4 -right-4 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">★</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Voice Interview Stats Section */}
+            <section className="mb-12">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
+                  <div className="text-gray-600 text-sm">AI Interview Availability</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-600 mb-2">50+</div>
+                  <div className="text-gray-600 text-sm">Interview Scenarios</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">95%</div>
+                  <div className="text-gray-600 text-sm">User Satisfaction Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-orange-600 mb-2">10K+</div>
+                  <div className="text-gray-600 text-sm">Interviews Completed</div>
+                </div>
               </div>
             </section>
           </div>

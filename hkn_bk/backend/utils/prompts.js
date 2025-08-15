@@ -5,32 +5,65 @@ const questionAnswerPrompt = (
   numberOfQuestions,
   existingQuestions = null
 ) => `
-    You are an AI trained to generate technical interview questions and answers.
+    You are an expert AI interviewer specializing in technical interviews for ${role} positions.
     
-    Task:
-    - Role: ${role}
-    - Candidate Experience: ${experience} years
-    - Focus Topics: ${topicsToFocus}
-    - Write ${numberOfQuestions} interview questions.
-    - The questions must be balanced: 2/3 should be technical and knowledge questions (type: 'technical'), and 1/3 should be coding questions (type: 'coding').
-    - Distribute the questions evenly and fairly across all the provided topics/skills (from both manual input and PDF). Do NOT focus only on one topic; ensure all topics are represented in the questions.
-    ${existingQuestions ? `- IMPORTANT: Avoid generating questions that are similar to these existing questions:\n${existingQuestions}\n- Generate completely new and different questions.` : ''}
-    - For each question, add a 'type' field: 'technical' for technical/knowledge questions, 'coding' for coding questions.
-    - For each question, generate a detailed but beginner-friendly answer.
-    - If the answer needs a code example, add a small code block inside (especially for coding questions).
-    - For technical/knowledge questions, focus on concepts, definitions, and explanations (no code required, answer as text).
-    - For coding questions, require a code solution in the answer.
-    - Keep formatting very clean.
-    - Return a pure JSON array like:
+    TASK: Generate EXACTLY ${numberOfQuestions} comprehensive, detailed interview questions (no more, no less):
+    - SPECIFIC to the role: ${role}
+    - APPROPRIATE for experience level: ${experience} years
+    - COVERING all focus topics: ${topicsToFocus}
+    - BALANCED: 2/3 technical knowledge questions (type: 'technical'), 1/3 coding questions (type: 'coding')
+    - DETAILED: Each question should be comprehensive and clear, not short or vague
+    - PRACTICAL: Questions should reflect real-world scenarios and challenges
+    
+    ${existingQuestions ? `DUPLICATION PREVENTION: Avoid generating questions similar to these existing questions from other sessions:
+${existingQuestions}
+- Generate completely new and different questions
+- Focus on different aspects, scenarios, or approaches
+- Use different terminology and phrasing` : ''}
+    
+    QUESTION QUALITY REQUIREMENTS:
+    - Technical questions: Focus on concepts, principles, best practices, system design, architecture decisions, troubleshooting, and real-world applications
+    - Coding questions: Require actual code solutions, consider edge cases, optimization, and best practices
+    - Each question should be 2-4 sentences long for clarity and context
+    - Include specific details relevant to the role and experience level
+    - Questions should test both theoretical knowledge and practical application
+    - Avoid generic or overly broad questions
+    - Include specific technologies, frameworks, or methodologies when relevant
+    - Questions should require detailed explanations, not just yes/no answers
+    
+    ANSWER REQUIREMENTS:
+    - Provide comprehensive, detailed answers (minimum 3-4 sentences)
+    - Include explanations of concepts, reasoning, and best practices
+    - For coding questions: Include complete, working code examples with comments
+    - For technical questions: Provide thorough explanations with examples and use cases
+    - Answers should be educational and help candidates understand the concepts deeply
+    - Include real-world examples and scenarios when possible
+    - Explain the "why" behind concepts, not just the "what"
+    - Address common misconceptions and pitfalls
+    - Provide actionable insights and best practices
+    
+    TOPIC DISTRIBUTION:
+    - Ensure all provided topics are represented in the questions
+    - Distribute questions evenly across topics
+    - Include questions that combine multiple topics when relevant
+    
+    FORMAT: Return a pure JSON array like:
     [
       {
-        "question": "Question here?",
-        "answer": "Answer here.",
+        "question": "Detailed question here with context and specific details?",
+        "answer": "Comprehensive answer with explanations, examples, and best practices.",
         "type": "technical" // or "coding"
       },
       ...
     ]
-    Important: Do NOT add any extra text. Only return valid JSON.
+    
+    IMPORTANT: 
+    - Do NOT add any extra text outside the JSON
+    - Make questions detailed and comprehensive, not short or vague
+    - Ensure answers are thorough and educational
+    - Focus on real-world relevance and practical application
+    - Only return valid JSON
+    - CRITICAL: Return EXACTLY ${numberOfQuestions} questions, no more, no less
     `;
 
 const conceptExplainPrompt = (question) => `
@@ -153,6 +186,51 @@ const SKILL_KEYWORDS = [
   'javascript', 'java', 'python', 'c++', 'c#', 'php', 'ruby', 'go', 'typescript', 'swift', 'kotlin', 'scala', 'rust', 'sql', 'laravel', 'react', 'angular', 'vue', 'node', 'express', 'django', 'spring', 'flask', 'html', 'css', 'sass', 'less', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'firebase', 'mongodb', 'mysql', 'postgresql', 'redis', 'graphql', 'rest', 'git', 'linux', 'bash', 'shell', 'matlab', 'r', 'perl', 'objective-c', 'assembly', 'dart', 'flutter', 'react native', 'next.js', 'nuxt', 'nestjs', 'tailwind', 'bootstrap', 'jquery', 'pandas', 'numpy', 'scikit', 'tensorflow', 'pytorch', 'machine learning', 'deep learning', 'nlp', 'opencv', 'blockchain', 'solidity', 'web3', 'unity', 'unreal', 'game development', 'android', 'ios', 'xcode', 'visual studio', 'jira', 'trello', 'figma', 'adobe', 'photoshop', 'illustrator', 'xd', 'seo', 'wordpress', 'shopify', 'magento', 'woocommerce', 'salesforce', 'sap', 'tableau', 'power bi', 'excel', 'vba', 'sas', 'spss', 'hadoop', 'spark', 'bigquery', 'airflow', 'ci/cd', 'devops', 'agile', 'scrum', 'kanban', 'testing', 'jest', 'mocha', 'chai', 'cypress', 'selenium', 'junit', 'pytest', 'robot framework', 'appium', 'puppeteer', 'playwright', 'jira', 'confluence', 'notion', 'asana', 'monday', 'slack', 'zoom', 'teams', 'jira', 'confluence', 'notion', 'asana', 'monday', 'slack', 'zoom', 'teams'
 ];
 
+// Utility: Check if two questions are similar to prevent duplication
+function areQuestionsSimilar(question1, question2, threshold = 0.7) {
+  if (!question1 || !question2) return false;
+  
+  const q1 = question1.toLowerCase().trim();
+  const q2 = question2.toLowerCase().trim();
+  
+  // Exact match
+  if (q1 === q2) return true;
+  
+  // Check for key technical terms overlap
+  const q1Terms = q1.split(/\s+/).filter(word => word.length > 3);
+  const q2Terms = q2.split(/\s+/).filter(word => word.length > 3);
+  
+  const commonTerms = q1Terms.filter(term => q2Terms.includes(term));
+  const similarity = commonTerms.length / Math.max(q1Terms.length, q2Terms.length);
+  
+  return similarity >= threshold;
+}
+
+// Utility: Filter out similar questions from a list
+function filterSimilarQuestions(questions, threshold = 0.7) {
+  const filtered = [];
+  const seen = new Set();
+  
+  for (const question of questions) {
+    let isDuplicate = false;
+    
+    for (const existing of filtered) {
+      if (areQuestionsSimilar(question, existing, threshold)) {
+        isDuplicate = true;
+        break;
+      }
+    }
+    
+    if (!isDuplicate) {
+      filtered.push(question);
+      seen.add(question.toLowerCase().trim());
+    }
+  }
+  
+  return filtered;
+}
+
+// Utility: Extract skills from text using a keyword list or regex
 function extractSkillsFromText(text) {
   const found = new Set();
   const lowerText = text.toLowerCase();
@@ -199,7 +277,14 @@ function extractProjectsFromText(text) {
   return [];
 }
 
-module.exports = { questionAnswerPrompt, conceptExplainPrompt, feedbackPrompt, checkAnswerPrompt };
+module.exports = { 
+  questionAnswerPrompt, 
+  conceptExplainPrompt, 
+  feedbackPrompt, 
+  checkAnswerPrompt,
+  areQuestionsSimilar,
+  filterSimilarQuestions
+};
 module.exports.extractSkillsFromText = extractSkillsFromText;
 module.exports.extractRoleFromText = extractRoleFromText;
 module.exports.extractDescriptionFromText = extractDescriptionFromText;

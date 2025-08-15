@@ -66,6 +66,9 @@ app.post("/api/ai/generate-explanation", protectKey2Career, generateConceptExpla
 app.post("/api/ai/generate-feedback", protectKey2Career, generateFeedbackAPI);
 app.post("/api/ai/check-answer", protectKey2Career, checkAnswerWithAI);
 
+// Test endpoint without authentication for debugging
+app.post("/api/ai/test-generate-questions", generateInterviewQuestions);
+
 // Serve uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {}));
 

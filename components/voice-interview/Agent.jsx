@@ -245,7 +245,7 @@ const Agent = ({
     <div className="voice-interview">
       <div className="call-view">
         {/* AI Interviewer Card */}
-        <div className="card-interviewer">
+        <div className="card-interviewer" style={{ backgroundColor: 'black' }}>
           <div className="avatar">
             <video
               autoPlay
@@ -265,13 +265,15 @@ const Agent = ({
         {/* User Profile Card */}
         <div className="card-border">
           <div className="card-content">
-            <Image
-              src="/BladeRunner_Style_539x539.png"
-              alt="profile-image"
-              width={539}
-              height={539}
-              className="rounded-full object-cover size-[120px]"
-            />
+            <div className="relative size-[120px] rounded-full overflow-hidden">
+              <Image
+                src="/BladeRunner_Style_539x539.png"
+                alt="profile-image"
+                width={539}
+                height={539}
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
             <h3>{userName}</h3>
           </div>
         </div>

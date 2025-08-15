@@ -538,11 +538,8 @@ const CodingTestSession = () => {
                         let buttonStyle;
                         
                         if (sessionData.isFinalSubmitted) {
-                          // After submission: green for correct, red for incorrect
-                          const isCorrect = q.userAnswer && q.userAnswer === q.answer;
-                          buttonStyle = isCorrect 
-                            ? "bg-green-500 text-white" 
-                            : "bg-red-500 text-white";
+                          // After submission: all questions are black
+                          buttonStyle = "bg-black text-white";
                         } else {
                           // Before submission: orange for current page, blue for answered questions, gray for others
                           if (isCurrentPage) {
