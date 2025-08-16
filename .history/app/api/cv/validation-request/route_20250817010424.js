@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI || "mongodb+srv://htetpaing:htetpaing@cluster0.mongodb.net/ForCVs?retryWrites=true&w=majority";
 
 export async function POST(request) {
   let client;
