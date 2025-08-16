@@ -803,9 +803,41 @@ export default function JobBoard() {
 
                   {/* Actions */}
                   <div className="mt-6 flex items-center gap-3">
-                    <Link href="/job-portal/job-application-form" className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-indigo-700 text-white text-sm font-medium shadow-sm hover:bg-indigo-800 active:bg-indigo-900 transition-colors">
+                    <button
+                      onClick={() => {
+                        try {
+                          const jwt = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+                          const jid = job?._id || job?.id || job?.jobId || "";
+                          const dest = `/job-portal/job-application-form?jobId=${encodeURIComponent(jid)}`;
+                          if (!jwt) {
+                            router.push(`/login?redirect=${encodeURIComponent(dest)}`);
+                            return;
+                          }
+                          // Disallow admins/orgs from applying
+                          try {
+                            const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+                            const payload = JSON.parse(atob(base64));
+                            const roles = [];
+                            if (typeof payload?.role === 'string') roles.push(payload.role);
+                            if (Array.isArray(payload?.roles)) roles.push(...payload.roles);
+                            if (typeof payload?.user?.role === 'string') roles.push(payload.user.role);
+                            const flat = roles.map(r => String(r).toLowerCase());
+                            const disallowed = flat.some(r => r.includes('admin') || r.includes('org'));
+                            if (disallowed) {
+                              router.push(`/login?redirect=${encodeURIComponent(dest)}`);
+                              return;
+                            }
+                          } catch {}
+                          // Optional: a light client-side expiry check similar to parseJwt
+                          router.push(dest);
+                        } catch {
+                          router.push('/login');
+                        }
+                      }}
+                      className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-indigo-700 text-white text-sm font-medium shadow-sm hover:bg-indigo-800 active:bg-indigo-900 transition-colors"
+                    >
                       Apply now
-                    </Link>
+                    </button>
                     <button className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-gray-300 bg-white text-gray-900 text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors">
                       Save
                     </button>
