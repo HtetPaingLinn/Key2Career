@@ -53,6 +53,7 @@ import MembershipsSection from "@/components/cv/MembershipsSection";
 import PublicationsSection from "@/components/cv/PublicationsSection";
 import AttachmentsSection from "@/components/cv/AttachmentsSection";
 import JobAppliedSection from "@/components/cv/JobAppliedSection";
+import ValidationStatusModal from "@/components/ValidationStatusModal";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faBriefcase, faGraduationCap, faCogs, faGlobe, faProjectDiagram, faAward, faUsers, faCertificate, faStar } from '@fortawesome/free-solid-svg-icons';
 import jsPDF from "jspdf";
@@ -88,6 +89,8 @@ export default function CVCustomizationPage() {
   const [validationStatus, setValidationStatus] = useState(null); // CV validation status
   const [isRequestingValidation, setIsRequestingValidation] = useState(false); // Validation request loading state
   const [showValidationMessage, setShowValidationMessage] = useState(false); // Validation success message
+  const [showValidationModal, setShowValidationModal] = useState(false); // Validation status modal
+  const [hasShownValidationModal, setHasShownValidationModal] = useState(false); // Track if modal was shown
   const [cvData, setCvData] = useState({
     personalInfo: {
       firstName: '',
@@ -264,6 +267,14 @@ export default function CVCustomizationPage() {
       return () => clearTimeout(timeout);
     }
   }, [isLoading]);
+
+  // Show validation status modal on page entry
+  useEffect(() => {
+    if (!isLoading && userEmail && !hasShownValidationModal && validationStatus) {
+      setShowValidationModal(true);
+      setHasShownValidationModal(true);
+    }
+  }, [isLoading, userEmail, hasShownValidationModal, validationStatus]);
 
   // Handle page refresh - check if user has already started working on CV
   useEffect(() => {
@@ -1631,6 +1642,15 @@ export default function CVCustomizationPage() {
           size: auto;
         }
       `}</style>
+
+      {/* Validation Status Modal */}
+      <ValidationStatusModal
+        isOpen={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        onProceed={() => setShowValidationModal(false)}
+        validationStatus={validationStatus}
+        userEmail={userEmail}
+      />
     </div>
   );
 }

@@ -33,7 +33,15 @@ export async function POST(request) {
     
     const result = await collection.updateOne(
       { email },
-      { $set: { [section]: data, updatedAt: new Date() } },
+      { 
+        $set: { 
+          [section]: data, 
+          updatedAt: new Date(),
+          validationStatus: "pending",
+          validationRequestedAt: null,
+          validationApprovedAt: null
+        } 
+      },
       { upsert: true }
     );
     console.log('MongoDB update result:', result);

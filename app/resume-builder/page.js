@@ -199,8 +199,11 @@ export default function ResumeBuilderPage() {
                 >
                   Build Your CV
                 </button>
-                <button className="border border-blue-200 text-blue-700 font-semibold px-8 py-3 rounded-lg text-lg bg-white hover:bg-blue-50 transition">
-                  Get Your CV Score
+                <button 
+                  className="border border-blue-200 text-blue-700 font-semibold px-8 py-3 rounded-lg text-lg bg-white hover:bg-blue-50 transition"
+                  onClick={() => router.push('/resume-templates')}
+                >
+                  View Templates
                 </button>
               </div>
               <p className="text-2xl text-slate-700 font-medium mb-10">
