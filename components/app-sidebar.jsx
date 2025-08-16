@@ -65,6 +65,12 @@ const data = {
       isSimpleButton: true,
     },
     {
+      title: "CV Validation",
+      url: "/admin/dashboard/cv-validation",
+      icon: LayoutDashboard,
+      isSimpleButton: true,
+    },
+    {
       title: "Placeholder Tab",
       url: "/admin/dashboard/placeholder-tab",
       icon: LayoutDashboard,

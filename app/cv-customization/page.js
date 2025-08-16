@@ -85,6 +85,9 @@ export default function CVCustomizationPage() {
   const [isLinkedInLoading, setIsLinkedInLoading] = useState(false); // New state for LinkedIn loading
   const [showClearDataModal, setShowClearDataModal] = useState(false); // State for clear data confirmation modal
   const [isClearingData, setIsClearingData] = useState(false); // State for clearing data process
+  const [validationStatus, setValidationStatus] = useState(null); // CV validation status
+  const [isRequestingValidation, setIsRequestingValidation] = useState(false); // Validation request loading state
+  const [showValidationMessage, setShowValidationMessage] = useState(false); // Validation success message
   const [cvData, setCvData] = useState({
     personalInfo: {
       firstName: '',
@@ -227,6 +230,9 @@ export default function CVCustomizationPage() {
             // Clear the import flag after data is fetched
             localStorage.removeItem('cvDataImported');
           });
+          
+          // Fetch validation status
+          fetchValidationStatus(email);
         } else if (!hasImportedData) {
           console.log('User has no CV data, showing import modal');
           setShowImportModal(true);
@@ -425,6 +431,50 @@ export default function CVCustomizationPage() {
     } catch (error) {
       console.error('Error checking user and CV data:', error);
       return false;
+    }
+  };
+
+  // Fetch validation status
+  const fetchValidationStatus = async (email) => {
+    if (!email) return;
+    try {
+      const res = await fetch(`/api/cv/validation-request?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          setValidationStatus(result.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching validation status:', error);
+    }
+  };
+
+  // Request CV validation
+  const requestValidation = async () => {
+    if (!userEmail) return;
+    
+    setIsRequestingValidation(true);
+    try {
+      const res = await fetch('/api/cv/validation-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail })
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        setValidationStatus('pending');
+        setShowValidationMessage(true);
+        setTimeout(() => setShowValidationMessage(false), 5000);
+      } else {
+        alert(result.error || 'Failed to request validation');
+      }
+    } catch (error) {
+      console.error('Error requesting validation:', error);
+      alert('Error requesting validation');
+    } finally {
+      setIsRequestingValidation(false);
     }
   };
 
@@ -1432,6 +1482,16 @@ export default function CVCustomizationPage() {
         </div>
       )}
 
+      {/* Validation Success Message */}
+      {showValidationMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          <span>Validation request submitted successfully!</span>
+        </div>
+      )}
+
       {/* Error Feedback */}
       {saveError && (
         <div className="fixed top-20 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
@@ -1488,6 +1548,49 @@ export default function CVCustomizationPage() {
               {currentStep === 9 && <ReferencesSection data={cvData.references} onChange={(data) => updateCvData('references', data)} onAdd={() => addItem('references')} onRemove={(index) => removeItem('references', index)} onMove={(fromIndex, toIndex) => moveItem('references', fromIndex, toIndex)} />}
             </div>
             </div>
+            {/* CV Validation Section */}
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">CV Validation</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Request admin approval to enable blockchain verification for your CV
+                </p>
+                
+                {/* Validation Status */}
+                {validationStatus && (
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-4 ${
+                    validationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    validationStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                    validationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {validationStatus === 'pending' && '⏳ Validation Pending'}
+                    {validationStatus === 'approved' && '✅ Validation Approved'}
+                    {validationStatus === 'rejected' && '❌ Validation Rejected'}
+                  </div>
+                )}
+                
+                {/* Validation Request Button */}
+                {!validationStatus || validationStatus === 'rejected' ? (
+                  <button
+                    onClick={requestValidation}
+                    disabled={isRequestingValidation}
+                    className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isRequestingValidation ? 'Requesting...' : 'Request CV Validation'}
+                  </button>
+                ) : validationStatus === 'pending' ? (
+                  <div className="w-full px-4 py-3 text-sm font-medium text-center text-gray-600 bg-gray-100 rounded-lg">
+                    Validation request submitted. Please wait for admin approval.
+                  </div>
+                ) : (
+                  <div className="w-full px-4 py-3 text-sm font-medium text-center text-green-700 bg-green-50 rounded-lg">
+                    Your CV is approved for blockchain verification!
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Navigation */}
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
               <button

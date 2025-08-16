@@ -112,6 +112,7 @@ export default function TemplatePreviewPage() {
 
   // Authentication and user data
   const { userEmail, cvData, isLoading, error, isAuthenticated, redirectToLogin } = useAuth();
+  const [validationStatus, setValidationStatus] = useState(null);
 
   useEffect(() => {
     const initializePage = async () => {
@@ -124,6 +125,11 @@ export default function TemplatePreviewPage() {
           return;
         }
         setSelectedTemplate(template);
+        
+        // Fetch validation status if user is authenticated
+        if (userEmail) {
+          fetchValidationStatus();
+        }
       } catch (error) {
         console.error('Error initializing page:', error);
         router.push('/resume-templates');
@@ -133,7 +139,23 @@ export default function TemplatePreviewPage() {
     if (templateId && !isLoading) {
       initializePage();
     }
-  }, [templateId, router, isLoading]);
+  }, [templateId, router, isLoading, userEmail]);
+
+  // Fetch validation status
+  const fetchValidationStatus = async () => {
+    if (!userEmail) return;
+    try {
+      const res = await fetch(`/api/cv/validation-request?email=${encodeURIComponent(userEmail)}`);
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          setValidationStatus(result.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching validation status:', error);
+    }
+  };
 
   const handleExportPDF = async () => {
     if (!cvData || !selectedTemplate) return;
@@ -486,20 +508,47 @@ export default function TemplatePreviewPage() {
                   Choose Different Template
                 </button>
 
-                {/* Blockchain Verification Component */}
-                <div className="mt-6">
-                  <BlockchainVerification 
-                    documentHash={localStorage.getItem('lastPdfHash')}
-                    onVerificationComplete={(result) => {
-                      console.log('Blockchain verification completed:', result);
-                    }}
-                  />
-                </div>
+                {/* Blockchain Verification Component - Only show if validation is approved */}
+                {validationStatus === 'approved' && (
+                  <div className="mt-6">
+                    <BlockchainVerification 
+                      documentHash={localStorage.getItem('lastPdfHash')}
+                      onVerificationComplete={(result) => {
+                        console.log('Blockchain verification completed:', result);
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {/* Validation Status Message */}
+                {validationStatus && validationStatus !== 'approved' && (
+                  <div className="mt-6 p-4 rounded-lg border">
+                    {validationStatus === 'pending' && (
+                      <div className="bg-yellow-50 border-yellow-200 text-yellow-800">
+                        <h4 className="font-medium mb-2">⏳ Validation Pending</h4>
+                        <p className="text-sm">Your CV validation request is being reviewed by an admin. Blockchain verification will be available once approved.</p>
+                      </div>
+                    )}
+                    {validationStatus === 'rejected' && (
+                      <div className="bg-red-50 border-red-200 text-red-800">
+                        <h4 className="font-medium mb-2">❌ Validation Rejected</h4>
+                        <p className="text-sm">Your CV validation request was rejected. Please contact support or submit a new request from the CV customization page.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {!validationStatus && (
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-800 mb-2">🔒 Blockchain Verification</h4>
+                    <p className="text-sm text-blue-700">To enable blockchain verification for your CV, please request validation from the CV customization page.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Template Preview */}
+          {/* Right Panel - CV Preview */}
           <div className="lg:col-span-2">
             {showPreview ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
