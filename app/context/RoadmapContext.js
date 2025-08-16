@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import dataset from "../data/dataset.json";
+import { useAuth } from "../../lib/useAuth";
 
 const RoadmapContext = createContext();
 
@@ -572,9 +573,50 @@ export function RoadmapProvider({ children }) {
   const [shouldRewireConnectors, setShouldRewireConnectors] = useState(false);
   const [lastSkillDeletionWarning, setLastSkillDeletionWarning] =
     useState(null);
+  const { userEmail } = useAuth();
+  const [lastUserEmail, setLastUserEmail] = useState(null);
 
-  // Load saved roadmap data from localStorage on mount
+  // Clear localStorage when user changes
   useEffect(() => {
+    if (userEmail && userEmail !== lastUserEmail) {
+      console.log("User changed from", lastUserEmail, "to", userEmail);
+
+      // Clear localStorage when a new user logs in
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("roadmaps");
+        localStorage.removeItem("selectedGoal");
+        localStorage.removeItem("canvas");
+        localStorage.removeItem("foldedSkills");
+        localStorage.removeItem("removedCvSkills");
+        console.log("Cleared localStorage for new user");
+      }
+
+      // Reset state to initial values
+      dispatch({
+        type: "LOAD_SAVED_ROADMAP",
+        payload: {
+          elements: [],
+          roadmaps: {},
+          canvas: {
+            zoom: 1,
+            position: { x: 0, y: 0 },
+            gridSize: 20,
+          },
+          selectedGoal: null,
+          foldedSkills: [],
+        },
+      });
+
+      setLastUserEmail(userEmail);
+      console.log("Reset roadmap state for new user");
+    }
+  }, [userEmail, lastUserEmail]);
+
+  // Load saved roadmap data from localStorage on mount (only if user hasn't changed)
+  useEffect(() => {
+    // Only load from localStorage if we have a user and they haven't changed
+    if (!userEmail || userEmail !== lastUserEmail) return;
+
     try {
       if (typeof window !== "undefined") {
         const savedRoadmaps = localStorage.getItem("roadmaps");
@@ -623,26 +665,33 @@ export function RoadmapProvider({ children }) {
           localStorage.setItem("roadmaps", JSON.stringify(syncedRoadmaps));
         }
 
-        // Load removedCvSkills from backend
-        loadRemovedCvSkillsFromBackend();
+        // Load removedCvSkills from backend (only if user hasn't changed)
+        if (userEmail === lastUserEmail) {
+          loadRemovedCvSkillsFromBackend();
+        }
       }
     } catch (error) {
       console.error("Error loading saved roadmap data:", error);
     }
-  }, []);
+  }, [userEmail, lastUserEmail]);
 
   // Add a new useEffect to handle backend data loading and ensure no default goal for new users
   useEffect(() => {
+    // Only run if we have a user and they haven't changed
+    if (!userEmail || userEmail !== lastUserEmail) return;
+
     const handleBackendDataLoad = async () => {
       try {
         if (typeof window !== "undefined") {
-          const email = localStorage.getItem("userEmail");
-          if (!email) return;
+          const jwt = localStorage.getItem("jwt");
+          if (!jwt) return;
 
           const response = await fetch("/api/roadmap", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${jwt}`,
+            },
           });
 
           if (response.ok) {
@@ -685,7 +734,14 @@ export function RoadmapProvider({ children }) {
     // Call this after the initial load
     const timer = setTimeout(handleBackendDataLoad, 100);
     return () => clearTimeout(timer);
-  }, []); // Empty dependency array to run only once on mount
+  }, [userEmail, lastUserEmail]); // Run when user changes
+
+  // Load removedCvSkills when user changes
+  useEffect(() => {
+    if (userEmail && userEmail === lastUserEmail) {
+      loadRemovedCvSkillsFromBackend();
+    }
+  }, [userEmail, lastUserEmail]);
 
   // Auto-hide keyboard hints after 20 seconds
   useEffect(() => {
@@ -3443,16 +3499,16 @@ export function RoadmapProvider({ children }) {
   // Load removedCvSkills from backend
   const loadRemovedCvSkillsFromBackend = async () => {
     try {
-      const email =
-        typeof window !== "undefined"
-          ? localStorage.getItem("userEmail")
-          : null;
-      if (!email) return;
+      const jwt =
+        typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+      if (!jwt) return;
 
       const response = await fetch("/api/roadmap", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
       });
 
       if (response.ok) {
@@ -3484,11 +3540,9 @@ export function RoadmapProvider({ children }) {
   async function saveSkillsToBackend(updatedElements, completedSkill = null) {
     if (!state.selectedGoal) return; // Add this guard clause
     try {
-      const email =
-        typeof window !== "undefined"
-          ? localStorage.getItem("userEmail")
-          : null;
-      if (!email) return;
+      const jwt =
+        typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+      if (!jwt) return;
 
       // Use the provided updatedElements if available, otherwise use from state
       const elementsToSave = updatedElements || state.elements;
@@ -3551,9 +3605,11 @@ export function RoadmapProvider({ children }) {
       // Save complete roadmap data
       await fetch("/api/roadmap", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
         body: JSON.stringify({
-          email,
           skills: dedupedSkills,
           roadmaps: syncedRoadmaps, // Use the synced roadmaps object
           canvas: state.canvas,

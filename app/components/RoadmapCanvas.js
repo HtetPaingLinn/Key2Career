@@ -98,15 +98,15 @@ export default function RoadmapCanvas({ onShowInfo }) {
     // Load cvSkills from backend API
     const loadCvSkillsFromBackend = async () => {
       try {
-        const email =
-          typeof window !== "undefined"
-            ? localStorage.getItem("userEmail")
-            : null;
-        if (!email) return;
+        const jwt =
+          typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+        if (!jwt) return;
 
-        const response = await fetch(
-          `/api/cv-skills?email=${encodeURIComponent(email)}`
-        );
+        const response = await fetch(`/api/cv-skills`, {
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
 

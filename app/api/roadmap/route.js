@@ -1,13 +1,33 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../backend/mongodb";
 
+// Helper function to extract email from JWT token
+const getEmailFromJWT = (req) => {
+  try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return null;
+    }
+
+    const token = authHeader.substring(7);
+    const payload = JSON.parse(
+      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return payload.email || payload.sub || null;
+  } catch (error) {
+    console.error("Error parsing JWT:", error);
+    return null;
+  }
+};
+
 export async function POST(req) {
   try {
-    const { email } = await req.json();
+    // Get email from JWT token instead of request body
+    const email = getEmailFromJWT(req);
     if (!email) {
       return NextResponse.json(
-        { error: "Email is required." },
-        { status: 400 }
+        { error: "Authentication required. Please log in." },
+        { status: 401 }
       );
     }
 
@@ -70,8 +90,16 @@ export async function POST(req) {
 
 export async function PATCH(req) {
   try {
+    // Get email from JWT token instead of request body
+    const email = getEmailFromJWT(req);
+    if (!email) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in." },
+        { status: 401 }
+      );
+    }
+
     const {
-      email,
       skills,
       roadmaps,
       canvas,
@@ -80,12 +108,6 @@ export async function PATCH(req) {
       removedCvSkills,
       completedSkill,
     } = await req.json();
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email is required." },
-        { status: 400 }
-      );
-    }
 
     const client = await clientPromise;
     const db = client.db("ForCVs");

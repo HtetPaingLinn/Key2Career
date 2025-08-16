@@ -1,78 +1,97 @@
 import { NextResponse } from 'next/server';
 
-// Function to pre-clean content before AI processing
+// Function to pre-clean content before processing
 function preCleanContent(content) {
   if (!content) return '';
   
   let cleaned = content;
   
-  // Remove markdown headers
-  cleaned = cleaned.replace(/^#{1,6}\s+.*$/gm, '');
-  
-  // Remove markdown links but keep the text
-  cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  // Remove HTML/XML tags and their content
+  cleaned = cleaned.replace(/<[^>]*>/g, '');
+  cleaned = cleaned.replace(/&[a-zA-Z0-9#]+;/g, ''); // HTML entities
   
   // Remove markdown formatting
+  cleaned = cleaned.replace(/^#{1,6}\s+.*$/gm, ''); // Headers
+  cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Links but keep text
   cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1'); // Bold
   cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1'); // Italic
-  cleaned = cleaned.replace(/`([^`]+)`/g, '$1'); // Code
+  cleaned = cleaned.replace(/~~([^~]+)~~/g, '$1'); // Strikethrough
   
-  // Remove code blocks
+  // Remove code blocks and inline code
   cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
-  cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+  cleaned = cleaned.replace(/`[^`]*`/g, '');
   
-  // Remove HTML tags
-  cleaned = cleaned.replace(/<[^>]*>/g, '');
+  // Remove command line instructions
+  cleaned = cleaned.replace(/^\$\s+.*$/gm, '');
+  cleaned = cleaned.replace(/^npm\s+.*$/gm, '');
+  cleaned = cleaned.replace(/^yarn\s+.*$/gm, '');
+  cleaned = cleaned.replace(/^pnpm\s+.*$/gm, '');
+  cleaned = cleaned.replace(/^bun\s+.*$/gm, '');
   
-  // Remove emojis
+  // Remove URLs
+  cleaned = cleaned.replace(/https?:\/\/[^\s]+/g, '');
+  
+  // Remove badges and shields
+  cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, '');
+  
+  // Remove emojis and special characters
   cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
   
-  // Remove excessive dots and ellipsis
-  cleaned = cleaned.replace(/\.{3,}/g, '...');
-  
-  // Remove excessive whitespace
-  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-  cleaned = cleaned.replace(/\s{2,}/g, ' ');
-  
-  // Remove common GitHub template text
-  const templatePatterns = [
-    /This template provides a minimal setup to get .* working in .* with HMR and some ESLint rules\./gi,
-    /This is a .* template for .*\./gi,
-    /Click the preview link to take a look at your changes\./gi,
-    /Edit .* and save to test HMR/gi,
-    /Check out the .* documentation to learn more\./gi,
-    /Recommended IDE setup: .*/gi,
-    /Vite is a build tool that aims to provide a faster and leaner development experience/gi,
-    /React is a JavaScript library for building user interfaces/gi,
-    /Node\.js is a JavaScript runtime built on Chrome's V8 JavaScript engine/gi,
-    /TypeScript is a strongly typed programming language that builds on JavaScript/gi,
-    /Next\.js is a React framework that gives you building blocks to create web applications/gi,
-    /Tailwind CSS is a utility-first CSS framework/gi,
-    /npm is a package manager for the JavaScript programming language/gi,
-    /yarn is a package manager that doubles down as project manager/gi,
-    /GitHub is where over 100 million developers shape the future of software/gi,
-    /Welcome to my GitHub profile/gi,
-    /Feel free to reach out if you have any questions/gi,
-    /Don't forget to give a star if you like this project/gi,
-    /Contributions are welcome/gi,
-    /Please read the contributing guidelines/gi,
-    /This project is licensed under the .* License/gi
+  // Remove common development patterns
+  const devPatterns = [
+    // Template boilerplate
+    /This template provides.*?ESLint rules\.?/gi,
+    /This is a.*?template.*?\./gi,
+    /bootstrapped with.*?\./gi,
+    /First, run the development server:?/gi,
+    /Open.*?with your browser.*?\./gi,
+    /You can start editing.*?\./gi,
+    /The page auto-updates.*?\./gi,
+    /This project uses.*?font.*?\./gi,
+    
+    // Common instructions
+    /To learn more.*?resources:?/gi,
+    /Check out.*?documentation.*?\./gi,
+    /Click.*?preview.*?\./gi,
+    /Edit.*?save to test.*?\./gi,
+    /Recommended IDE.*?\./gi,
+    
+    // Technology descriptions
+    /React is a JavaScript library.*?\./gi,
+    /Next\.js is a React framework.*?\./gi,
+    /Vite is a build tool.*?\./gi,
+    /TypeScript is a.*?programming language.*?\./gi,
+    /Tailwind CSS is a.*?framework.*?\./gi,
+    
+    // Package manager descriptions
+    /npm is a package manager.*?\./gi,
+    /yarn is a package manager.*?\./gi,
+    
+    // Generic GitHub text
+    /Welcome to.*?profile.*?\./gi,
+    /Feel free to reach out.*?\./gi,
+    /Don't forget to.*?star.*?\./gi,
+    /Contributions are welcome.*?\./gi,
+    /This project is licensed.*?\./gi,
+    
+    // Development commands and paths
+    /app\/page\.js/gi,
+    /localhost:\d+/gi,
   ];
   
-  templatePatterns.forEach(pattern => {
+  devPatterns.forEach(pattern => {
     cleaned = cleaned.replace(pattern, '');
   });
   
-  // Remove lines that are just dots or dashes
+  // Remove excessive whitespace and cleanup
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
   cleaned = cleaned.replace(/^[.\-_\s]+$/gm, '');
-  
-  // Remove empty lines at the beginning and end
   cleaned = cleaned.trim();
   
-  // If content is too short after cleaning, return original content
-  if (cleaned.length < 10) {
-    console.log('Content too short after cleaning, returning original');
-    return content;
+  // If content is too short or meaningless after cleaning, return empty
+  if (cleaned.length < 20 || /^[.\-_\s]*$/.test(cleaned)) {
+    return '';
   }
   
   return cleaned;
@@ -95,57 +114,8 @@ async function generateAIDescription(content, context, type = 'description') {
       return cleanedContent || content;
     }
     
-    // Check if GROQ_API_KEY is available
-    if (!process.env.GROQ_API_KEY) {
-      console.log('GROQ_API_KEY not found, skipping AI enhancement');
-      return cleanedContent;
-    }
-    console.log('GROQ_API_KEY found, proceeding with AI enhancement');
-    
-    let prompt = '';
-    
-    if (type === 'description') {
-      prompt = `Transform this technical GitHub content into a professional, human-readable description suitable for a CV. 
-      
-      Requirements:
-      - Remove any markdown formatting, headers, or technical boilerplate
-      - Focus on the actual project functionality and achievements
-      - Write in clear, professional language
-      - Highlight key features, technologies used, and business value
-      - Keep it concise but informative (2-3 sentences)
-      - Make it suitable for a professional CV/resume
-      
-      Content to transform: ${cleanedContent}`;
-    } else if (type === 'bio') {
-      prompt = `Transform this GitHub bio/profile content into a professional, concise bio suitable for a CV.
-      
-      Requirements:
-      - Remove any markdown formatting, emojis, or technical jargon
-      - Focus on professional achievements, skills, and experience
-      - Write in clear, professional language
-      - Keep it concise (1-2 sentences)
-      - Highlight key skills and expertise
-      - Make it suitable for a professional CV/resume
-      
-      Content to transform: ${cleanedContent}`;
-    } else {
-      prompt = `Convert this technical content into a professional, human-readable description for a CV. Remove any markdown, headers, or unnecessary formatting: ${cleanedContent}`;
-    }
-    
-    // Import the groq functions directly instead of making HTTP calls
-    const { generateDescription, checkGrammar } = await import('@/lib/groq');
-    
-    if (type === 'description') {
-      console.log('Calling generateDescription...');
-      const result = await generateDescription(prompt, context);
-      console.log('AI result:', result);
-      return result || cleanedContent;
-    } else {
-      console.log('Calling checkGrammar...');
-      const result = await checkGrammar(cleanedContent);
-      console.log('AI result:', result);
-      return result || cleanedContent;
-    }
+    console.log('Skipping AI enhancement, returning cleaned content');
+    return cleanedContent;
   } catch (error) {
     console.log('AI generation failed:', error.message);
     console.log('Error stack:', error.stack);
@@ -250,26 +220,28 @@ Forks: ${repo.forks_count || 0}
 Homepage: ${repo.homepage || 'N/A'}
 Created: ${repo.created_at || 'N/A'}`;
 
-               // Generate AI-enhanced description
+               // Generate clean description
         const rawDescription = readmeContent 
-          ? `${detailedDescription}\n\n${readmeContent.substring(0, 800)}...`
+          ? `${detailedDescription}\n\n${readmeContent.substring(0, 500)}`
           : detailedDescription;
         
-        let finalDescription = rawDescription;
-        try {
-          const aiEnhancedDescription = await generateAIDescription(
-            rawDescription, 
-            projectContext, 
-            'description'
-          );
-          if (aiEnhancedDescription && aiEnhancedDescription !== rawDescription) {
-            finalDescription = aiEnhancedDescription;
-            console.log('AI enhancement successful for project:', repo.name);
+        // Clean the description thoroughly
+        let finalDescription = preCleanContent(rawDescription);
+        
+        // If description is empty or too short after cleaning, create a basic one
+        if (!finalDescription || finalDescription.length < 20) {
+          if (repo.description && repo.description.length > 10) {
+            finalDescription = repo.description;
+          } else if (repo.language) {
+            finalDescription = `A ${repo.language} project with ${repo.stargazers_count || 0} stars.`;
           } else {
-            console.log('AI enhancement skipped for project:', repo.name);
+            finalDescription = `A software project hosted on GitHub.`;
           }
-        } catch (aiError) {
-          console.log('AI enhancement failed for project:', repo.name, aiError.message);
+        }
+        
+        // Limit description length for CV readability
+        if (finalDescription.length > 200) {
+          finalDescription = finalDescription.substring(0, 200) + '...';
         }
 
                // Create enhanced project object matching the expected structure
@@ -299,17 +271,26 @@ Created: ${repo.created_at || 'N/A'}`;
 
          // Prepare personal info data with enhanced details
      const enhancedBio = userData.bio || '';
-     const enhancedDescription = mainRepoReadme 
-       ? `${userData.bio || ''}\n\n${mainRepoReadme.substring(0, 1000)}...`
-       : readmeContent || userData.bio || '';
+     const cleanedReadme = preCleanContent(mainRepoReadme);
+     const enhancedDescription = cleanedReadme && cleanedReadme.length > 20 
+       ? `${userData.bio || ''} ${cleanedReadme.substring(0, 300)}`
+       : userData.bio || '';
      
-     // Create a more detailed bio based on GitHub stats
-     const totalRepos = reposData.length;
-     const totalStars = reposData.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
-     const totalForks = reposData.reduce((sum, repo) => sum + (repo.forks_count || 0), 0);
-     const topLanguages = Array.from(skills).slice(0, 5).join(', ');
-     
-     const rawBio = enhancedBio || `Full-stack developer with ${totalRepos} repositories, ${totalStars} stars, and ${totalForks} forks on GitHub. Specialized in ${topLanguages}.`;
+     // Create a professional bio based on GitHub data
+    const totalRepos = reposData.length;
+    const totalStars = reposData.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
+    const totalForks = reposData.reduce((sum, repo) => sum + (repo.forks_count || 0), 0);
+    const topLanguages = Array.from(skills).slice(0, 3).join(', ');
+    
+    // Generate a more professional bio
+    let rawBio = enhancedBio;
+    if (!rawBio || rawBio.length < 20) {
+      if (topLanguages) {
+        rawBio = `Software developer experienced in ${topLanguages} with ${totalRepos} projects on GitHub.`;
+      } else {
+        rawBio = `Software developer with ${totalRepos} projects and experience in full-stack development.`;
+      }
+    }
      
      // Prepare personal context for AI
      const personalContext = `Name: ${userData.name || 'N/A'}
@@ -400,7 +381,7 @@ GitHub Bio: ${userData.bio || 'N/A'}`;
 
     // Prepare projects data (limit to top 10 most recent)
     const topProjects = projects
-      .sort((a, b) => new Date(b.endDate) - new Date(a.endDate))
+      .sort((a, b) => new Date(b.duration.split(' - ')[1]) - new Date(a.duration.split(' - ')[1]))
       .slice(0, 10);
 
     const result = {

@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { Code2Icon } from 'lucide-react'; // optional icon
-import { Montserrat } from 'next/font/google';
+import { useEffect, useState } from "react";
+import { Code2Icon } from "lucide-react"; // optional icon
+import { Montserrat } from "next/font/google";
 
-const montserrat = Montserrat({ subsets: ["latin"], weight: ['400'] });
+const montserrat = Montserrat({ subsets: ["latin"], weight: ["400"] });
 
 export default function CvSkills() {
   const [skills, setSkills] = useState(null);
@@ -14,15 +14,20 @@ export default function CvSkills() {
     async function fetchSkills() {
       try {
         setLoading(true);
-        const email = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
-        if (!email) {
-          setError('No user email found');
+        const jwt =
+          typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+        if (!jwt) {
+          setError("Authentication required. Please log in.");
           setLoading(false);
           return;
         }
-        
-        const res = await fetch(`/api/cv-skills?email=${encodeURIComponent(email)}`);
-        if (!res.ok) throw new Error('Failed to fetch skills');
+
+        const res = await fetch(`/api/cv-skills`, {
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch skills");
         const data = await res.json();
         setSkills(data.skills);
       } catch (err) {
@@ -34,12 +39,29 @@ export default function CvSkills() {
     fetchSkills();
   }, []);
 
-  if (loading) return <div className="text-sm text-gray-500 text-center mt-4">Loading skills...</div>;
-  if (error) return <div className="text-red-500 text-sm text-center mt-4">Error: {error}</div>;
-  if (!skills) return <div className="text-gray-400 text-sm text-center mt-4">No skills found.</div>;
+  if (loading)
+    return (
+      <div className="text-sm text-gray-500 text-center mt-4">
+        Loading skills...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-red-500 text-sm text-center mt-4">
+        Error: {error}
+      </div>
+    );
+  if (!skills)
+    return (
+      <div className="text-gray-400 text-sm text-center mt-4">
+        No skills found.
+      </div>
+    );
 
   return (
-    <div className={`${montserrat.className} bg-white rounded-2xl shadow-md p-8 w-full max-w-lg border border-gray-100 font-montserrat`}>
+    <div
+      className={`${montserrat.className} bg-white rounded-2xl shadow-md p-8 w-full max-w-lg border border-gray-100 font-montserrat`}
+    >
       <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
         <Code2Icon size={30} className="text-indigo-500" />
         Technical Skills
@@ -62,10 +84,22 @@ export default function CvSkills() {
         type="button"
         onClick={() => {
           // Skills will be loaded from backend on the main page
-          window.location.href = 'http://localhost:3000/';
+          window.location.href = "http://localhost:3000/";
         }}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
         Send to Roadmap
       </button>
     </div>

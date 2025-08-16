@@ -24,6 +24,7 @@ import { useRoadmap } from "../context/RoadmapContext";
 import WarningPrompt from "./WarningPrompt";
 import dataset from "../data/dataset.json";
 import { roadmapData } from "../data/roadmapData";
+import { useAuth } from "../../lib/useAuth";
 
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["400"] });
 
@@ -329,16 +330,9 @@ export default function Toolbar({
   const dropdownAnimHidden = "opacity-0 scale-95 pointer-events-none";
 
   // Profile circle state
-  const [userEmail, setUserEmail] = useState("");
   const [showEmailPopover, setShowEmailPopover] = useState(false);
   const profileCircleRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const email = localStorage.getItem("userEmail");
-      if (email) setUserEmail(email);
-    }
-  }, []);
+  const { userEmail } = useAuth();
 
   // Helper to get first letter and color
   function getProfileCircleData(email) {

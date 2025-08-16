@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Montserrat } from "next/font/google";
+import { useAuth } from "../../../lib/useAuth";
 import {
   Area,
   AreaChart,
@@ -127,6 +128,7 @@ function SectionHeader({ title, subtitle, right }) {
 
 export default function StatsPage() {
   const router = useRouter();
+  const { userEmail, isAuthenticated, isLoading } = useAuth();
   const [checking, setChecking] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -144,10 +146,9 @@ export default function StatsPage() {
 
   useEffect(() => {
     // Only run on client
-    if (typeof window !== "undefined") {
-      const email = localStorage.getItem("userEmail");
-      if (!email) {
-        router.replace("/enter-email");
+    if (typeof window !== "undefined" && !isLoading) {
+      if (!isAuthenticated || !userEmail) {
+        router.replace("/login");
         return;
       }
 
@@ -156,7 +157,7 @@ export default function StatsPage() {
         try {
           setLoadingStep(1);
           const response = await fetch(
-            `/api/stats?email=${encodeURIComponent(email)}`
+            `/api/stats?email=${encodeURIComponent(userEmail)}`
           );
 
           if (!response.ok) {
@@ -209,7 +210,19 @@ export default function StatsPage() {
         clearInterval(stepInterval);
       };
     }
-  }, [router, loadingProgress]);
+  }, [router, loadingProgress, isAuthenticated, userEmail, isLoading]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center w-full h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 border-b-2 border-blue-600 rounded-full animate-spin"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (checking) {
     return (
@@ -231,12 +244,12 @@ export default function StatsPage() {
             {/* Compact progress indicator */}
             <div className="w-full space-y-3">
               <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-700 font-medium">
-                      Processing Data
-                    </span>
-                    <span className="text-sky-600 font-semibold">
-                      {loadingProgress}%
-                    </span>
+                <span className="text-gray-700 font-medium">
+                  Processing Data
+                </span>
+                <span className="text-sky-600 font-semibold">
+                  {loadingProgress}%
+                </span>
               </div>
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
                 <div
@@ -393,10 +406,10 @@ export default function StatsPage() {
   }
   return (
     <div className={`relative min-h-[100dvh] ${montserrat.className}`}>
-              {/* Ambient background */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[radial-gradient(35rem_35rem_at_20%_10%,rgba(99,102,241,0.25),transparent_40%),radial-gradient(45rem_45rem_at_80%_20%,rgba(16,185,129,0.25),transparent_40%),linear-gradient(120deg,rgba(59,130,246,0.1),transparent)]" />
-        </div>
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(35rem_35rem_at_20%_10%,rgba(99,102,241,0.25),transparent_40%),radial-gradient(45rem_45rem_at_80%_20%,rgba(16,185,129,0.25),transparent_40%),linear-gradient(120deg,rgba(59,130,246,0.1),transparent)]" />
+      </div>
 
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Top bar */}

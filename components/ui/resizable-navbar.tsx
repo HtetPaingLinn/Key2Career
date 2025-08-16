@@ -1,4 +1,4 @@
-"use client";;
+"use client";
 import { cn } from "@/lib/utils";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import {
@@ -12,14 +12,16 @@ import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface NavBodyProps {
-  children: React.ReactNode | ((props: { visible: boolean }) => React.ReactNode);
+  children:
+    | React.ReactNode
+    | ((props: { visible: boolean }) => React.ReactNode);
   className?: string;
   visible: boolean;
 }
 
 export const Navbar = ({
   children,
-  className
+  className,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -43,9 +45,10 @@ export const Navbar = ({
     <motion.div
       ref={ref}
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("sticky inset-x-0 top-20 z-40 w-full", className)}>
+      className={cn("sticky inset-x-0 top-20 z-40 w-full", className)}
+    >
       {React.Children.map(children, (child) => {
-        if (React.isValidElement(child) && typeof child.type !== 'string') {
+        if (React.isValidElement(child) && typeof child.type !== "string") {
           return React.cloneElement(child, { visible } as any);
         }
         return child;
@@ -77,10 +80,10 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
       className={cn(
         "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-6 lg:flex",
         visible && "bg-white/80",
-        className,
+        className
       )}
     >
-      {typeof children === 'function' ? children({ visible }) : children}
+      {typeof children === "function" ? children({ visible }) : children}
     </motion.div>
   );
 };
@@ -88,16 +91,21 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
 export const NavItems = ({
   items,
   className,
-  onItemClick
+  onItemClick,
 }: {
-  items: Array<{ name: string; link: string; dropdown?: Array<{ name: string; link: string }> }>;
+  items: Array<{
+    name: string;
+    link: string;
+    dropdown?: Array<{ name: string; link: string }>;
+  }>;
   className?: string;
   onItemClick?: () => void;
 }) => {
   const [hovered, setHovered] = useState<number | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
   const router = useRouter();
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "";
 
   const handleItemClick = (item: any, idx: number) => {
     if (item.dropdown) {
@@ -105,7 +113,16 @@ export const NavItems = ({
     } else {
       // For Interview Q&A, always go to /interview-prep
       if (item.name === "Interview Q&A") {
-        router.push('/interview-prep');
+        router.push("/interview-prep");
+      } else if (item.name === "Career Roadmap") {
+        // Check authentication for roadmap
+        const jwt =
+          typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+        if (jwt) {
+          router.push("/roadmap");
+        } else {
+          router.push("/login");
+        }
       } else {
         router.push(item.link);
       }
@@ -116,13 +133,13 @@ export const NavItems = ({
   const getSmartLink = (itemName: string) => {
     if (itemName === "Dashboard") {
       // Dashboard goes to main interview prep page
-      return '/interview-prep';
+      return "/interview-prep";
     } else if (itemName === "Interview Practice") {
       // Always go to interview prep dashboard
-      return '/interview-prep/dashboard';
+      return "/interview-prep/dashboard";
     } else if (itemName === "Coding Page") {
       // Always go to coding test page
-      return '/interview-prep/coding-test';
+      return "/interview-prep/coding-test";
     }
     return itemName;
   };
@@ -136,7 +153,8 @@ export const NavItems = ({
       className={cn(
         "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-base font-medium text-black transition duration-200 hover:text-gray-800 lg:flex lg:space-x-2",
         className
-      )}>
+      )}
+    >
       {items.map((item, idx) => (
         <div key={`link-${idx}`} className="relative">
           <button
@@ -147,23 +165,29 @@ export const NavItems = ({
             {hovered === idx && (
               <motion.div
                 layoutId="hovered"
-                className="absolute inset-0 h-full w-full rounded-full bg-gray-100" />
+                className="absolute inset-0 h-full w-full rounded-full bg-gray-100"
+              />
             )}
             <span className="relative z-20 flex items-center gap-1">
               {item.name}
               {item.dropdown && (
-                <svg 
-                  className={`w-4 h-4 transition-transform ${dropdownOpen === idx ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className={`w-4 h-4 transition-transform ${dropdownOpen === idx ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               )}
             </span>
           </button>
-          
+
           {/* Dropdown Menu */}
           {item.dropdown && (
             <AnimatePresence>
@@ -201,7 +225,7 @@ export const NavItems = ({
 export const MobileNav = ({
   children,
   className,
-  visible
+  visible,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -230,7 +254,8 @@ export const MobileNav = ({
         "relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-transparent px-0 py-2 lg:hidden",
         visible && "bg-white/80",
         className
-      )}>
+      )}
+    >
       {children}
     </motion.div>
   );
@@ -238,14 +263,18 @@ export const MobileNav = ({
 
 export const MobileNavHeader = ({
   children,
-  className
+  className,
 }: {
   children: React.ReactNode;
   className?: string;
 }) => {
   return (
     <div
-      className={cn("flex w-full flex-row items-center justify-between", className)}>
+      className={cn(
+        "flex w-full flex-row items-center justify-between",
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -255,7 +284,7 @@ export const MobileNavMenu = ({
   children,
   className,
   isOpen,
-  onClose
+  onClose,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -266,29 +295,30 @@ export const MobileNavMenu = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ 
-            opacity: 0, 
+          initial={{
+            opacity: 0,
             y: -20,
-            scale: 0.95
+            scale: 0.95,
           }}
-          animate={{ 
-            opacity: 1, 
+          animate={{
+            opacity: 1,
             y: 0,
-            scale: 1
+            scale: 1,
           }}
-          exit={{ 
-            opacity: 0, 
+          exit={{
+            opacity: 0,
             y: -20,
-            scale: 0.95
+            scale: 0.95,
           }}
           transition={{
             duration: 0.15,
-            ease: "easeOut"
+            ease: "easeOut",
           }}
           className={cn(
             "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-xl bg-white border border-gray-200 px-6 py-8 shadow-lg",
             className
-          )}>
+          )}
+        >
           {children}
         </motion.div>
       )}
@@ -298,7 +328,7 @@ export const MobileNavMenu = ({
 
 export const MobileNavToggle = ({
   isOpen,
-  onClick
+  onClick,
 }: {
   isOpen: boolean;
   onClick: () => void;
@@ -345,13 +375,13 @@ export const NavbarLogo = () => {
   return (
     <button
       type="button"
-      onClick={() => router.replace('/')}
+      onClick={() => router.replace("/")}
       className="relative z-20 mr-4 flex items-center text-sm font-normal text-black -ml-[50px] cursor-pointer"
       aria-label="Go to home"
     >
-      <img 
-        src="/mainlogo.png" 
-        alt="Key2Career Logo" 
+      <img
+        src="/mainlogo.png"
+        alt="Key2Career Logo"
         className="w-[150px] h-[48px] object-contain p-0 m-0"
       />
     </button>
@@ -389,8 +419,9 @@ export const NavbarButton = ({
     <Tag
       href={href || undefined}
       className={cn(baseStyles, variantStyles[variant], className)}
-      {...props}>
+      {...props}
+    >
       {children}
     </Tag>
   );
-}; 
+};

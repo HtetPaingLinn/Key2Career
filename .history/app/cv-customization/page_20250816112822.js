@@ -83,8 +83,6 @@ export default function CVCustomizationPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false); // New state for GitHub loading
   const [isLinkedInLoading, setIsLinkedInLoading] = useState(false); // New state for LinkedIn loading
-  const [showClearDataModal, setShowClearDataModal] = useState(false); // State for clear data confirmation modal
-  const [isClearingData, setIsClearingData] = useState(false); // State for clearing data process
   const [cvData, setCvData] = useState({
     personalInfo: {
       firstName: '',
@@ -962,81 +960,6 @@ export default function CVCustomizationPage() {
     }
   };
 
-  // Clear all CV data from MongoDB and reset state
-  const clearAllCVData = async () => {
-    if (!userEmail) {
-      alert('No user email found');
-      return;
-    }
-
-    setIsClearingData(true);
-    try {
-      console.log('Clearing all CV data for user:', userEmail);
-      const response = await fetch('/api/cv/clear-all', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail })
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        console.log('CV data cleared successfully');
-        
-        // Reset all CV data to initial state
-        setCvData({
-          personalInfo: {
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            address: '',
-            dateOfBirth: '',
-            nationality: '',
-            linkedin: '',
-            website: '',
-            drivingLicense: '',
-            bio: '',
-            description: '',
-            imageUrl: ''
-          },
-          jobApplied: '',
-          workExperience: [],
-          education: [],
-          skills: { technical: [], soft: [] },
-          languages: [],
-          projects: [],
-          certifications: [],
-          awardsAndHonors: [],
-          references: []
-        });
-
-        // Reset import flags and show import modal
-        setHasImportedData(false);
-        setCurrentStep(0);
-        localStorage.removeItem('cvDataImported');
-        setShowClearDataModal(false);
-        setShowImportModal(true);
-        
-        // Show success message
-        setShowSuccessMessage(true);
-        setTimeout(() => setShowSuccessMessage(false), 3000);
-      } else {
-        console.error('Failed to clear CV data:', result.error);
-        alert('Failed to clear CV data: ' + (result.error || 'Unknown error'));
-      }
-    } catch (error) {
-      console.error('Error clearing CV data:', error);
-      alert('Error clearing CV data: ' + error.message);
-    } finally {
-      setIsClearingData(false);
-    }
-  };
-
-  // Handle clear data confirmation
-  const handleClearDataConfirm = () => {
-    clearAllCVData();
-  };
-
   // Fix addItem to always add an empty object
   const addItem = (section) => {
     setCvData(prev => ({
@@ -1157,13 +1080,6 @@ export default function CVCustomizationPage() {
                 Save Draft
               </button>
               <button
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                onClick={() => setShowClearDataModal(true)}
-                disabled={isClearingData}
-              >
-                {isClearingData ? 'Clearing...' : 'Clear CV Data'}
-              </button>
-              <button
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors relative"
                 onClick={handlePrintCV}
               >
@@ -1190,25 +1106,6 @@ export default function CVCustomizationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* GitHub Loading Modal */}
-      <Dialog open={isGitHubLoading}>
-        <DialogContent
-          showCloseButton={false}
-          className="backdrop-blur-sm bg-white/90 border-none shadow-2xl max-w-md w-full mx-4 p-0 flex flex-col items-center justify-center"
-        >
-          <DialogTitle className="sr-only">Importing from GitHub</DialogTitle>
-          <div className="w-full px-8 py-10 text-center">
-            <div className="p-3 rounded-lg bg-gray-800 text-white mb-4 inline-block">
-              <CodeBracketIcon className="w-7 h-7" />
-            </div>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800 mx-auto mb-4"></div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Importing from GitHub...</h2>
-            <p className="text-gray-600">Please wait while we fetch your repositories and profile information</p>
-            <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* LinkedIn Loading Modal */}
       <Dialog open={isLinkedInLoading}>
         <DialogContent
@@ -1229,7 +1126,7 @@ export default function CVCustomizationPage() {
       </Dialog>
 
       {/* Import Method Modal */}
-      <Dialog open={showImportModal && !isLoading && !hasImportedData && !isLinkedInLoading && !isLinkedInImporting && !isGitHubLoading && !isGitHubImporting}>
+      <Dialog open={showImportModal && !isLoading && !hasImportedData && !isLinkedInLoading && !isLinkedInImporting}>
         <DialogContent
           showCloseButton={false}
           className="backdrop-blur-sm bg-white/90 border-none shadow-2xl max-w-2xl w-full mx-4 p-0 flex flex-col items-center justify-center"
@@ -1265,7 +1162,7 @@ export default function CVCustomizationPage() {
       </Dialog>
 
       {/* GitHub Username Modal */}
-      <Dialog open={showGitHubModal && !hasImportedData && !isLinkedInImporting && !isGitHubLoading}>
+      <Dialog open={showGitHubModal && !hasImportedData && !isLinkedInImporting}>
         <DialogContent
           showCloseButton={false}
           className="backdrop-blur-sm bg-white/90 border-none shadow-2xl max-w-md w-full mx-4 p-0 flex flex-col items-center justify-center"
@@ -1374,54 +1271,6 @@ export default function CVCustomizationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Clear CV Data Confirmation Modal */}
-      <Dialog open={showClearDataModal}>
-        <DialogContent
-          showCloseButton={false}
-          className="backdrop-blur-sm bg-white/90 border-none shadow-2xl max-w-md w-full mx-4 p-0 flex flex-col items-center justify-center"
-        >
-          <DialogTitle className="sr-only">Clear CV Data Confirmation</DialogTitle>
-          <div className="w-full px-8 py-10">
-            <div className="text-center mb-8">
-              <div className="p-3 rounded-lg bg-red-500 text-white mb-4 inline-block">
-                <TrashIcon className="w-7 h-7" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Clear All CV Data</h2>
-              <p className="text-gray-600 mb-4">Are you sure you want to clear all your CV data? This action cannot be undone.</p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <div className="flex items-start">
-                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-medium text-yellow-800">Warning</h3>
-                    <p className="text-sm text-yellow-700 mt-1">This will permanently delete all your CV data from the database and reset your progress. You will need to import or enter your data again.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                onClick={() => setShowClearDataModal(false)}
-                disabled={isClearingData}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="flex-1 px-4 py-3 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleClearDataConfirm}
-                disabled={isClearingData}
-              >
-                {isClearingData ? 'Clearing...' : 'Clear Data'}
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Success Message */}
       {showSuccessMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
@@ -1440,7 +1289,7 @@ export default function CVCustomizationPage() {
       )}
 
       {/* Main Content */}
-      <div className={`max-w-7xl mx-auto px-0 sm:px-2 lg:px-4 py-8 print:p-0 ${isLoading || isLinkedInLoading || isLinkedInImporting || isGitHubLoading || isGitHubImporting ? 'hidden' : ''}`}>
+      <div className={`max-w-7xl mx-auto px-0 sm:px-2 lg:px-4 py-8 print:p-0 ${isLoading || isLinkedInLoading || isLinkedInImporting ? 'hidden' : ''}`}>
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center text-xs text-gray-500 mb-6 font-sans print:hidden" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
