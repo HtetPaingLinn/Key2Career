@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { addMockJobPost } from "../mockData";
+import { connectToDatabase } from "@/lib/mongodb";
 
 export async function POST(request) {
   try {
@@ -8,77 +8,37 @@ export async function POST(request) {
 
     console.log("Received job post data:", jobData);
 
-    try {
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      // Add authorization header if provided
-      if (authHeader) {
-        headers["Authorization"] = authHeader;
-      }
-
-      const response = await fetch("http://localhost:8080/api/org/postJob", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(jobData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Backend API error:", errorData);
-        throw new Error(errorData.message || "Backend API returned an error");
-      }
-
-      const result = await response.json();
-      console.log("Job post created successfully in backend:", result);
-
-      return NextResponse.json(result);
-    } catch (backendError) {
-      console.warn(
-        "Backend API not available, simulating job post creation:",
-        backendError.message
+    // Validate required fields
+    if (!jobData.org_email || !jobData.job_title) {
+      return NextResponse.json(
+        { error: "Organization email and job title are required" },
+        { status: 400 }
       );
-
-      // Simulate successful job post creation when backend is not available
-      const mockJobId = `mock_${Date.now()}`;
-      const mockJobPost = {
-        id: mockJobId,
-        orgEmail: jobData.org_email,
-        org_name: "Test Organization",
-        org_img: jobData.org_img,
-        job_title: jobData.job_title,
-        job_field: ["Software Development"],
-        jobLevel: jobData.job_level,
-        workingType: jobData.working_type,
-        tag: jobData.tag,
-        work_time: jobData.work_time,
-        address: jobData.address,
-        cv_email: jobData.cv_email,
-        contact_ph_number: jobData.contact_ph_number,
-        responsibility: [jobData.responsibility],
-        qualification: [jobData.qualification],
-        salary_mmk: jobData.salary_mmk,
-        required_number: jobData.required_number,
-        tech_skill: jobData.tech_skill,
-        due_date: jobData.due_date,
-        posted_date: new Date().toISOString(),
-      };
-
-      // Store the mock job post in memory
-      addMockJobPost(mockJobPost);
-
-      const mockResult = {
-        message:
-          "Job post created successfully (mock mode - backend not available)",
-        jobId: mockJobId,
-        timestamp: new Date().toISOString(),
-        data: jobData,
-      };
-
-      console.log("Mock job post created and stored:", mockResult);
-      return NextResponse.json(mockResult);
     }
+
+    // Connect to MongoDB and save the job post
+    const { db } = await connectToDatabase();
+    const collection = db.collection("jobPosts");
+
+    // Add timestamps
+    const jobPostWithTimestamps = {
+      ...jobData,
+      posted_date: new Date(),
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    // Insert the job post
+    const result = await collection.insertOne(jobPostWithTimestamps);
+
+    console.log("Job post created successfully in MongoDB:", result.insertedId);
+
+    return NextResponse.json({
+      success: true,
+      message: "Job post created successfully",
+      jobId: result.insertedId.toString(),
+      jobData: jobPostWithTimestamps,
+    });
   } catch (error) {
     console.error("Error creating job post:", error);
     return NextResponse.json(

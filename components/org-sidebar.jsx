@@ -36,6 +36,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/useAuth";
 
 const sidebarData = {
   teams: [
@@ -113,6 +114,7 @@ const sidebarData = {
 };
 
 export function OrgSidebar({ ...props }) {
+  const { userEmail, isAuthenticated, isLoading } = useAuth();
   const [orgData, setOrgData] = useState({
     name: "",
     email: "",
@@ -120,14 +122,28 @@ export function OrgSidebar({ ...props }) {
   });
 
   useEffect(() => {
-    // TODO: When implementing org authentication, fetch actual org data
-    // For now, use mock data
-    setOrgData({
-      name: "Tech Solutions Inc",
-      email: "admin@techsolutions.com",
-      avatar: "",
-    });
-  }, []);
+    if (isAuthenticated && userEmail) {
+      // Extract organization name from email domain or use email as fallback
+      const orgName =
+        userEmail.split("@")[1]?.split(".")[0] || userEmail.split("@")[0];
+      const formattedOrgName =
+        orgName.charAt(0).toUpperCase() +
+        orgName.slice(1).replace(/[^a-zA-Z]/g, " ");
+
+      setOrgData({
+        name: formattedOrgName,
+        email: userEmail,
+        avatar: "",
+      });
+    } else if (!isLoading) {
+      // If not authenticated and not loading, set default values
+      setOrgData({
+        name: "Organization",
+        email: "",
+        avatar: "",
+      });
+    }
+  }, [userEmail, isAuthenticated, isLoading]);
 
   return (
     <Sidebar
@@ -148,9 +164,11 @@ export function OrgSidebar({ ...props }) {
               <span className="font-semibold text-gray-900 truncate">
                 Welcome back
               </span>
-              <span className="text-xs text-gray-600 truncate">
-                {orgData.name || "Organization"}
-              </span>
+              {orgData.email && (
+                <span className="text-xs text-gray-500 truncate">
+                  {orgData.email}
+                </span>
+              )}
             </div>
           </div>
         </div>

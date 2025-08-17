@@ -17,18 +17,61 @@ import {
   Upload,
   User,
 } from "lucide-react";
-import {
-  getProfileData,
-  updateName,
-  updateBio,
-  updateProfileImage,
-} from "@/lib/api/profileApi";
 import { useAuth } from "@/lib/useAuth";
+
+// Function to fetch organization profile data from backend
+const fetchOrgProfileData = async (email) => {
+  try {
+    // Get JWT token from localStorage
+    const jwt = localStorage.getItem("jwt");
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (jwt) {
+      headers["Authorization"] = `Bearer ${jwt}`;
+    }
+
+    const response = await fetch(
+      `/api/org/profile?org_email=${encodeURIComponent(email)}`,
+      { headers }
+    );
+
+    if (response.status === 404) {
+      // Organization data not found - return empty data instead of throwing error
+      console.log("Organization data not found for email:", email);
+      return {
+        name: "",
+        bio: "",
+        description: "",
+        image_url: null,
+      };
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.success ? result.data : null;
+  } catch (error) {
+    console.error("Error fetching organization profile data:", error);
+    // Return empty data on any error to prevent component from breaking
+    return {
+      name: "",
+      bio: "",
+      description: "",
+      image_url: null,
+    };
+  }
+};
 
 export function OrgPlaceholderContent() {
   const { userEmail, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [profileData, setProfileData] = useState({
     name: "",
     bio: "",
@@ -51,12 +94,22 @@ export function OrgPlaceholderContent() {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      const data = await getProfileData(userEmail);
+      setSuccessMessage("");
+      setErrorMessage("");
+      console.log("Loading organization profile data for email:", userEmail);
+      const data = await fetchOrgProfileData(userEmail);
+      console.log("Fetched organization data:", data);
 
-      // Set profile data with current values from backend
-      const currentName = data.name || "";
-      const currentBio = data.bio || data.about || "";
-      const currentImage = data.profileImage || null;
+      // Always set data (even if empty) to ensure form fields are initialized
+      const currentName = data?.name || "";
+      const currentBio = data?.bio || data?.about || data?.description || "";
+      const currentImage = data?.image_url || null;
+
+      console.log("Setting organization profile data:", {
+        name: currentName,
+        bio: currentBio,
+        image: currentImage,
+      });
 
       setProfileData({
         name: currentName,
@@ -70,12 +123,27 @@ export function OrgPlaceholderContent() {
         bio: currentBio,
       });
 
+      console.log("Form data set to:", {
+        name: currentName,
+        bio: currentBio,
+      });
+
       // Set image preview if exists
       if (currentImage) {
         setImagePreview(currentImage);
       }
     } catch (error) {
-      console.error("Error loading profile data:", error);
+      console.error("Error loading organization profile data:", error);
+      // Set empty data on error to prevent component from breaking
+      setProfileData({
+        name: "",
+        bio: "",
+        profileImage: null,
+      });
+      setFormData({
+        name: "",
+        bio: "",
+      });
     } finally {
       setLoading(false);
     }
@@ -108,43 +176,126 @@ export function OrgPlaceholderContent() {
   const handleSave = async () => {
     if (!userEmail) {
       console.error("No user email available");
+      setErrorMessage("Please log in to save organization profile");
+      return;
+    }
+
+    // Validate that at least one field has been changed
+    const hasChanges =
+      formData.name !== profileData.name ||
+      formData.bio !== profileData.bio ||
+      profileData.profileImage instanceof File;
+
+    if (!hasChanges) {
+      setErrorMessage(
+        "No changes detected. Please make changes before saving."
+      );
       return;
     }
 
     try {
       setSaving(true);
+      setSuccessMessage("");
+      setErrorMessage("");
 
-      // Update name if changed
-      if (formData.name !== profileData.name) {
-        await updateName({
-          email: userEmail,
-          name: formData.name,
-        });
+      console.log("Profile data to save:", {
+        name: formData.name,
+        bio: formData.bio,
+        image:
+          profileData.profileImage instanceof File
+            ? profileData.profileImage.name
+            : "No new image",
+      });
+
+      // Get JWT token from localStorage
+      const jwt = localStorage.getItem("jwt");
+      const headers = {};
+
+      if (jwt) {
+        headers["Authorization"] = `Bearer ${jwt}`;
       }
 
-      // Update bio if changed
-      if (formData.bio !== profileData.bio) {
-        await updateBio({
-          email: userEmail,
-          about: formData.bio,
-        });
+      // Create FormData for multipart request
+      const formDataToSend = new FormData();
+      formDataToSend.append("email", userEmail);
+      formDataToSend.append("name", formData.name || "");
+      formDataToSend.append("about", formData.bio || "");
+
+      // Handle image upload
+      if (profileData.profileImage instanceof File) {
+        // New image file uploaded
+        formDataToSend.append("image", profileData.profileImage);
       }
 
-      // Update profile image if changed
-      if (
-        profileData.profileImage &&
-        profileData.profileImage instanceof File
-      ) {
-        await updateProfileImage({
-          email: userEmail,
-          image: profileData.profileImage,
-        });
+      console.log("Sending FormData to backend:");
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}: ${value instanceof File ? value.name : value}`);
       }
 
-      // Reload profile data to get updated values
-      await loadProfileData();
+      // Save organization profile data
+      const response = await fetch("/api/org/profile", {
+        method: "POST",
+        headers,
+        body: formDataToSend,
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (error) {
+        // If response is not JSON, try to get text
+        const errorText = await response.text();
+        console.error("Non-JSON response:", errorText);
+        throw new Error(`Server error: ${errorText}`);
+      }
+
+      console.log("Save result:", result);
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to save organization profile");
+      }
+
+      // Handle success response
+      if (result.success) {
+        if (result.warnings && result.warnings.length > 0) {
+          // Partial success with warnings
+          const warningMessages = result.warnings
+            .map((w) => `${w.field}: ${w.error}`)
+            .join(", ");
+          setSuccessMessage(
+            `Profile updated with warnings: ${warningMessages}`
+          );
+        } else {
+          // Full success
+          setSuccessMessage("Organization profile updated successfully!");
+        }
+        setErrorMessage("");
+
+        // Reload profile data to get updated values
+        await loadProfileData();
+      } else {
+        throw new Error(result.error || "Failed to save organization profile");
+      }
     } catch (error) {
-      console.error("Error saving profile:", error);
+      console.error("Error saving organization profile:", error);
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to save organization profile";
+
+      if (error.message.includes("Server error:")) {
+        errorMessage = error.message.replace("Server error: ", "");
+      } else if (error.message.includes("Failed to fetch")) {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
+      } else if (error.message.includes("No fields to update")) {
+        errorMessage =
+          "No changes detected. Please make changes before saving.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      setErrorMessage(errorMessage);
+      setSuccessMessage("");
     } finally {
       setSaving(false);
     }
@@ -161,18 +312,22 @@ export function OrgPlaceholderContent() {
       ...prev,
       profileImage: null,
     }));
+
+    // Clear any messages
+    setSuccessMessage("");
+    setErrorMessage("");
   };
 
   // Show loading state while auth is loading or profile data is loading
   if (authLoading || loading) {
     return (
-      <div className="mx-3 mt-6 flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64 mx-3 mt-6">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="w-8 h-8 mx-auto border-b-2 border-blue-600 rounded-full animate-spin"></div>
           <p className="mt-2 text-gray-600">
             {authLoading
               ? "Loading authentication..."
-              : "Loading profile data..."}
+              : "Loading organization data..."}
           </p>
         </div>
       </div>
@@ -182,10 +337,10 @@ export function OrgPlaceholderContent() {
   // Show error if no user email
   if (!userEmail) {
     return (
-      <div className="mx-3 mt-6 flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64 mx-3 mt-6">
         <div className="text-center">
           <p className="text-red-600">
-            Please log in to access profile settings.
+            Please log in to access organization settings.
           </p>
         </div>
       </div>
@@ -194,14 +349,26 @@ export function OrgPlaceholderContent() {
 
   return (
     <div className="mx-3 mt-6 space-y-6">
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+          <p className="text-green-800">{successMessage}</p>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+          <p className="text-red-800">{errorMessage}</p>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            Profile Settings
+            Organization Settings
           </h1>
           <p className="mt-2 text-sm text-gray-600 sm:text-base">
-            Manage your profile and preferences
+            Manage your organization profile and preferences
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -231,10 +398,10 @@ export function OrgPlaceholderContent() {
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <User className="w-5 h-5" />
-                Profile Details
+                Organization Details
               </CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                You can change your profile details here seamlessly.
+                You can change your organization details here seamlessly.
               </p>
             </div>
           </div>
@@ -244,19 +411,19 @@ export function OrgPlaceholderContent() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Label className="text-sm font-medium text-gray-900">
-                  Display Name
+                  Organization Name
                 </Label>
                 <HelpCircle className="w-4 h-4 text-gray-400" />
               </div>
               <p className="text-sm text-gray-500">
-                This is the name that will be displayed on your profile
+                This is the name that will be displayed for your organization
               </p>
             </div>
             <div className="space-y-4">
               <div className="relative">
                 <Input
                   className="pl-10"
-                  placeholder="Enter your name"
+                  placeholder="Enter organization name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                 />
@@ -270,9 +437,9 @@ export function OrgPlaceholderContent() {
       {/* Bio Description Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Bio Description</CardTitle>
+          <CardTitle className="text-lg">Organization Description</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Tell others about yourself and your experience
+            Tell others about your organization and its mission
           </p>
         </CardHeader>
         <CardContent>
@@ -280,7 +447,7 @@ export function OrgPlaceholderContent() {
             <Textarea
               className="resize-none"
               rows={4}
-              placeholder="Write something about yourself..."
+              placeholder="Write something about your organization..."
               value={formData.bio}
               onChange={(e) => handleInputChange("bio", e.target.value)}
               maxLength={300}
@@ -300,16 +467,16 @@ export function OrgPlaceholderContent() {
       {/* Profile Picture Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Profile Picture</CardTitle>
+          <CardTitle className="text-lg">Organization Logo</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload a profile picture to personalize your account
+            Upload an organization logo to personalize your account
           </p>
         </CardHeader>
         <CardContent>
           <div className="flex items-start gap-6">
             <div className="flex-1">
               <div
-                className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 cursor-pointer"
+                className="p-8 text-center transition-colors border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-gray-400"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -317,7 +484,7 @@ export function OrgPlaceholderContent() {
                   <span className="text-blue-600 cursor-pointer">
                     Click here
                   </span>{" "}
-                  to upload your file or drag.
+                  to upload your organization logo or drag.
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
                   Supported Format: JPG, PNG (10mb each)
@@ -336,8 +503,8 @@ export function OrgPlaceholderContent() {
                 {imagePreview ? (
                   <img
                     src={imagePreview}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
+                    alt="Organization Logo"
+                    className="object-cover w-full h-full"
                   />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-blue-400 to-blue-600">

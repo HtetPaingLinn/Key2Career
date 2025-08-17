@@ -18,171 +18,49 @@ export async function GET(request) {
     // Add minimal delay only if not disabled in dev config
     await addDevDelay(100);
 
-    // For testing purposes, use real backend data for delamain@org.net
-    let jobPosts;
+    // Get JWT token from authorization header
+    const authHeader = request.headers.get("authorization");
+    const headers = {
+      "Content-Type": "application/json",
+    };
 
-    if (orgEmail === "delamain@org.net") {
+    if (authHeader) {
+      headers["Authorization"] = authHeader;
       console.log(
-        "Overview API - Using real backend data for delamain@org.net"
+        "Overview API - Authorization header received and passed through"
+      );
+    } else {
+      console.warn("Overview API - No authorization header received");
+    }
+
+    // Fetch real job posts data from backend
+    let jobPosts = [];
+    try {
+      const jobPostsResponse = await fetch(
+        `http://localhost:8080/api/org/postedJobs?org_email=${encodeURIComponent(orgEmail)}`,
+        {
+          method: "GET",
+          headers,
+        }
       );
 
-      // Use the real backend data you provided
-      jobPosts = [
-        {
-          id: "689b957bb3e0f62c8e76fc3e",
-          orgEmail: "delamain@org.net",
-          org_name: "Delamain Corporation",
-          job_title: "AI Prompt Engineer",
-          jobLevel: "Mid-Level",
-          workingType: null,
-          posted_date: "2025-08-12T19:26:51.698Z",
-          due_date: "2025-09-20T23:59:59Z",
-        },
-        {
-          id: "689b95a9b3e0f62c8e76fc3f",
-          orgEmail: "delamain@org.net",
-          org_name: "Delamain Corporation",
-          job_title: "Computer Vision Engineer",
-          jobLevel: "Senior",
-          workingType: null,
-          posted_date: "2025-08-12T19:27:37.434Z",
-          due_date: "2025-09-25T23:59:59Z",
-        },
-        {
-          id: "689b95dab3e0f62c8e76fc40",
-          orgEmail: "delamain@org.net",
-          org_name: "Delamain Corporation",
-          job_title: "AI Ethics & Fairness Analyst",
-          jobLevel: "Mid-Senior",
-          workingType: null,
-          posted_date: "2025-08-12T19:28:26.133Z",
-          due_date: "2025-09-30T23:59:59Z",
-        },
-        {
-          id: "689bf8ae2d1a751e89a77997",
-          orgEmail: "delamain@org.net",
-          org_name: "Delamain Corporation",
-          job_title: "AI Research Engineer",
-          jobLevel: "Mid-Senior",
-          workingType: null,
-          posted_date: "2025-08-13T02:30:05.905Z",
-          due_date: "2025-10-01T23:59:59Z",
-        },
-        {
-          id: "689e381e2f7ee84a204a35a1",
-          orgEmail: "delamain@org.net",
-          org_name: "Delamain Corporation",
-          job_title: "Backend Developer",
-          jobLevel: "Mid-Level",
-          workingType: "Full-Time",
-          posted_date: "2025-08-14T19:25:17.940Z",
-          due_date: "2025-09-15T23:59:59Z",
-        },
-        {
-          id: "689ec3dcff8c91225fb8afb3",
-          orgEmail: "delamain@org.net",
-          org_name: "Delamain Corporation",
-          job_title: "ML Eng",
-          jobLevel: "Mid",
-          workingType: "Part-time",
-          posted_date: "2025-08-15T05:21:31.878Z",
-          due_date: "2025-08-22T17:29:59.999Z",
-        },
-      ];
+      if (!jobPostsResponse.ok) {
+        console.error(
+          "Overview API - Backend API response status:",
+          jobPostsResponse.status
+        );
+        throw new Error("Failed to fetch job posts data from backend");
+      }
 
+      jobPosts = await jobPostsResponse.json();
       console.log(
-        "Overview API - Using real backend data:",
+        "Overview API - Successfully fetched from backend:",
         jobPosts.length,
         "job posts"
       );
-    } else {
-      // Fetch real job posts data from internal API route for other organizations
-      const authHeader = request.headers.get("authorization");
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      if (authHeader) {
-        headers["Authorization"] = authHeader;
-        console.log(
-          "Overview API - Authorization header received and passed through"
-        );
-      } else {
-        console.warn("Overview API - No authorization header received");
-      }
-
-      const internalUrl = `${request.nextUrl.origin}/api/org/postedJobs?org_email=${encodeURIComponent(orgEmail)}`;
-      console.log("Overview API - Internal API URL:", internalUrl);
-
-      try {
-        const jobPostsResponse = await fetch(internalUrl, {
-          method: "GET",
-          headers,
-        });
-
-        if (!jobPostsResponse.ok) {
-          console.error(
-            "Overview API - Internal API response status:",
-            jobPostsResponse.status
-          );
-          throw new Error("Failed to fetch job posts data from internal API");
-        }
-
-        jobPosts = await jobPostsResponse.json();
-        console.log(
-          "Overview API - Successfully fetched from internal API:",
-          jobPosts.length,
-          "job posts"
-        );
-      } catch (backendError) {
-        console.warn(
-          "Overview API - Internal API not available, using mock data:",
-          backendError.message
-        );
-
-        // Fallback to mock data
-        const { getMockJobPosts } = await import("../mockData");
-        jobPosts = getMockJobPosts(orgEmail);
-
-        if (jobPosts.length === 0) {
-          // Use default mock data
-          jobPosts = [
-            {
-              id: "1",
-              orgEmail: orgEmail,
-              job_title: "Senior Software Engineer",
-              jobLevel: "Senior",
-              workingType: "Full-time",
-              posted_date: "2024-06-15T10:00:00Z",
-              due_date: "2024-07-15T10:00:00Z",
-            },
-            {
-              id: "2",
-              orgEmail: orgEmail,
-              job_title: "Product Manager",
-              jobLevel: "Mid-level",
-              workingType: "Full-time",
-              posted_date: "2024-06-10T10:00:00Z",
-              due_date: "2024-07-10T10:00:00Z",
-            },
-            {
-              id: "3",
-              orgEmail: orgEmail,
-              job_title: "UI/UX Designer",
-              jobLevel: "Junior",
-              workingType: "Part-time",
-              posted_date: "2024-06-05T10:00:00Z",
-              due_date: "2025-07-05T10:00:00Z",
-            },
-          ];
-        }
-
-        console.log(
-          "Overview API - Using mock data:",
-          jobPosts.length,
-          "job posts"
-        );
-      }
+    } catch (backendError) {
+      console.error("Overview API - Backend API error:", backendError.message);
+      throw new Error("Failed to fetch job posts from backend");
     }
 
     // Calculate real statistics from job posts data
@@ -198,7 +76,7 @@ export async function GET(request) {
       .sort((a, b) => new Date(b.posted_date) - new Date(a.posted_date))
       .slice(0, 3)
       .map((job) => ({
-        id: job.id,
+        id: job._id || job.id, // Handle both MongoDB ObjectId and string ID
         job_title: job.job_title,
         job_level: job.jobLevel || job.job_level || "Not specified", // Handle both field names
         working_type: job.workingType || job.working_type || "Not specified", // Handle both field names
@@ -207,15 +85,97 @@ export async function GET(request) {
         status: new Date(job.due_date) > new Date() ? "active" : "closed",
       }));
 
-    // TODO: When backend is available, fetch real application data
-    // For now, using calculated estimates based on job posts
-    const pendingApplications = Math.floor(totalJobPosts * 2.5); // Estimate 2.5 applications per job post
-    const organizationMembers = Math.max(1, Math.floor(totalJobPosts * 0.8)); // Estimate based on job posts
+    // Fetch real application data from backend
+    let applicationsData = {
+      totalApplications: 0,
+      pendingApplications: 0,
+      reviewedApplications: 0,
+      hiredApplications: 0,
+    };
 
-    // Calculate application stats (estimates for now)
-    const totalApplications = Math.floor(totalJobPosts * 4); // Estimate 4 applications per job post
-    const reviewedApplications = Math.floor(totalApplications * 0.6);
-    const hiredApplications = Math.floor(totalApplications * 0.2);
+    try {
+      // Fetch applications for this organization
+      const applicationsResponse = await fetch(
+        `http://localhost:8080/api/org/applications?org_email=${encodeURIComponent(orgEmail)}`,
+        {
+          method: "GET",
+          headers,
+        }
+      );
+
+      if (applicationsResponse.ok) {
+        const applications = await applicationsResponse.json();
+
+        // Calculate application statistics
+        applicationsData = {
+          totalApplications: applications.length || 0,
+          pendingApplications:
+            applications.filter((app) => app.status === "applied").length || 0,
+          reviewedApplications:
+            applications.filter((app) => app.status === "reviewed").length || 0,
+          hiredApplications:
+            applications.filter((app) => app.status === "hired").length || 0,
+        };
+
+        console.log(
+          "Overview API - Successfully fetched applications data:",
+          applicationsData
+        );
+      } else {
+        console.warn(
+          "Overview API - Failed to fetch applications, using estimates"
+        );
+        // Fallback to estimates based on job posts
+        applicationsData = {
+          totalApplications: Math.floor(totalJobPosts * 4),
+          pendingApplications: Math.floor(totalJobPosts * 2.5),
+          reviewedApplications: Math.floor(totalJobPosts * 2.4),
+          hiredApplications: Math.floor(totalJobPosts * 0.8),
+        };
+      }
+    } catch (applicationsError) {
+      console.warn(
+        "Overview API - Applications fetch error, using estimates:",
+        applicationsError.message
+      );
+      // Fallback to estimates based on job posts
+      applicationsData = {
+        totalApplications: Math.floor(totalJobPosts * 4),
+        pendingApplications: Math.floor(totalJobPosts * 2.5),
+        reviewedApplications: Math.floor(totalJobPosts * 2.4),
+        hiredApplications: Math.floor(totalJobPosts * 0.8),
+      };
+    }
+
+    // Fetch organization members data from backend
+    let organizationMembers = 1; // Default minimum
+    try {
+      const membersResponse = await fetch(
+        `http://localhost:8080/api/org/members?org_email=${encodeURIComponent(orgEmail)}`,
+        {
+          method: "GET",
+          headers,
+        }
+      );
+
+      if (membersResponse.ok) {
+        const members = await membersResponse.json();
+        organizationMembers = members.length || 1;
+        console.log(
+          "Overview API - Successfully fetched members data:",
+          organizationMembers
+        );
+      } else {
+        console.warn("Overview API - Failed to fetch members, using estimate");
+        organizationMembers = Math.max(1, Math.floor(totalJobPosts * 0.8));
+      }
+    } catch (membersError) {
+      console.warn(
+        "Overview API - Members fetch error, using estimate:",
+        membersError.message
+      );
+      organizationMembers = Math.max(1, Math.floor(totalJobPosts * 0.8));
+    }
 
     // Generate monthly trends based on job posts data
     const monthlyTrends = generateMonthlyTrends(jobPosts);
@@ -223,14 +183,14 @@ export async function GET(request) {
     const overviewData = {
       totalJobPosts,
       activeJobPosts,
-      pendingApplications,
+      pendingApplications: applicationsData.pendingApplications,
       organizationMembers,
       recentJobPosts,
       applicationStats: {
-        total: totalApplications,
-        pending: pendingApplications,
-        reviewed: reviewedApplications,
-        hired: hiredApplications,
+        total: applicationsData.totalApplications,
+        pending: applicationsData.pendingApplications,
+        reviewed: applicationsData.reviewedApplications,
+        hired: applicationsData.hiredApplications,
       },
       monthlyTrends,
     };

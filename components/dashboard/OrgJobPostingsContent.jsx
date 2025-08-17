@@ -92,36 +92,6 @@ export function OrgJobPostingsContent() {
   const [tempTechSkill, setTempTechSkill] = useState("");
   const [completedSections, setCompletedSections] = useState(new Set());
 
-  // Test backend connectivity
-  const testBackendConnection = async () => {
-    try {
-      console.log("Testing backend connection...");
-      const response = await fetch("/api/test-backend");
-      const result = await response.json();
-      console.log("Backend test result:", result);
-
-      if (result.status === "success") {
-        toast.success("Backend is running and accessible!", {
-          duration: 3000,
-          className:
-            "text-base px-4 py-3 bg-green-100 text-green-800 border-green-200",
-        });
-      } else {
-        toast.error(`Backend test failed: ${result.message}`, {
-          duration: 5000,
-          className:
-            "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
-        });
-      }
-    } catch (error) {
-      console.error("Backend test error:", error);
-      toast.error("Backend test failed: " + error.message, {
-        duration: 5000,
-        className: "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
-      });
-    }
-  };
-
   // Progress tracking functions
   const validateSection = (sectionId) => {
     switch (sectionId) {
@@ -172,78 +142,73 @@ export function OrgJobPostingsContent() {
     updateProgress();
   }, [formData, updateProgress]);
 
-  const fetchJobPosts = React.useCallback(async () => {
-    // Simple cache: don't refetch if last fetch was less than 30 seconds ago
-    const now = Date.now();
-    if (now - lastFetchTime < 30000 && jobPosts.length > 0) {
-      return;
-    }
+  const fetchJobPosts = React.useCallback(
+    async (isBackgroundRefresh = false) => {
+      try {
+        if (!isBackgroundRefresh) {
+          setLoading(true);
+        }
+        setError(null);
 
-    try {
-      setLoading(true);
-      setError(null);
-      console.time("Job Posts Fetch");
+        // Get JWT token from localStorage
+        const jwt = localStorage.getItem("jwt");
+        const headers = { "Content-Type": "application/json" };
 
-      // Get JWT token from localStorage
-      const jwt = localStorage.getItem("jwt");
-      const headers = {};
+        if (jwt) {
+          headers["Authorization"] = `Bearer ${jwt}`;
+        } else {
+          console.warn("No JWT token found in localStorage");
+          console.log(
+            "Available localStorage keys:",
+            Object.keys(localStorage)
+          );
+        }
 
-      if (jwt) {
-        headers["Authorization"] = `Bearer ${jwt}`;
-        console.log("JWT token found and added to headers");
-      } else {
-        console.warn("No JWT token found in localStorage");
+        const response = await fetch(
+          `http://localhost:8080/api/org/postedJobs?org_email=${userEmail}`,
+          { headers }
+        ).catch((networkError) => {
+          console.error("Network error details:", networkError);
+          throw new Error(
+            "Network error: Unable to connect to the server. Please check your connection and try again."
+          );
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Response error data:", errorData);
+          throw new Error(
+            errorData.message ||
+              `HTTP ${response.status}: Failed to fetch job posts`
+          );
+        }
+
+        const data = await response.json();
+
+        setJobPosts(data);
+        setLastFetchTime(Date.now());
+      } catch (err) {
+        console.error("Error fetching job posts:", err);
+        if (!isBackgroundRefresh) {
+          setError(err.message);
+          toast.error("Failed to fetch job posts: " + err.message, {
+            duration: 5000,
+            className:
+              "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
+          });
+        }
+      } finally {
+        if (!isBackgroundRefresh) {
+          setLoading(false);
+        }
       }
-
-      console.log("Fetching job posts for organization:", userEmail);
-      console.log("Request URL:", `/api/org/postedJobs?org_email=${userEmail}`);
-      console.log("Request headers:", headers);
-
-      const response = await fetch(
-        `/api/org/postedJobs?org_email=${userEmail}`,
-        { headers }
-      ).catch((networkError) => {
-        console.error("Network error details:", networkError);
-        throw new Error(
-          "Network error: Unable to connect to the server. Please check your connection and try again."
-        );
-      });
-
-      console.log("Response status:", response.status);
-      console.log(
-        "Response headers:",
-        Object.fromEntries(response.headers.entries())
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Response error data:", errorData);
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: Failed to fetch job posts`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Response data:", data);
-      console.timeEnd("Job Posts Fetch");
-      setJobPosts(data);
-      setLastFetchTime(now);
-    } catch (err) {
-      console.error("Error fetching job posts:", err);
-      setError(err.message);
-      toast.error("Failed to fetch job posts: " + err.message, {
-        duration: 5000,
-        className: "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [lastFetchTime, jobPosts.length, userEmail]);
+    },
+    [userEmail]
+  );
 
   useEffect(() => {
     if (userEmail && isAuthenticated) {
-      fetchJobPosts();
+      fetchJobPosts(false); // Initial load, not background refresh
     }
   }, [fetchJobPosts, userEmail, isAuthenticated]);
 
@@ -321,7 +286,7 @@ export function OrgJobPostingsContent() {
         headers["Authorization"] = `Bearer ${jwt}`;
       }
 
-      const response = await fetch("/api/org/postJob", {
+      const response = await fetch("http://localhost:8080/api/org/postJob", {
         method: "POST",
         headers,
         body: JSON.stringify(jobData),
@@ -336,15 +301,23 @@ export function OrgJobPostingsContent() {
         throw new Error(errorData.message || "Failed to create job post");
       }
 
-      const result = await response.json();
-      console.log("Job post created successfully:", result);
+      // Handle both JSON and text responses
+      let result;
+      const responseText = await response.text();
+
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        // If it's not JSON, treat it as a success message
+        result = { success: true, message: responseText };
+      }
 
       toast.success("Job post created successfully!", {
         duration: 3000,
         className: "text-base px-4 py-3",
       });
 
-      await fetchJobPosts();
+      await fetchJobPosts(false); // Refresh after creation, not background
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -422,8 +395,6 @@ export function OrgJobPostingsContent() {
     try {
       setIsDeleting(true);
 
-      console.log("Attempting to delete job post with ID:", jobId);
-
       // Get JWT token from localStorage
       const jwt = localStorage.getItem("jwt");
       const headers = { "Content-Type": "application/json" };
@@ -431,35 +402,74 @@ export function OrgJobPostingsContent() {
       if (jwt) {
         headers["Authorization"] = `Bearer ${jwt}`;
         console.log("JWT token found and added to headers");
+        console.log("JWT token length:", jwt.length);
+        console.log("JWT token preview:", jwt.substring(0, 20) + "...");
       } else {
         console.warn("No JWT token found in localStorage");
+        console.log("Available localStorage keys:", Object.keys(localStorage));
       }
 
+      // Use our Next.js API route which handles both job post and application deletion
       const deleteUrl = `/api/org/deletePost?jobPost_obj_id=${jobId}`;
-      console.log("Delete request URL:", deleteUrl);
-      console.log("Delete request headers:", headers);
 
       const response = await fetch(deleteUrl, {
         method: "DELETE",
         headers,
       });
 
-      console.log("Delete response status:", response.status);
-      console.log(
-        "Delete response headers:",
-        Object.fromEntries(response.headers.entries())
-      );
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Try to get the response as JSON first, fallback to text if that fails
+        let errorData = {};
+        let responseText = "";
+
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.log("Failed to parse error response as JSON, trying as text");
+          try {
+            responseText = await response.text();
+            console.log("Error response text:", responseText);
+          } catch (textError) {
+            console.log("Failed to read error response as text");
+          }
+        }
+
         console.error("Delete response error data:", errorData);
+        console.error("Delete response text:", responseText);
+        console.error("Delete response status:", response.status);
+
+        // A 404 means the job was not found - this is an error, not success
+        if (response.status === 404) {
+          console.log("Job not found - this is an error, not success");
+          toast.error(
+            "Job post not found. It may have been already deleted or the ID is invalid.",
+            {
+              duration: 5000,
+              className:
+                "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
+            }
+          );
+          return;
+        }
+
         throw new Error(
-          errorData.message || errorData.error || "Failed to delete job post"
+          errorData.message ||
+            errorData.error ||
+            responseText ||
+            `Failed to delete job post (HTTP ${response.status})`
         );
       }
 
-      const result = await response.json();
-      console.log("Job post deleted successfully:", result);
+      // Handle both JSON and text responses
+      let result;
+      const responseText = await response.text();
+
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        // If it's not JSON, treat it as a success message
+        result = { success: true, message: responseText };
+      }
 
       toast.success("Job post deleted successfully!", {
         duration: 3000,
@@ -467,12 +477,35 @@ export function OrgJobPostingsContent() {
           "text-base px-4 py-3 bg-green-100 text-green-800 border-green-200",
       });
 
-      // Refresh the job posts list
-      await fetchJobPosts();
-
-      // Close the delete dialog
+      // Close the delete dialog first
       setIsDeleteDialogOpen(false);
       setJobToDelete(null);
+
+      // Optimistically remove the job from the current list
+      setJobPosts((prevJobs) =>
+        prevJobs.filter((job) => {
+          // Handle different possible ID formats
+          const jobIdStr = jobId?.toString();
+          const jobIdFromData = job._id?.toString() || job.id?.toString();
+          return jobIdFromData !== jobIdStr;
+        })
+      );
+
+      // Refresh the job posts list in the background to ensure data consistency
+      setTimeout(async () => {
+        try {
+          await fetchJobPosts(true); // Pass true for background refresh
+        } catch (refreshError) {
+          console.error(
+            "Error refreshing job posts after deletion:",
+            refreshError
+          );
+          // Don't show error toast for background refresh failure
+          // The optimistic update already removed the job from the UI
+          // If the refresh fails, the optimistic update will remain, which is fine
+          // since the deletion was successful on the backend
+        }
+      }, 500); // Reduced delay since we're doing optimistic update
     } catch (err) {
       console.error("Error deleting job post:", err);
       toast.error("Failed to delete job post: " + err.message, {
@@ -1307,22 +1340,31 @@ export function OrgJobPostingsContent() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  jobPosts.map((job) => (
-                    <TableRow key={job.id}>
+                  jobPosts.map((job, index) => (
+                    <TableRow key={job._id || `job-${index}`}>
                       <TableCell className="text-xs font-medium sm:text-sm">
-                        {job.job_title}
+                        {job.job_title || "Untitled"}
                       </TableCell>
                       <TableCell className="text-xs sm:text-sm">
-                        {job.jobLevel}
+                        {job.jobLevel ||
+                          job.job_level ||
+                          job.level ||
+                          "Not specified"}
                       </TableCell>
                       <TableCell className="text-xs sm:text-sm">
-                        {job.workingType || "Not specified"}
+                        {job.workingType ||
+                          job.working_type ||
+                          job.work_type ||
+                          job.type ||
+                          "Not specified"}
                       </TableCell>
                       <TableCell className="text-xs sm:text-sm">
-                        {job.salary_mmk}
+                        {job.salary_mmk || job.salary || "Not specified"}
                       </TableCell>
                       <TableCell className="text-xs sm:text-sm">
-                        {formatDate(job.due_date)}
+                        {job.due_date
+                          ? formatDate(job.due_date)
+                          : "Not specified"}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -1390,7 +1432,9 @@ export function OrgJobPostingsContent() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => handleDeleteJob(jobToDelete?.id)}
+              onClick={() =>
+                handleDeleteJob(jobToDelete?._id || jobToDelete?.id)
+              }
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >

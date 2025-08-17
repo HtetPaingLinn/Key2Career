@@ -21,12 +21,10 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-
-// TODO: When implementing org authentication, replace with actual org data fetching
-// Example: const orgId = getCurrentOrgId(); // Get from auth context
-const MOCK_ORG_EMAIL = "delamain@org.net"; // Temporary mock data - using actual org email for testing
+import { useAuth } from "@/lib/useAuth";
 
 export function OrgOverviewContent() {
+  const { user, isAuthenticated, userEmail } = useAuth();
   const [data, setData] = useState({
     totalJobPosts: 0,
     activeJobPosts: 0,
@@ -49,6 +47,13 @@ export function OrgOverviewContent() {
       setLoading(true);
       setError(null);
 
+      // Check if user is authenticated and has an email
+      if (!isAuthenticated || !userEmail) {
+        setError("User not authenticated or email not available");
+        setLoading(false);
+        return;
+      }
+
       console.time("Org Overview Data Fetch");
 
       // Get JWT token from localStorage
@@ -60,16 +65,20 @@ export function OrgOverviewContent() {
         console.log("JWT token found and added to headers");
       } else {
         console.warn("No JWT token found in localStorage");
+        setError("Authentication token not found");
+        setLoading(false);
+        return;
       }
 
-      // Fetch data from the new API endpoint
+      // Fetch data from the API endpoint using real organization email
       const response = await fetch(
-        `/api/org/overview?org_email=${MOCK_ORG_EMAIL}`,
+        `/api/org/overview?org_email=${encodeURIComponent(userEmail)}`,
         { headers }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch organization data");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch organization data");
       }
 
       const overviewData = await response.json();
@@ -81,7 +90,7 @@ export function OrgOverviewContent() {
       setError(err.message || "Failed to fetch organization data");
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, userEmail]);
 
   // Memoize chart data to prevent unnecessary re-renders
   const chartData = useMemo(
@@ -127,8 +136,18 @@ export function OrgOverviewContent() {
   );
 
   useEffect(() => {
-    fetchOrgData();
-  }, [fetchOrgData]);
+    if (isAuthenticated && userEmail) {
+      fetchOrgData();
+    }
+  }, [fetchOrgData, isAuthenticated, userEmail]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Please log in to view organization data</div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
