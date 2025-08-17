@@ -204,13 +204,14 @@ function FormClient() {
       setAddress("");
       setExperienceYears("");
       setCvFile(null);
+      // Show success toast briefly, then redirect back to job portal
       setToast({ type: 'success', message: 'Application submitted successfully' });
       setTimeout(() => {
         setToast(null);
         try {
           router.push('/job-portal');
         } catch {}
-      }, 1000);
+      }, 2500);
     } catch (err) {
       alert(err.message || "Submission failed");
     } finally {

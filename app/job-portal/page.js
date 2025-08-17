@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 // Navigation items copied from resume-builder navbar
 const navItems = [
   // { name: "Home", link: "/" },
-  { name: "Job Tracker", link: "/job-portal/job-tracker" },
+  // { name: "Job Tracker", link: "/job-portal/job-tracker" }, // moved to right side of navbar
   // { name: "Resume Builder", link: "/resume-builder" },
   // { name: "CV Verification", link: "#" },
   // { name: "Interview Q&A", link: "/interview-prep" },
@@ -41,6 +41,27 @@ export default function JobBoard() {
   // Saved dropdown state
   const [savedOpen, setSavedOpen] = useState(false);
   const savedDropdownRef = useRef(null);
+  // Server-backed saved jobs
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [savedJobsLoading, setSavedJobsLoading] = useState(false);
+  // Unique saved job IDs (dedup by id) - independent of `jobs` to avoid order/init issues
+  const uniqueSavedJobIds = useMemo(() => {
+    const seen = new Set();
+    const ids = [];
+    for (const sj of savedJobs || []) {
+      const savedIdRaw = sj?.id ?? sj?.jobPost_obj_id ?? sj?._id;
+      if (!savedIdRaw) continue;
+      const savedId = String(savedIdRaw);
+      if (seen.has(savedId)) continue;
+      seen.add(savedId);
+      ids.push(savedId);
+    }
+    return ids;
+  }, [savedJobs]);
+  // Capsule row drag scroll state
+  const capsulesRef = useRef(null);
+  const [isCapsDragging, setIsCapsDragging] = useState(false);
+  const capsDrag = useRef({ startX: 0, scrollLeft: 0 });
   // Track logo load failures to show placeholder icon
   const [badLogoIds, setBadLogoIds] = useState(new Set());
   const ORG_PLACEHOLDER_SVG = "data:image/svg+xml;utf8,\
@@ -88,23 +109,64 @@ export default function JobBoard() {
   // Search and saved jobs state
   const [searchQuery, setSearchQuery] = useState(""); // debounced/effective query
   const [searchQueryInput, setSearchQueryInput] = useState(""); // raw input
-  const [savedIds, setSavedIds] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const s = localStorage.getItem('savedJobIds');
-        return s ? JSON.parse(s) : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  // Use server, not localStorage, for saved jobs
+
   const [showSavedOnly, setShowSavedOnly] = useState(false);
-  useEffect(() => {
+
+  // Helper to fetch saved jobs from API
+  const fetchSavedJobs = async () => {
     try {
-      localStorage.setItem('savedJobIds', JSON.stringify(savedIds));
-    } catch {}
-  }, [savedIds]);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+      if (!token) return;
+      const payload = parseJwt(token);
+      const email = payload?.sub;
+      if (!email) return;
+      setSavedJobsLoading(true);
+      const url = `http://localhost:8080/api/user/savedJobs?email=${encodeURIComponent(email)}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error('Failed to fetch saved jobs');
+      const data = await res.json();
+      // Expecting an array of saved job posts; normalize minimal fields
+      const arr = Array.isArray(data) ? data : (Array.isArray(data?.jobs) ? data.jobs : []);
+      setSavedJobs(arr);
+    } catch (e) {
+      console.warn('savedJobs fetch error:', e);
+    } finally {
+      setSavedJobsLoading(false);
+    }
+  };
+
+  // Fetch saved jobs on mount (if logged in)
+  useEffect(() => { fetchSavedJobs(); }, []);
+  // Refresh when opening dropdown
+  useEffect(() => { if (savedOpen) fetchSavedJobs(); }, [savedOpen]);
+
+  // Capsule handlers
+  const handleCapsMouseDown = (e) => {
+    const el = capsulesRef.current;
+    if (!el) return;
+    setIsCapsDragging(true);
+    capsDrag.current.startX = e.pageX - el.offsetLeft;
+    capsDrag.current.scrollLeft = el.scrollLeft;
+  };
+  const handleCapsMouseMove = (e) => {
+    const el = capsulesRef.current;
+    if (!el || !isCapsDragging) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = x - capsDrag.current.startX;
+    el.scrollLeft = capsDrag.current.scrollLeft - walk;
+  };
+  const handleCapsMouseUp = () => setIsCapsDragging(false);
+  const handleCapsMouseLeave = () => setIsCapsDragging(false);
+  const handleCapsWheel = (e) => {
+    const el = capsulesRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  };
   // Debounce search input -> effective query
   useEffect(() => {
     const t = setTimeout(() => setSearchQuery(searchQueryInput), 250);
@@ -176,20 +238,19 @@ export default function JobBoard() {
   useEffect(() => {
     let cancelled = false;
     const fetchJobs = async () => {
-      if (!selectedCategories.length) { setJobs([]); return; }
       setLoading(true);
       setError(null);
       try {
-        // fetch all selected categories in parallel
-        const catMap = new Map(JOB_CATEGORIES.map(c => [c.key, c]));
-        const selected = selectedCategories.map(k => catMap.get(k)).filter(Boolean);
-        const responses = await Promise.all(selected.map(async (c) => {
+        // fetch all categories in parallel (counts need full dataset)
+        const responses = await Promise.all(JOB_CATEGORIES.map(async (c) => {
           const r = await fetch(c.path);
           if (!r.ok) throw new Error(`Failed to fetch ${c.key} (${r.status})`);
           const json = await r.json();
-          return Array.isArray(json) ? json : [];
+          const arr = Array.isArray(json) ? json : [];
+          // Attach source category for later counts and filtering UI
+          return arr.map(item => ({ ...item, __cat: c.key }));
         }));
-        const merged = [].concat(...responses);
+        const merged = ([]).concat(...responses);
         const normalized = merged.map((d, idx) => {
           const parseSalary = (v) => {
             if (v == null) return 0;
@@ -201,6 +262,26 @@ export default function JobBoard() {
           const company = d.org_name || d.orgEmail || "";
           const rawSalaryStr = typeof d.salary_mmk === 'string' ? d.salary_mmk : '';
           const isNegotiable = (typeof d.salary_mmk === 'string' && /nego/i.test(d.salary_mmk)) || (rawSalaryStr.trim().length > 0 && !/\d/.test(rawSalaryStr));
+          // Normalize working type from multiple possible source keys or tags
+          const tagsArr = safeArray(d.tag);
+          const jobFieldArr = safeArray(d.job_field);
+          const guessFromTags = () => {
+            const blob = [
+              ...tagsArr,
+              ...jobFieldArr,
+              typeof d.work_time === 'string' ? d.work_time : '',
+              typeof d.address === 'string' ? d.address : ''
+            ].join(' ').toLowerCase();
+            if (/remote/.test(blob) || /wfh/.test(blob)) return 'Remote';
+            if (/hybrid/.test(blob)) return 'Hybrid';
+            if (/on[- ]?site/.test(blob) || /onsite/.test(blob)) return 'Onsite';
+            return '';
+          };
+          const wt = (typeof d.workingType === 'string' && d.workingType.trim().length > 0)
+            ? d.workingType.trim()
+            : (typeof d.working_type === 'string' && d.working_type.trim().length > 0)
+              ? d.working_type.trim()
+              : guessFromTags();
           return {
             // Preserve old fields for UI while also keeping original API fields
             // company,
@@ -216,10 +297,11 @@ export default function JobBoard() {
             id: d.id ?? `${company}-${d.job_title || 'job'}-${idx}`,
             orgEmail: (typeof d.orgEmail === 'string' && d.orgEmail.trim().length > 0) ? d.orgEmail.trim() : "[OrgEmail]",
             org_name: (typeof d.org_name === 'string' && d.org_name.trim().length > 0) ? d.org_name.trim() : "[OrgName]",
+            org_img: (typeof d.org_img === 'string' && d.org_img.trim().length > 0) ? d.org_img.trim() : "https://via.placeholder.com/48?text=JB",
             job_title: (typeof d.job_title === 'string' && d.job_title.trim().length > 0) ? d.job_title.trim() : "[JobTitle]",
             job_field: safeArray(d.job_field),
-            job_level: (typeof d.job_level === 'string' && d.job_level.trim().length > 0) ? d.job_level.trim() : "[JobLevel]",
-            working_type: (typeof d.working_type === 'string' && d.working_type.trim().length > 0) ? d.working_type.trim() : "[WorkingType]",
+            jobLevel: (typeof d.jobLevel === 'string' && d.jobLevel.trim().length > 0) ? d.jobLevel.trim() : "[JobLevel]",
+            workingType: wt,
             tags: safeArray(d.tag).length ? safeArray(d.tag) : safeArray(d.job_field),
             work_time: d.work_time,
             address: (typeof d.address === 'string' && d.address.trim().length > 0) ? d.address.trim() : "[Address]",
@@ -231,17 +313,35 @@ export default function JobBoard() {
             salary_mmk: parseSalary(d.salary_mmk),
             salary_raw: d.salary_mmk,
             negotiable: isNegotiable,
-            required_number: (typeof d.required_number === 'string' && d.required_number.trim().length > 0) ? d.required_number.trim() : "[RequiredNumber]",
+            // Required positions: ensure numeric (support alternative API keys and string forms like "3 positions")
+            // required_number: (() => {
+            //   const altKeys = [
+            //     'required_number', 'required', 'requiredCount', 'requiredPersons',
+            //     'required_persons', 'required_people', 'required_number_of_positions',
+            //     'no_of_positions', 'positions_required'
+            //   ];
+            //   let raw;
+            //   for (const k of altKeys) {
+            //     if (Object.prototype.hasOwnProperty.call(d, k) && d[k] != null && d[k] !== '') { raw = d[k]; break; }
+            //   }
+            //   if (raw == null) return 0;
+            //   const n = typeof raw === 'number' ? raw : parseInt(String(raw).replace(/[^0-9]/g, ''), 10);
+            //   return Number.isFinite(n) ? n : 0;
+            // })(),
+            required_number: d.required_number,
             tech_skill: safeArray(d.tech_skill),
             due_date: (typeof d.due_date === 'string' && d.due_date.trim().length > 0) ? d.due_date.trim() : "[DueDate]",
             posted_date: (typeof d.posted_date === 'string' && d.posted_date.trim().length > 0) ? d.posted_date.trim() : "[PostedDate]",
+            // track source category for counts
+            categoryKey: d.__cat,
           };
         });
-        // de-duplicate by id to avoid duplicates across categories
-        const seen = new Set();
-        const dedup = [];
-        for (const j of normalized) {
-          if (seen.has(j.id)) continue;
+
+  // de-duplicate by id to avoid duplicates across categories
+  const seen = new Set();
+  const dedup = [];
+  for (const j of normalized) {
+    if (seen.has(j.id)) continue;
           seen.add(j.id);
           dedup.push(j);
         }
@@ -254,10 +354,9 @@ export default function JobBoard() {
     };
     fetchJobs();
     return () => { cancelled = true; };
-  }, [selectedCategories]);
+  }, []);
 
   // Derived facets from jobs
-  const allLevels = Array.from(new Set(jobs.map(j => j.job_level).filter(Boolean)));
   const allCompanies = Array.from(new Set(jobs.map(j => j.org_name).filter(Boolean)));
 
   // Helpers for search and save (must be before preSalaryFilteredJobs)
@@ -287,7 +386,7 @@ export default function JobBoard() {
       ...(job.tech_skill || []),
       ...(job.responsibilities || []),
       job.job_level,
-      job.working_type,
+      (job.workingType || job.working_type),
       job.address,
     ];
     return normalizeText(parts.filter(Boolean).join(" \n "));
@@ -336,7 +435,7 @@ export default function JobBoard() {
     const skills = (job.tech_skill || []).map(normalizeText);
     const resp = (job.responsibilities || []).map(normalizeText);
     const level = normalizeText(job.job_level);
-    const work = normalizeText(job.working_type);
+    const work = normalizeText(job.workingType || job.working_type);
     const address = normalizeText(job.address);
 
     let score = 0;
@@ -387,9 +486,68 @@ export default function JobBoard() {
 
     return score;
   };
-  const isSaved = (id) => savedIds.includes(id);
-  const toggleSave = (id) => {
-    setSavedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const isSaved = (id) => uniqueSavedJobIds.some((key) => String(key) === String(id));
+  const toggleSave = async (id) => {
+    const dest = '/job-portal';
+    const token = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+    if (!token) {
+      router.replace(`/login?redirect=${encodeURIComponent(dest)}`);
+      return;
+    }
+    const payload = parseJwt(token);
+    const roles = [];
+    if (typeof payload?.role === 'string') roles.push(payload.role);
+    if (Array.isArray(payload?.roles)) roles.push(...payload.roles);
+    if (typeof payload?.user?.role === 'string') roles.push(payload.user.role);
+    const hasUser = roles.map(r => String(r).toLowerCase()).some(r => r.includes('user'));
+    if (!hasUser) {
+      router.replace(`/login?redirect=${encodeURIComponent(dest)}`);
+      return;
+    }
+    const email = payload?.sub;
+    if (!email) {
+      router.replace(`/login?redirect=${encodeURIComponent(dest)}`);
+      return;
+    }
+    try {
+      if (isSaved(id)) {
+        // UNSAVE via DELETE
+        const res = await fetch('http://localhost:8080/api/user/unsaveJob', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email, jobPost_obj_id: id }),
+        });
+        if (!res.ok) throw new Error('Failed to unsave job');
+        // Optimistically remove from savedJobs
+        setSavedJobs(prev => prev.filter((sj) => {
+          const savedId = sj?.id ?? sj?.jobPost_obj_id ?? sj?._id;
+          return savedId !== id;
+        }));
+      } else {
+        // SAVE via POST
+        const res = await fetch('http://localhost:8080/api/user/saveJob', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email, jobPost_obj_id: id }),
+        });
+        if (!res.ok) throw new Error('Failed to save job');
+        // Optimistically add to savedJobs if not already there
+        if (!isSaved(id)) {
+          const job = (typeof jobs !== 'undefined' && Array.isArray(jobs)) ? jobs.find(j => String(j.id) === String(id)) : null;
+          if (job) setSavedJobs(prev => [job, ...prev]);
+          else fetchSavedJobs();
+        }
+      }
+    } catch (e) {
+      console.error('saveJob error:', e);
+      alert(e.message || 'Save/Unsave failed');
+    }
   };
   const matchesQuery = (job, q) => {
     const s = (q || "").trim();
@@ -406,23 +564,115 @@ export default function JobBoard() {
   const [filterCompanies, setFilterCompanies] = useState([]); // values from allCompanies
   const [remoteOnly, setRemoteOnly] = useState(false); // true -> tag must include "Remote Ops"
   const [includeNegotiable, setIncludeNegotiable] = useState(true);
+  const [filterWorkingTypes, setFilterWorkingTypes] = useState([]); // values from allWorkingTypes
+
+  // For the Seniority facet: compute available levels from jobs ignoring the current level filter
+  const preLevelFacetJobs = useMemo(() => {
+    return jobs.filter(j => {
+      // category selection: if not all selected, restrict by selectedCategories
+      if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
+        if (!selectedCategories.includes(j.categoryKey)) return false;
+      }
+      // remote
+      if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
+      // NOTE: do NOT filter by filterLevels here, so options don't disappear when checked
+      // companies
+      if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+      // saved only
+      if (showSavedOnly && !isSaved(j.id)) return false;
+      // keyword match
+      if (!matchesQuery(j, searchQuery)) return false;
+      return true;
+    });
+  }, [jobs, selectedCategories, remoteOnly, filterCompanies, showSavedOnly, searchQuery]);
+
+  // For the Working Type facet: compute options ignoring the current working type filter
+  const preWorkingFacetJobs = useMemo(() => {
+    return jobs.filter(j => {
+      // category selection
+      if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
+        if (!selectedCategories.includes(j.categoryKey)) return false;
+      }
+      // remote filter still applies
+      if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
+      // DO NOT filter by working type here; we want options to remain visible
+      // levels still apply
+      if (filterLevels.length > 0 && !filterLevels.includes(j.jobLevel || "")) return false;
+      // companies
+      if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+      // saved only
+      if (showSavedOnly && !isSaved(j.id)) return false;
+      // keyword match
+      if (!matchesQuery(j, searchQuery)) return false;
+      return true;
+    });
+  }, [jobs, selectedCategories, remoteOnly, filterLevels, filterCompanies, showSavedOnly, searchQuery]);
 
   // Compute the set of jobs shown BEFORE applying salary filter
   const preSalaryFilteredJobs = jobs.filter(j => {
+    // category selection: if not all selected, restrict by selectedCategories
+    if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
+      if (!selectedCategories.includes(j.categoryKey)) return false;
+    }
     // remote
-    if (remoteOnly && !(/remote/i.test(j.working_type || ""))) return false;
-    // levels
-    if (filterLevels.length > 0 && !filterLevels.includes(j.job_level || "")) return false;
+    if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
+    // levels (use normalized jobLevel)
+    if (filterLevels.length > 0 && !filterLevels.includes(j.jobLevel || "")) return false;
+    // working type (use normalized workingType)
+    if (filterWorkingTypes.length > 0 && !filterWorkingTypes.includes(j.workingType || "")) return false;
     // companies
     if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
-    // negotiable toggle (exclude negotiable when off)
-    if (!includeNegotiable && j.negotiable) return false;
-    // saved only toggle
+    // saved only
     if (showSavedOnly && !isSaved(j.id)) return false;
     // keyword match
     if (!matchesQuery(j, searchQuery)) return false;
     return true;
   });
+
+  // For category capsules: compute counts while IGNORING the current category selection
+  // so that other categories remain clickable and show their true counts under other filters
+  const preCategoryFacetJobs = useMemo(() => {
+    return jobs.filter(j => {
+      // DO NOT filter by selectedCategories here
+      // remote
+      if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
+      // levels
+      if (filterLevels.length > 0 && !filterLevels.includes(j.jobLevel || "")) return false;
+      // working type
+      if (filterWorkingTypes.length > 0 && !filterWorkingTypes.includes(j.workingType || "")) return false;
+      // companies
+      if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+      // saved only
+      if (showSavedOnly && !isSaved(j.id)) return false;
+      // keyword match
+      if (!matchesQuery(j, searchQuery)) return false;
+      return true;
+    });
+  }, [jobs, remoteOnly, filterLevels, filterWorkingTypes, filterCompanies, showSavedOnly, searchQuery]);
+
+  const categoryCounts = useMemo(() => {
+    const init = Object.fromEntries(JOB_CATEGORIES.map(c => [c.key, 0]));
+    for (const j of preCategoryFacetJobs) {
+      if (j.categoryKey && Object.prototype.hasOwnProperty.call(init, j.categoryKey)) {
+        init[j.categoryKey] += 1;
+      }
+    }
+    return init;
+  }, [preCategoryFacetJobs]);
+  // Seniority facet based on jobs ignoring the level filter (keeps options visible for multi-select)
+  const allLevels = useMemo(
+    () => Array.from(new Set(preLevelFacetJobs.map(j => j.jobLevel).filter(Boolean))),
+    [preLevelFacetJobs]
+  );
+  // Working type facet based on jobs ignoring the working type filter
+  const allWorkingTypes = useMemo(
+    () => Array.from(new Set(preWorkingFacetJobs.map(j => j.workingType).filter(Boolean))),
+    [preWorkingFacetJobs]
+  );
+
+  // Category helpers for capsules
+  const allCategoryKeys = useMemo(() => JOB_CATEGORIES.map(c => c.key), []);
+  const allSelected = selectedCategories.length === allCategoryKeys.length;
 
   // Slider bounds based on shown jobs (excluding salary filter)
   const salaryPool = preSalaryFilteredJobs
@@ -493,14 +743,20 @@ export default function JobBoard() {
   // Helpers for search and save (moved above)
 
   let filteredJobs = jobs.filter(j => {
+    // category selection: if not all selected, restrict by selectedCategories
+    if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
+      if (!selectedCategories.includes(j.categoryKey)) return false;
+    }
     // salary: negotiable passes when included; otherwise enforce numeric range
     if (!(includeNegotiable && j.negotiable)) {
       if ((j.salary_mmk || 0) < salaryRange[0] || (j.salary_mmk || 0) > salaryRange[1]) return false;
     }
     // remote
-    if (remoteOnly && !(/remote/i.test(j.working_type || ""))) return false;
+    if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
     // levels
-    if (filterLevels.length > 0 && !filterLevels.includes(j.job_level || "")) return false;
+    if (filterLevels.length > 0 && !filterLevels.includes(j.jobLevel || "")) return false;
+    // working type
+    if (filterWorkingTypes.length > 0 && !filterWorkingTypes.includes(j.workingType || "")) return false;
     // companies
     if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
     // saved only toggle
@@ -597,17 +853,18 @@ export default function JobBoard() {
           
           {/* Company logo - 25% width */}
           <div className="flex-shrink-0 flex justify-end" style={{flexBasis: '25%'}}>
-            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center overflow-hidden">
+            <div className="w-12 h-12 rounded-lg overflow-hidden">
               <img
-                src={(job.logoUrl && !badLogoIds.has(job.id)) ? job.logoUrl : ORG_PLACEHOLDER_SVG}
+                src={(job.org_img && !badLogoIds.has(job.id)) ? job.org_img : ORG_PLACEHOLDER_SVG}
                 alt={job.org_name || 'Organization'}
-                className="w-10 h-10 rounded-lg object-cover"
+                className="w-full h-full object-cover"
                 onError={() => setBadLogoIds(prev => {
                   const next = new Set(prev);
                   next.add(job.id);
                   return next;
                 })}
                 referrerPolicy="no-referrer"
+                loading="lazy"
               />
             </div>
           </div>
@@ -666,9 +923,8 @@ export default function JobBoard() {
   
     if (!job) return null;
   
-    const applicantsText = `${job.applicants || 0} applicant${
-      (job.applicants || 0) === 1 ? "" : "s"
-    }`;
+    // Show required positions instead of applicants
+    const positionsText = `${Number.isFinite(Number(job.required_number)) ? Number(job.required_number) : 0} positions`;
   
     return (
       <AnimatePresence>
@@ -718,11 +974,12 @@ export default function JobBoard() {
                 {/* Header */}
                 <motion.div className="p-6 sm:p-8" layout="position">
                   <div className="flex items-center gap-4 sm:gap-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-black rounded-xl flex items-center justify-center">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden">
                       <img
-                        src={job.logoUrl}
-                        alt={job.org_name}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg"
+                        src={job.org_img || "https://via.placeholder.com/48?text=JB"}
+                        alt={job.org_name || "Organization"}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -749,7 +1006,7 @@ export default function JobBoard() {
                         <span>·</span>
                         <span>{new Date(job.posted_date).toLocaleDateString()}</span>
                         <span>·</span>
-                        <span>{applicantsText}</span>
+                        <span>{positionsText}</span>
                       </div>
                     </div>
                     <div className="ml-auto flex items-center gap-1">
@@ -838,8 +1095,22 @@ export default function JobBoard() {
                     >
                       Apply now
                     </button>
-                    <button className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-gray-300 bg-white text-gray-900 text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors">
-                      Save
+                    <button
+                      onClick={() => toggleSave(job.id)}
+                      aria-label={isSaved(job.id) ? 'Unsave job' : 'Save job'}
+                      title={isSaved(job.id) ? 'Unsave job' : 'Save job'}
+                      className="inline-flex items-center gap-2 justify-center px-5 py-2.5 rounded-full border border-gray-300 bg-white text-gray-900 text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      {isSaved(job.id) ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="text-gray-900">
+                          <path d="M5 3h14a2 2 0 0 1 2 2v16l-9-6-9 6V5a2 2 0 0 1 2-2z" />
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-900">
+                          <path d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                      <span>{isSaved(job.id) ? 'Unsave' : 'Save'}</span>
                     </button>
                   </div>
                 </motion.div>
@@ -867,6 +1138,56 @@ export default function JobBoard() {
                       </ul>
                     </div>
                   )}
+
+                  {/* Working Type */}
+                  {job?.workingType && job.workingType !== "[WorkingType]" && (
+                    <div className="mb-6">
+                      <h4 className="text-gray-900 font-semibold mb-2">Working type</h4>
+                      <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                        <li>{highlightText(job.workingType, queryTokens)}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Job Level */}
+                  {job?.jobLevel && job.jobLevel !== "[JobLevel]" && (
+                    <div className="mb-6">
+                      <h4 className="text-gray-900 font-semibold mb-2">Job level</h4>
+                      <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                        <li>{highlightText(job.jobLevel, queryTokens)}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Work Time */}
+                  {job?.work_time && (
+                    <div className="mb-6">
+                      <h4 className="text-gray-900 font-semibold mb-2">Working hours</h4>
+                      <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                        <li>{highlightText(job.work_time, queryTokens)}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Salary */}
+                  {(() => {
+                    const negotiable = !!job?.negotiable;
+                    const salaryText = negotiable
+                      ? 'Negotiable'
+                      : (typeof job?.salary_raw === 'string' && job.salary_raw.trim())
+                        ? job.salary_raw
+                        : (typeof job?.salary_mmk === 'number' && job.salary_mmk > 0)
+                          ? formatMMKNumber(job.salary_mmk)
+                          : '';
+                    return salaryText ? (
+                      <div className="mb-6">
+                        <h4 className="text-gray-900 font-semibold mb-2">Salary</h4>
+                        <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                          <li>{salaryText}</li>
+                        </ul>
+                      </div>
+                    ) : null;
+                  })()}
   
                   {/* Required Skills */}
                   {(job.tech_skill && job.tech_skill.length > 0) && (
@@ -997,17 +1318,17 @@ export default function JobBoard() {
               title={savedOpen ? 'Close saved jobs' : 'Open saved jobs'}
             >
               {savedOpen ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="text-white">
                   <path d="M5 3h14a2 2 0 0 1 2 2v16l-9-6-9 6V5a2 2 0 0 1 2-2z" />
                 </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
                   <path d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
-              {savedIds.length > 0 && (
+              {uniqueSavedJobIds.length > 0 && (
                 <span className={`absolute -top-1 -right-1 text-[10px] leading-none px-1.5 py-0.5 rounded-full ${savedOpen ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                  {savedIds.length}
+                  {uniqueSavedJobIds.length}
                 </span>
               )}
             </button>
@@ -1024,49 +1345,67 @@ export default function JobBoard() {
                   </button>
                 </div>
                 <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-hide-scrollbar="true" style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
-                  {(() => { const items = jobs.filter(j => savedIds.includes(j.id)).slice(0,3); return items.length === 0 ? (
-                    <div className="text-sm text-slate-500 text-center py-6">No saved jobs</div>
-                  ) : items.map((job) => (
-                    <div
-                      key={job.id}
-                      className="w-full border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-slate-50"
-                      onClick={() => { setShowSavedOnly(true); setSavedOpen(false); }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowSavedOnly(true); setSavedOpen(false); } }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          <img
-                            src={(job.logoUrl && !badLogoIds.has(job.id)) ? job.logoUrl : ORG_PLACEHOLDER_SVG}
-                            alt={job.org_name || 'Organization'}
-                            className="w-7 h-7 rounded object-cover"
-                            onError={() => setBadLogoIds(prev => {
-                              const next = new Set(prev);
-                              next.add(job.id);
-                              return next;
-                            })}
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs text-slate-600 font-medium truncate">{job.org_name}</div>
-                          <div className="text-sm text-slate-900 font-semibold truncate">{job.job_title}</div>
-                        </div>
+                  {savedJobsLoading ? (
+                    <div className="text-sm text-slate-500 text-center py-6">Loading...</div>
+                  ) : (() => {
+                    // Build items from deduped ids to avoid duplicate keys and init order issues
+                    const items = uniqueSavedJobIds.map((savedId) => {
+                      const jobFromList = Array.isArray(jobs) ? jobs.find(j => String(j.id) === String(savedId)) : null;
+                      const jobFromSaved = Array.isArray(savedJobs)
+                        ? savedJobs.find(sj => String(sj?.id ?? sj?.jobPost_obj_id ?? sj?._id) === String(savedId))
+                        : null;
+                      const job = jobFromList || jobFromSaved || { id: savedId };
+                      return { key: savedId, job };
+                    });
+                    return items.length === 0 ? (
+                      <div className="text-sm text-slate-500 text-center py-6">No saved jobs</div>
+                    ) : items.map(({ key, job }) => (
+                      <div
+                        key={key}
+                        className="w-full border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-slate-50"
+                        onClick={() => { openJobModal(job); setSavedOpen(false); }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { openJobModal(job); setSavedOpen(false); } }}
+                      >
                         <div className="flex items-center gap-3">
-                          <button
-                            className="text-xs text-slate-500 hover:text-slate-700"
-                            onClick={(e)=>{ e.stopPropagation(); toggleSave(job.id); }}
-                          >
-                            Unsave
-                          </button>
+                          <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <img
+                              src={(job.logoUrl && !badLogoIds.has(key)) ? job.logoUrl : ORG_PLACEHOLDER_SVG}
+                              alt={job.org_name || '[Org]'}
+                              className="w-7 h-7 rounded object-cover"
+                              onError={() => setBadLogoIds(prev => { const next = new Set(prev); next.add(key); return next; })}
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs text-slate-600 font-medium truncate">{job.org_name || '[Org]'}</div>
+                            <div className="text-sm text-slate-900 font-semibold truncate">{job.job_title || '[Job Title]'}</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
+                              onClick={(e)=>{ e.stopPropagation(); toggleSave(key); }}
+                            >
+                              Unsave
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )); })()}
+                    ));
+                  })()}
                 </div>
               </div>
             )}
+          </div>
+          {/* Job Tracker moved next to Saved button with animated gradient border */}
+          <div className="hidden md:block rainbow-wrap">
+            <Link
+              href="/job-portal/job-tracker"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-zinc-700 text-sm font-medium hover:bg-slate-50 active:bg-slate-100 transition relative z-[1]"
+            >
+              <span>Job Tracker</span>
+            </Link>
           </div>
           {mounted && jwt && user ? (
             <div className="relative mr-8 order-first" ref={dropdownRef} key={profileKey}>
@@ -1104,6 +1443,48 @@ export default function JobBoard() {
           {/* You can add a mobile menu here if needed */}
         </div>
       </nav>
+      <style jsx global>{`
+        .rainbow-wrap {
+          position: relative;
+          border-radius: 9999px; /* full */
+          padding: 2px; /* border thickness */
+          isolation: isolate; /* contain z-index */
+        }
+        .rainbow-wrap::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: conic-gradient(from var(--angle),
+            #4f46e5, /* indigo-600 */
+            #6366f1, /* indigo-500 */
+            #3b82f6, /* blue-500 */
+            #22d3ee, /* cyan-400 */
+            #4f46e5  /* back to indigo */
+          );
+          animation: spin-conic 4s linear infinite;
+          filter: none;
+          z-index: 0;
+        }
+        /* soft glow */
+        .rainbow-wrap::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: conic-gradient(from var(--angle),
+            #4f46e5cc, #6366f1cc, #3b82f6cc, #22d3eecc, #4f46e5cc
+          );
+          animation: spin-conic 4s linear infinite;
+          filter: blur(8px);
+          opacity: .65;
+          z-index: -1; /* keep glow behind */
+        }
+        @keyframes spin-conic {
+          from { --angle: 0deg; }
+          to { --angle: 360deg; }
+        }
+      `}</style>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
       <div className="w-full h-screen bg-white overflow-hidden flex flex-col pt-16" style={{fontFamily: 'Inter, sans-serif', fontWeight: 400}}>
 
@@ -1205,73 +1586,75 @@ export default function JobBoard() {
               </AnimatePresence>
             </div>
 
-            {/* Job categories (multiple) */}
-            <div className="pb-5 mb-5 border-b border-slate-200">
-              <button
-                type="button"
-                onClick={() => toggleFilterOpen('category')}
-                className="w-full flex items-start justify-between text-slate-700 mb-1"
-                aria-expanded={openFilters.category}
-              >
-                <div className="flex-1 text-left">
-                  <div className="text-slate-700 text-base font-semibold">Job category</div>
-                  <div className="text-xs text-slate-500 text-left">
-                    {selectedCategories.length
-                      ? `${selectedCategories.length} selected`
-                      : 'None selected'}
-                  </div>
-                </div>
-                <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.category ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
-              </button>
-              <AnimatePresence initial={false}>
-                {openFilters.category && (
-                  <motion.div
-                    key="category-body"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: [0.22, 0.61, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-2">
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="text-xs text-slate-500">Select categories</span>
-                        {selectedCategories.length === JOB_CATEGORIES.length ? (
-                          <button
-                            type="button"
-                            className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
-                            onClick={() => setSelectedCategories([])}
-                          >
-                            Uncheck all
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
-                            onClick={() => setSelectedCategories(JOB_CATEGORIES.map(c => c.key))}
-                          >
-                            Check all
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        {JOB_CATEGORIES.map((c) => (
-                          <label key={c.key} className="flex items-center gap-3 text-sm text-slate-700">
-                            <input
-                              type="checkbox"
-                              className="accent-indigo-700 rounded"
-                              checked={selectedCategories.includes(c.key)}
-                              onChange={() => toggleInArray(selectedCategories, c.key, setSelectedCategories)}
-                            />
-                            <span>{c.label}</span>
-                          </label>
-                        ))}
-                      </div>
+            {/* Job categories (legacy checkboxes) - hidden in favor of capsule bar */}
+            {false && (
+              <div className="pb-5 mb-5 border-b border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => toggleFilterOpen('category')}
+                  className="w-full flex items-start justify-between text-slate-700 mb-1"
+                  aria-expanded={openFilters.category}
+                >
+                  <div className="flex-1 text-left">
+                    <div className="text-slate-700 text-base font-semibold">Job category</div>
+                    <div className="text-xs text-slate-500 text-left">
+                      {selectedCategories.length
+                        ? `${selectedCategories.length} selected`
+                        : 'None selected'}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  </div>
+                  <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.category ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
+                </button>
+                <AnimatePresence initial={false}>
+                  {openFilters.category && (
+                    <motion.div
+                      key="category-body"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.22, 0.61, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-2">
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="text-xs text-slate-500">Select categories</span>
+                          {selectedCategories.length === JOB_CATEGORIES.length ? (
+                            <button
+                              type="button"
+                              className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
+                              onClick={() => setSelectedCategories([])}
+                            >
+                              Uncheck all
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
+                              onClick={() => setSelectedCategories(JOB_CATEGORIES.map(c => c.key))}
+                            >
+                              Check all
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {JOB_CATEGORIES.map((c) => (
+                            <label key={c.key} className="flex items-center gap-3 text-sm text-slate-700">
+                              <input
+                                type="checkbox"
+                                className="accent-indigo-700 rounded"
+                                checked={selectedCategories.includes(c.key)}
+                                onChange={() => toggleInArray(selectedCategories, c.key, setSelectedCategories)}
+                              />
+                              <span>{c.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             {/* Seniority Level (Dropdown) */}
             <div className="pb-5 mb-5 border-b border-slate-200">
@@ -1324,8 +1707,8 @@ export default function JobBoard() {
                 aria-expanded={openFilters.work}
               >
                 <div className="flex-1 text-left">
-                  <div className="text-slate-700 text-base font-semibold">Work setup</div>
-                  <div className="text-xs text-slate-500 text-left">{remoteOnly ? 'Remote only' : 'Any'}</div>
+                  <div className="text-slate-700 text-base font-semibold">Work Type</div>
+                  <div className="text-xs text-slate-500 text-left">{filterWorkingTypes.length ? `${filterWorkingTypes.length} selected` : 'Any'}</div>
                 </div>
                 <svg className={`w-6 h-6 text-slate-500 transition-transform ${openFilters.work ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
               </button>
@@ -1339,16 +1722,18 @@ export default function JobBoard() {
                     transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-2">
-                      <label className="flex items-center gap-3 text-sm text-slate-700">
-                        <input
-                          type="checkbox"
-                          className="accent-indigo-700 rounded"
-                          checked={remoteOnly}
-                          onChange={(e) => setRemoteOnly(e.target.checked)}
-                        />
-                        <span>Remote only</span>
-                      </label>
+                    <div className="space-y-2 mt-2">
+                      {allWorkingTypes.map((t) => (
+                        <label key={t} className="flex items-center gap-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            className="accent-indigo-700 rounded"
+                            checked={filterWorkingTypes.includes(t)}
+                            onChange={() => toggleInArray(filterWorkingTypes, t, setFilterWorkingTypes)}
+                          />
+                          <span>{t}</span>
+                        </label>
+                      ))}
                     </div>
                   </motion.div>
                 )}
@@ -1403,7 +1788,7 @@ export default function JobBoard() {
         {/* Job Listings */}
         <section className="flex-1 min-w-0">
           <div className="flex items-center mb-6 ml-4 gap-4">
-            <h1 className="text-gray-800 text-3xl font-extrabold">Recommended jobs</h1>
+            <h1 className="text-gray-800 text-3xl font-extrabold">Vacant Positions</h1>
             <div className="border border-[#BCB6AD] rounded-[25px] text-[#5F5F5F] text-sm font-bold py-2 px-4">{filteredJobs.length}</div>
             <div className="ml-auto flex items-center gap-2">
               <span className="text-[#BBB] text-sm font-normal">Sort by:</span>
@@ -1411,9 +1796,66 @@ export default function JobBoard() {
             </div>
           </div>
 
+          {/* Category Capsules Bar */}
+          <div className="mb-4 ml-4 pr-4">
+            <div
+              ref={capsulesRef}
+              onMouseDown={handleCapsMouseDown}
+              onMouseMove={handleCapsMouseMove}
+              onMouseUp={handleCapsMouseUp}
+              onMouseLeave={handleCapsMouseLeave}
+              onWheel={handleCapsWheel}
+              className={`w-full min-w-0 flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden pb-1 select-none ${isCapsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {/* All capsule */}
+              <button
+                type="button"
+                onClick={() => setSelectedCategories(allCategoryKeys)}
+                className={
+                  "whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors " +
+                  (allSelected
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-800 border-gray-300 hover:border-gray-500")
+                }
+                aria-pressed={allSelected}
+                title="Show all categories"
+              >
+                All
+              </button>
+
+              {JOB_CATEGORIES.map(c => {
+                const count = categoryCounts[c.key] || 0;
+                const isActive = !allSelected && selectedCategories.length === 1 && selectedCategories[0] === c.key;
+                const isDisabled = count === 0;
+                return (
+                  <button
+                    key={c.key}
+                    type="button"
+                    onClick={() => !isDisabled && setSelectedCategories([c.key])}
+                    disabled={isDisabled}
+                    aria-disabled={isDisabled}
+                    aria-pressed={isActive}
+                    className={
+                      "whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors " +
+                      (isDisabled
+                        ? "bg-white text-gray-400 border-gray-200 cursor-not-allowed"
+                        : isActive
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-gray-800 border-gray-300 hover:border-gray-500")
+                    }
+                    title={isDisabled ? `${c.label} (no jobs)` : c.label}
+                  >
+                    {c.label} <span className="opacity-70 font-normal">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Job Cards Container */}
           <div
-            className="h-[calc(100vh-160px)] pt-4 pb-12 overflow-y-scroll"
+            className="h-[calc(100vh-200px)] pt-4 pb-12 overflow-y-scroll"
             data-hide-scrollbar="true"
             style={{ overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
