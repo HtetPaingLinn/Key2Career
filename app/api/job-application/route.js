@@ -71,3 +71,36 @@ export async function POST(req) {
     );
   }
 }
+
+// GET /api/job-application?email={email}
+// Returns applications belonging to the specified email only
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const rawEmail = searchParams.get('email');
+    if (!rawEmail) {
+      return NextResponse.json(
+        { success: false, error: 'email is required' },
+        { status: 400 }
+      );
+    }
+
+    const email = String(rawEmail).trim().toLowerCase();
+    const { db } = await connectToDatabase();
+    const collection = db.collection('application');
+
+    const apps = await collection
+      .find({ email })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .toArray();
+
+    return NextResponse.json({ success: true, applications: apps });
+  } catch (error) {
+    console.error('Failed to fetch applications:', error);
+    return NextResponse.json(
+      { success: false, error: error?.message || 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
