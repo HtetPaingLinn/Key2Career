@@ -16,6 +16,19 @@ export default function JobTrackerPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailJob, setDetailJob] = useState(null);
 
+  // Notifications dropdown state and sample data (mirror Job Portal)
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifDropdownRef = useRef(null);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'notif-1',
+      org_name: 'Acme Corp',
+      job_title: 'Frontend Developer',
+      org_img: 'https://via.placeholder.com/48?text=AC',
+      message: 'Acme Corp offered you this position',
+    },
+  ]);
+
   function parseJwt(token) {
     if (!token) return null;
     try {
@@ -67,7 +80,7 @@ export default function JobTrackerPage() {
               interview: [],
               offer: [],
               accepted: [],
-              rejected: [],
+              rejected: []
             };
 
             const pick = (obj, keys) => keys.find(k => obj && obj[k] != null && obj[k] !== '')
@@ -137,6 +150,21 @@ export default function JobTrackerPage() {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdown]);
+
+  // Close notifications dropdown on outside click
+  useEffect(() => {
+    function handleNotifOutside(event) {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) {
+      document.addEventListener('mousedown', handleNotifOutside);
+    } else {
+      document.removeEventListener('mousedown', handleNotifOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleNotifOutside);
+  }, [notifOpen]);
 
   let jwt = null; let user = null;
   if (typeof window !== 'undefined') {
@@ -576,6 +604,86 @@ export default function JobTrackerPage() {
               <NavbarButton variant="primary" href="/signup">Sign up for free</NavbarButton>
             </>
           )}
+          {/* Notifications bell (mirror Job Portal) */}
+          <div className="relative" ref={notifDropdownRef}>
+            <button
+              className={`relative inline-flex items-center justify-center w-10 h-10 rounded-full border transition-colors ${notifOpen ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}
+              onClick={() => setNotifOpen(v => !v)}
+              aria-label="Notifications"
+            >
+              {/* bell icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className={`w-5 h-5 ${notifOpen ? 'text-indigo-600' : 'text-slate-600'}`}>
+                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6 6 0 1 0-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] font-semibold">
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+            {notifOpen && (
+              <div className="absolute right-0 mt-3 w-[520px] max-w-[85vw] bg-white rounded-xl shadow-2xl border border-slate-200 z-50">
+                <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+                  <div className="text-sm font-semibold text-slate-800">Notifications</div>
+                  {notifications.length > 0 && (
+                    <button
+                      className="text-xs text-slate-500 hover:text-slate-700"
+                      onClick={() => setNotifications([])}
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[360px] overflow-y-auto" data-hide-scrollbar="true">
+                  {notifications.length === 0 ? (
+                    <div className="p-6 text-sm text-slate-500 text-center">No notifications</div>
+                  ) : (
+                    <ul className="divide-y divide-slate-100">
+                      {notifications.map(n => (
+                        <li key={n.id} className="p-3 hover:bg-slate-50/60 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100">
+                              <img src={n.org_img} alt={n.org_name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs text-slate-600 font-medium truncate">{n.org_name || '[Org]'}</div>
+                              <div className="text-sm text-slate-900 font-semibold truncate">{n.job_title || '[Job Title]'}</div>
+                              {n.message && (
+                                <div className="text-xs text-slate-500 mt-0.5 truncate">{n.message}</div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                className="px-2.5 py-1.5 text-xs rounded-md bg-green-100 text-green-700 hover:bg-green-200"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNotifications(prev => prev.filter(x => x.id !== n.id));
+                                  console.log('Accepted notification for', n.job_title);
+                                }}
+                              >
+                                Accept
+                              </button>
+                              <button
+                                className="px-2.5 py-1.5 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNotifications(prev => prev.filter(x => x.id !== n.id));
+                                  console.log('Rejected notification for', n.job_title);
+                                }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           {/* Job Portal button with animated gradient border (to go back) */}
           <div className="hidden md:block rainbow-wrap">
             <Link

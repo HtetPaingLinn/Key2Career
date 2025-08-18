@@ -173,14 +173,17 @@ export default function AdminLoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Email"
                       required
-                      className="bg-transparent border-none outline-none text-white placeholder-[#898889] w-full"
+                      className="bg-transparent border-none outline-none text-white !text-white placeholder-[#898889] w-full"
                       style={{
-                                                  fontFamily: 'Inter, -apple-system, Roboto, Helvetica, sans-serif',
-                          fontSize: '18px',
-                          fontWeight: '500',
-                          lineHeight: '24px',
-                          letterSpacing: '0.5px',
-                          outline: 'none'
+                        fontFamily: 'Inter, -apple-system, Roboto, Helvetica, sans-serif',
+                        fontSize: '18px',
+                        fontWeight: '500',
+                        lineHeight: '24px',
+                        letterSpacing: '0.5px',
+                        outline: 'none',
+                        color: '#FFFFFF',
+                        WebkitTextFillColor: '#FFFFFF',
+                        caretColor: '#FFFFFF'
                       }}
                     />
                   </div>
@@ -211,14 +214,17 @@ export default function AdminLoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Password"
                       required
-                      className="bg-transparent border-none outline-none text-white placeholder-[#898889] w-full"
+                      className="bg-transparent border-none outline-none text-white !text-white placeholder-[#898889] w-full"
                       style={{
-                                                  fontFamily: 'Inter, -apple-system, Roboto, Helvetica, sans-serif',
-                          fontSize: '18px',
-                          fontWeight: '500',
-                          lineHeight: '24px',
-                          letterSpacing: '0.5px',
-                          outline: 'none'
+                        fontFamily: 'Inter, -apple-system, Roboto, Helvetica, sans-serif',
+                        fontSize: '18px',
+                        fontWeight: '500',
+                        lineHeight: '24px',
+                        letterSpacing: '0.5px',
+                        outline: 'none',
+                        color: '#FFFFFF',
+                        WebkitTextFillColor: '#FFFFFF',
+                        caretColor: '#FFFFFF'
                       }}
                     />
                   </div>
@@ -261,7 +267,7 @@ export default function AdminLoginPage() {
                   </div>
                 </button>
 
-                {/* Supporting Text */}
+                {/* Supporting Text
                 <div
                   className="flex w-full items-start gap-2 mt-1"
                   style={{
@@ -286,7 +292,7 @@ export default function AdminLoginPage() {
                       Create one now!
                     </Link>
                   </p>
-                </div>
+                </div> */}
               </div>
             </form>
 

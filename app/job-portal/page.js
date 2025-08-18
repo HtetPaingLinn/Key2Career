@@ -44,6 +44,18 @@ export default function JobBoard() {
   // Server-backed saved jobs
   const [savedJobs, setSavedJobs] = useState([]);
   const [savedJobsLoading, setSavedJobsLoading] = useState(false);
+  // Notifications dropdown state and sample data
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifDropdownRef = useRef(null);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'notif-1',
+      org_name: 'Acme Corp',
+      job_title: 'Frontend Developer',
+      org_img: 'https://via.placeholder.com/48?text=AC',
+      message: 'Acme Corp offered you this position',
+    },
+  ]);
   // Unique saved job IDs (dedup by id) - independent of `jobs` to avoid order/init issues
   const uniqueSavedJobIds = useMemo(() => {
     const seen = new Set();
@@ -106,6 +118,22 @@ export default function JobBoard() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [savedOpen]);
+  // Close notifications dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [notifOpen]);
   // Search and saved jobs state
   const [searchQuery, setSearchQuery] = useState(""); // debounced/effective query
   const [searchQueryInput, setSearchQueryInput] = useState(""); // raw input
@@ -201,6 +229,8 @@ export default function JobBoard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Cache of org profiles by email: { [email]: { name, image_url, about, email } }
+  const [orgProfiles, setOrgProfiles] = useState({});
 
   // Job categories mapped to API endpoints
   const JOB_CATEGORIES = [
@@ -296,8 +326,8 @@ export default function JobBoard() {
             // Original API fields (pass-through)
             id: d.id ?? `${company}-${d.job_title || 'job'}-${idx}`,
             orgEmail: (typeof d.orgEmail === 'string' && d.orgEmail.trim().length > 0) ? d.orgEmail.trim() : "[OrgEmail]",
-            org_name: (typeof d.org_name === 'string' && d.org_name.trim().length > 0) ? d.org_name.trim() : "[OrgName]",
-            org_img: (typeof d.org_img === 'string' && d.org_img.trim().length > 0) ? d.org_img.trim() : "https://via.placeholder.com/48?text=JB",
+            // org_name: (typeof d.org_name === 'string' && d.org_name.trim().length > 0) ? d.org_name.trim() : "[OrgName]",
+            // org_img: (typeof d.org_img === 'string' && d.org_img.trim().length > 0) ? d.org_img.trim() : "https://via.placeholder.com/48?text=JB",
             job_title: (typeof d.job_title === 'string' && d.job_title.trim().length > 0) ? d.job_title.trim() : "[JobTitle]",
             job_field: safeArray(d.job_field),
             jobLevel: (typeof d.jobLevel === 'string' && d.jobLevel.trim().length > 0) ? d.jobLevel.trim() : "[JobLevel]",
@@ -356,13 +386,72 @@ export default function JobBoard() {
     return () => { cancelled = true; };
   }, []);
 
-  // Derived facets from jobs
-  const allCompanies = Array.from(new Set(jobs.map(j => j.org_name).filter(Boolean)));
+  // Fetch org profiles for unique emails once jobs are loaded
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!Array.isArray(jobs) || jobs.length === 0) return;
+        const token = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+        if (!token) return; // cannot call protected endpoint without JWT
+        const emails = Array.from(new Set(
+          jobs.map(j => j.orgEmail).filter(e => e && !/^\[.*\]$/.test(String(e)))
+        ));
+        const missing = emails.filter(e => !(e in orgProfiles));
+        if (missing.length === 0) return;
+        const results = await Promise.all(missing.map(async (email) => {
+          try {
+            const r = await fetch(`http://localhost:8080/api/common/profileData?email=${encodeURIComponent(email)}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!r.ok) throw new Error('profile fetch failed');
+            const data = await r.json();
+            return [email, data];
+          } catch (e) {
+            console.warn('profileData fetch failed for', email, e);
+            return [email, null];
+          }
+        }));
+        if (cancelled) return;
+        setOrgProfiles(prev => {
+          const next = { ...prev };
+          for (const [email, data] of results) {
+            if (data && (data.name || data.image_url)) next[email] = data;
+          }
+          return next;
+        });
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [jobs, orgProfiles]);
 
-  // Helpers for search and save (must be before preSalaryFilteredJobs)
-  const normalizeText = (s) => (s || "").toString().toLowerCase();
-  const tokenize = (q) => normalizeText(q).split(/[^a-z0-9+#.]+/i).filter(Boolean);
-  // Highlighting helpers (use across card and modal)
+  // Derived facets from jobs
+  const getOrgDisplayName = (job) => {
+    try {
+      const p = orgProfiles[job.orgEmail];
+      const name = (p?.name && p.name.trim().length > 0) ? p.name.trim() : '';
+      return name;
+    } catch {
+      return '';
+    }
+  };
+  const allCompanies = Array.from(new Set(jobs.map(j => getOrgDisplayName(j)).filter(Boolean)));
+  // Text helpers for search and highlighting
+  function normalizeText(s) {
+    try {
+      return String(s ?? '')
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '') // strip diacritics
+        .replace(/[^a-z0-9+#.]+/gi, ' ') // keep letters, digits, + # .
+        .trim();
+    } catch {
+      return '';
+    }
+  }
+  function tokenize(s) {
+    return normalizeText(s).split(/[^a-z0-9+#.]+/i).filter(Boolean);
+  }
   const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const queryTokens = useMemo(() => tokenize(searchQuery), [searchQuery]);
   const highlightText = (text, tokens) => {
@@ -381,7 +470,7 @@ export default function JobBoard() {
     // Combine key searchable fields into one normalized blob
     const parts = [
       job.job_title,
-      job.org_name,
+      getOrgDisplayName(job),
       ...(job.tags || []),
       ...(job.tech_skill || []),
       ...(job.responsibilities || []),
@@ -430,7 +519,7 @@ export default function JobBoard() {
     if (!tokens.length) return 0;
     // Field weights
     const title = normalizeText(job.job_title);
-    const company = normalizeText(job.org_name);
+    const company = normalizeText(getOrgDisplayName(job));
     const tags = (job.tags || []).map(normalizeText);
     const skills = (job.tech_skill || []).map(normalizeText);
     const resp = (job.responsibilities || []).map(normalizeText);
@@ -569,6 +658,8 @@ export default function JobBoard() {
   // For the Seniority facet: compute available levels from jobs ignoring the current level filter
   const preLevelFacetJobs = useMemo(() => {
     return jobs.filter(j => {
+      // exclude overdue jobs
+      if (isOverdue(j.due_date)) return false;
       // category selection: if not all selected, restrict by selectedCategories
       if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
         if (!selectedCategories.includes(j.categoryKey)) return false;
@@ -577,7 +668,7 @@ export default function JobBoard() {
       if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
       // NOTE: do NOT filter by filterLevels here, so options don't disappear when checked
       // companies
-      if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+      if (filterCompanies.length > 0 && !filterCompanies.includes(getOrgDisplayName(j))) return false;
       // saved only
       if (showSavedOnly && !isSaved(j.id)) return false;
       // keyword match
@@ -589,6 +680,8 @@ export default function JobBoard() {
   // For the Working Type facet: compute options ignoring the current working type filter
   const preWorkingFacetJobs = useMemo(() => {
     return jobs.filter(j => {
+      // exclude overdue jobs
+      if (isOverdue(j.due_date)) return false;
       // category selection
       if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
         if (!selectedCategories.includes(j.categoryKey)) return false;
@@ -599,7 +692,7 @@ export default function JobBoard() {
       // levels still apply
       if (filterLevels.length > 0 && !filterLevels.includes(j.jobLevel || "")) return false;
       // companies
-      if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+      if (filterCompanies.length > 0 && !filterCompanies.includes(getOrgDisplayName(j))) return false;
       // saved only
       if (showSavedOnly && !isSaved(j.id)) return false;
       // keyword match
@@ -610,6 +703,8 @@ export default function JobBoard() {
 
   // Compute the set of jobs shown BEFORE applying salary filter
   const preSalaryFilteredJobs = jobs.filter(j => {
+    // exclude overdue jobs
+    if (isOverdue(j.due_date)) return false;
     // category selection: if not all selected, restrict by selectedCategories
     if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
       if (!selectedCategories.includes(j.categoryKey)) return false;
@@ -621,7 +716,7 @@ export default function JobBoard() {
     // working type (use normalized workingType)
     if (filterWorkingTypes.length > 0 && !filterWorkingTypes.includes(j.workingType || "")) return false;
     // companies
-    if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+    if (filterCompanies.length > 0 && !filterCompanies.includes(getOrgDisplayName(j))) return false;
     // saved only
     if (showSavedOnly && !isSaved(j.id)) return false;
     // keyword match
@@ -633,6 +728,8 @@ export default function JobBoard() {
   // so that other categories remain clickable and show their true counts under other filters
   const preCategoryFacetJobs = useMemo(() => {
     return jobs.filter(j => {
+      // exclude overdue jobs
+      if (isOverdue(j.due_date)) return false;
       // DO NOT filter by selectedCategories here
       // remote
       if (remoteOnly && !(/remote/i.test((j.working_type || j.workingType || "")))) return false;
@@ -641,7 +738,7 @@ export default function JobBoard() {
       // working type
       if (filterWorkingTypes.length > 0 && !filterWorkingTypes.includes(j.workingType || "")) return false;
       // companies
-      if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+      if (filterCompanies.length > 0 && !filterCompanies.includes(getOrgDisplayName(j))) return false;
       // saved only
       if (showSavedOnly && !isSaved(j.id)) return false;
       // keyword match
@@ -743,6 +840,8 @@ export default function JobBoard() {
   // Helpers for search and save (moved above)
 
   let filteredJobs = jobs.filter(j => {
+    // exclude overdue jobs
+    if (isOverdue(j.due_date)) return false;
     // category selection: if not all selected, restrict by selectedCategories
     if (selectedCategories.length && selectedCategories.length !== JOB_CATEGORIES.length) {
       if (!selectedCategories.includes(j.categoryKey)) return false;
@@ -758,7 +857,7 @@ export default function JobBoard() {
     // working type
     if (filterWorkingTypes.length > 0 && !filterWorkingTypes.includes(j.workingType || "")) return false;
     // companies
-    if (filterCompanies.length > 0 && !filterCompanies.includes(j.org_name)) return false;
+    if (filterCompanies.length > 0 && !filterCompanies.includes(getOrgDisplayName(j))) return false;
     // saved only toggle
     if (showSavedOnly && !isSaved(j.id)) return false;
     // keyword match
@@ -789,6 +888,39 @@ export default function JobBoard() {
       return "";
     }
   };
+
+  // Utility: format date-time string into a human-readable date and time
+  const formatDateTime = (v) => {
+    try {
+      if (!v) return "";
+      const s = String(v);
+      // If it's our placeholder, return as-is
+      if (s.startsWith("[") && s.endsWith("]")) return s;
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return s;
+      return d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true
+      });
+    } catch {
+      return String(v);
+    }
+  };
+
+  // Utility: check if a due date is in the past (overdue)
+  function isOverdue(v) {
+    try {
+      if (!v) return false;
+      const s = String(v).trim();
+      // Treat placeholders like [DueDate] as no due date
+      if (!s || (s.startsWith("[") && s.endsWith("]"))) return false;
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return false;
+      return d.getTime() < Date.now();
+    } catch {
+      return false;
+    }
+  }
 
   // Utility: format a number like 3500000 to 3,500,000 and append MMK.
   const formatMMKNumber = (value) => {
@@ -831,7 +963,13 @@ export default function JobBoard() {
         </div>
 
         {/* Company name */}
-        <div className="text-gray-900 text-sm font-semibold mb-2">{highlightText(job.org_name, queryTokens)}</div>
+        {(() => {
+          const p = orgProfiles[job.orgEmail];
+          const displayName = (p?.name && p.name.trim().length > 0) ? p.name : job.org_name;
+          return (
+            <div className="text-gray-900 text-sm font-semibold mb-2">{highlightText(displayName, queryTokens)}</div>
+          );
+        })()}
 
         {/* Job title and logo row */}
         <div className="flex items-center justify-between mb-6">
@@ -855,8 +993,8 @@ export default function JobBoard() {
           <div className="flex-shrink-0 flex justify-end" style={{flexBasis: '25%'}}>
             <div className="w-12 h-12 rounded-lg overflow-hidden">
               <img
-                src={(job.org_img && !badLogoIds.has(job.id)) ? job.org_img : ORG_PLACEHOLDER_SVG}
-                alt={job.org_name || 'Organization'}
+                src={(() => { const p = orgProfiles[job.orgEmail]; const img = (p?.image_url && p.image_url.trim().length>0) ? p.image_url : null; return (img && !badLogoIds.has(job.id)) ? img : ORG_PLACEHOLDER_SVG; })()}
+                alt={(orgProfiles[job.orgEmail]?.name || 'Organization')}
                 className="w-full h-full object-cover"
                 onError={() => setBadLogoIds(prev => {
                   const next = new Set(prev);
@@ -975,17 +1113,14 @@ export default function JobBoard() {
                 <motion.div className="p-6 sm:p-8" layout="position">
                   <div className="flex items-center gap-4 sm:gap-6">
                     <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden">
-                      <img
-                        src={job.org_img || "https://via.placeholder.com/48?text=JB"}
-                        alt={job.org_name || "Organization"}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                      {(() => { const p = orgProfiles[job.orgEmail]; const img = (p?.image_url && p.image_url.trim().length>0) ? p.image_url : null; return (
+                        <img src={img || ORG_PLACEHOLDER_SVG} alt={(p?.name || "Organization")} className="w-full h-full object-cover" loading="lazy" />
+                      ); })()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
-                          {highlightText(job.org_name, queryTokens)}
+                          {(() => { const p = orgProfiles[job.orgEmail]; const displayName = (p?.name && p.name.trim().length>0) ? p.name : job.org_name; return highlightText(displayName, queryTokens); })()}
                         </h2>
                         <span className="text-gray-300">•</span>
                         <p
@@ -1007,6 +1142,9 @@ export default function JobBoard() {
                         <span>{new Date(job.posted_date).toLocaleDateString()}</span>
                         <span>·</span>
                         <span>{positionsText}</span>
+                      </div>
+                      <div className="mt-1 text-sm text-red-600">
+                        <span className="font-semibold">Due date:</span> {formatDateTime(job.due_date)}
                       </div>
                     </div>
                     <div className="ml-auto flex items-center gap-1">
@@ -1394,6 +1532,95 @@ export default function JobBoard() {
                       </div>
                     ));
                   })()}
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Notifications dropdown trigger */}
+          <div className="relative" ref={notifDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setNotifOpen((v) => !v)}
+              className={`relative w-10 h-10 rounded-full flex items-center justify-center border ${notifOpen ? 'bg-black text-white border-black' : 'bg-white text-black border-slate-300'} hover:shadow-sm`}
+              aria-expanded={notifOpen}
+              aria-label={notifOpen ? 'Close notifications' : 'Open notifications'}
+              title={notifOpen ? 'Close notifications' : 'Open notifications'}
+            >
+              {/* Bell icon */}
+              {notifOpen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                  <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Zm6-6v-5a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                  <path d="M18 8a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2V8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 20a2 2 0 0 1-4 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+              {notifications.length > 0 && (
+                <span className={`absolute -top-1 -right-1 text-[10px] leading-none px-1.5 py-0.5 rounded-full ${notifOpen ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 mt-3 w-[520px] max-w-[90vw] bg-white border border-gray-200 rounded-2xl shadow-xl p-4 z-[60]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-slate-900 font-semibold">Notifications</div>
+                  <button
+                    className="text-xs font-medium text-indigo-700 hover:text-indigo-900"
+                    onClick={() => setNotifOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-hide-scrollbar="true" style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
+                  {notifications.length === 0 ? (
+                    <div className="text-sm text-slate-500 text-center py-6">No notifications</div>
+                  ) : notifications.map((n) => (
+                    <div key={n.id} className="w-full border border-slate-200 rounded-xl p-3 bg-white">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <img
+                            src={n.org_img || ORG_PLACEHOLDER_SVG}
+                            alt={n.org_name || '[Org]'}
+                            className="w-7 h-7 rounded object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs text-slate-600 font-medium truncate">{n.org_name || '[Org]'}</div>
+                          <div className="text-sm text-slate-900 font-semibold truncate">{n.job_title || '[Job Title]'}</div>
+                          {n.message && (
+                            <div className="text-xs text-slate-500 mt-0.5 truncate">{n.message}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="px-2.5 py-1.5 text-xs rounded-md bg-green-100 text-green-700 hover:bg-green-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNotifications(prev => prev.filter(x => x.id !== n.id));
+                              console.log('Accepted notification for', n.job_title);
+                            }}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="px-2.5 py-1.5 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNotifications(prev => prev.filter(x => x.id !== n.id));
+                              console.log('Rejected notification for', n.job_title);
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

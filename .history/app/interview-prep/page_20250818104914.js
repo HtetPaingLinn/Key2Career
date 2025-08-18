@@ -3,9 +3,6 @@ import React, { useState, useContext, Component, useEffect, useRef } from "react
 import { useRouter } from "next/navigation";
 import { MdAssessment } from "react-icons/md"; // Icon for Interview Mock Test
 import { AiOutlineQuestionCircle } from "react-icons/ai"; // Icon for Interview Q&A
-import blockchainService from "@/lib/blockchainService";
-import { FiCopy, FiCheck, FiX } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Navbar,
   NavBody,
@@ -17,6 +14,7 @@ import {
   MobileNavToggle,
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
+import { motion, AnimatePresence } from "framer-motion";
 import AnimatedSphere3D from "@/components/interview/AnimatedSphere3D";
 
 const navItems = [
@@ -109,18 +107,6 @@ const InterviewLandingPage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Validation UI state
-  const [vIsConnected, setVIsConnected] = useState(false);
-  const [vLoading, setVLoading] = useState(false);
-  const [vError, setVError] = useState(null);
-  const [vResult, setVResult] = useState(null); // { publicId, manifestHash, version }
-  const [vTxInfo, setVTxInfo] = useState(null);
-  const [vUserId, setVUserId] = useState("");
-  const [vEmail, setVEmail] = useState("");
-  const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000";
-  const [vCopied, setVCopied] = useState(false);
-  const [vModalOpen, setVModalOpen] = useState(false);
-
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     const jwt = typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
@@ -128,20 +114,6 @@ const InterviewLandingPage = () => {
       router.replace("/login?redirect=/interview-prep");
     } else {
       setCheckingAuth(false);
-    }
-  }, []);
-
-  // Pre-fill userId/email for Validation UI from JWT
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const jwt = localStorage.getItem("jwt");
-      const payload = parseJwt(jwt);
-      if (payload) {
-        const id = payload._id || payload.id || payload.userId || payload.sub || "";
-        if (id) setVUserId(id);
-        const em = payload.email || payload.userEmail || payload.mail || "";
-        if (em) setVEmail(em);
-      }
     }
   }, []);
 
@@ -167,84 +139,6 @@ const InterviewLandingPage = () => {
     setProfileKey(prev => prev + 1);
     router.replace("/login");
   };
-
-  // Validation UI handlers
-  const vConnectWallet = async () => {
-    setVError(null);
-    setVLoading(true);
-    try {
-      const ok = await blockchainService.initialize(CONTRACT_ADDRESS);
-      setVIsConnected(!!ok);
-      if (!ok) throw new Error("Failed to connect wallet");
-    } catch (e) {
-      setVError(e.message);
-    } finally {
-      setVLoading(false);
-    }
-  };
-
-  const vGenerateValidationCode = async () => {
-    setVError(null);
-    setVResult(null);
-    setVTxInfo(null);
-    let uid = (vUserId || '').trim();
-    let eml = (vEmail || '').trim();
-    if (!eml && uid.includes('@')) { eml = uid; uid = ''; }
-    if (!uid && !eml) { setVError("Missing user info (no userId/email in JWT). Please login again."); return; }
-    setVLoading(true);
-    try {
-      const res = await fetch("/api/feedback/manifest/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: uid, email: eml }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || "Failed to generate manifest");
-      setVResult({ publicId: data.publicId, manifestHash: data.manifestHash, version: data.version });
-      if (data.counts) setVTxInfo(prev => ({ ...(prev || {}), counts: data.counts }));
-    } catch (e) {
-      setVError(e.message);
-    } finally {
-      setVLoading(false);
-    }
-  };
-
-  const vRegisterOnChain = async () => {
-    setVError(null);
-    setVTxInfo(null);
-    if (!vIsConnected) { setVError("Please connect your wallet first"); return; }
-    if (!vResult?.manifestHash) { setVError("Generate the Validation Code first"); return; }
-    setVLoading(true);
-    try {
-      const reg = await blockchainService.registerDocument(vResult.manifestHash);
-      setVTxInfo(reg);
-    } catch (e) {
-      setVError(e.message);
-    } finally {
-      setVLoading(false);
-    }
-  };
-
-  const vCopyLink = async () => {
-    if (!vResult?.publicId) return;
-    const url = `${window.location.origin}/interview-prep/verify?code=${encodeURIComponent(vResult.publicId)}`;
-    await navigator.clipboard.writeText(url);
-    setVCopied(true);
-    setTimeout(() => setVCopied(false), 1500);
-  };
-
-  // Open Validation modal (used by hero CTA)
-  const scrollToValidation = () => {
-    setVModalOpen(true);
-  };
-
-  // Close modal on ESC
-  useEffect(() => {
-    if (!vModalOpen) return;
-    const onKey = (e) => { if (e.key === 'Escape') setVModalOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [vModalOpen]);
 
   // Get user data for navbar
   let jwt = null;
@@ -440,12 +334,6 @@ const InterviewLandingPage = () => {
                 >
                   Start Coding Tests
                 </button>
-                <button
-                  className="text-sm font-semibold px-8 py-3 rounded-full border transition-colors cursor-pointer text-gray-800 bg-white hover:bg-gray-50"
-                  onClick={scrollToValidation}
-                >
-                  Generate Validation Code
-                </button>
               </div>
             </div>
 
@@ -458,126 +346,6 @@ const InterviewLandingPage = () => {
               </ErrorBoundary>
             </div>
           </div>
-
-          {/* Validation card moved into modal; section removed */}
-
-          {/* Validation Modal */}
-          <AnimatePresence>
-            {vModalOpen && (
-              <motion.div
-                key="v-modal-overlay"
-                className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setVModalOpen(false)}
-              >
-                <motion.div
-                  key="v-modal-panel"
-                  className="absolute inset-0 flex items-start justify-center p-4 md:p-6 pt-24 md:pt-28"
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col">
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <div className="inline-flex items-center gap-2 text-sm font-medium text-blue-600">
-                        <MdAssessment /> Validation Generator
-                      </div>
-                      <button className="p-2 rounded-lg hover:bg-gray-100" onClick={() => setVModalOpen(false)} aria-label="Close">
-                        <FiX className="text-gray-700" />
-                      </button>
-                    </div>
-                    <div className="p-6 overflow-y-auto max-h-[calc(100vh-8rem-64px)]">
-                      <div className="mb-3 inline-flex items-center gap-3 text-sm font-medium text-blue-600 bg-blue-50 px-3 py-2 rounded-full border border-blue-200">
-                        <MdAssessment /> Validation
-                      </div>
-                      <h2 className="text-2xl font-semibold mb-2 text-gray-800">Interview Validation Code</h2>
-                      <p className="text-sm text-gray-600 mb-4">
-                        Generate a single Validation Code that aggregates all your interview feedback (normal and coding test). You can then register it on-chain and share one link for verification.
-                      </p>
-                      <div className="mb-6 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 text-xs text-gray-700">
-                        Tip: Make sure your latest practice sessions are saved before generating a new code. You can verify your code instantly on the Verify page.
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">User ID or Email</div>
-                        <input
-                          value={vEmail || vUserId}
-                          onChange={(e) => { setVUserId(e.target.value); setVEmail(e.target.value); }}
-                          placeholder="Enter your User ID or Email"
-                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
-                        />
-                      </div>
-
-                      <div className="mt-4 text-sm">
-                        <div className="font-medium mb-1">Wallet</div>
-                        {vIsConnected ? (
-                          <div className="text-green-700">Connected to MetaMask</div>
-                        ) : (
-                          <button onClick={vConnectWallet} disabled={vLoading} className="px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 disabled:opacity-50">
-                            {vLoading ? "Connecting..." : "Connect MetaMask"}
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="mt-4 text-sm">
-                        <div className="font-medium mb-1">Generate</div>
-                        <button onClick={vGenerateValidationCode} disabled={vLoading} className="px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50">
-                          {vLoading ? "Generating..." : "Generate Validation Code"}
-                        </button>
-                      </div>
-
-                      {vResult && (
-                        <div className="mt-4 p-4 bg-blue-50/60 border border-blue-200 rounded-lg text-sm">
-                          <div className="mb-1"><span className="font-medium">Public Code:</span> <span className="font-mono break-all">{vResult.publicId}</span></div>
-                          <div className="mb-1"><span className="font-medium">Manifest Hash:</span> <span className="font-mono break-all">{vResult.manifestHash}</span></div>
-                          <div className="mb-3"><span className="font-medium">Version:</span> {vResult.version}</div>
-                          <div className="flex flex-wrap gap-2">
-                            <button onClick={vRegisterOnChain} disabled={vLoading || !vIsConnected} className="px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-700 hover:to-green-700 disabled:opacity-50">
-                              {vLoading ? "Registering..." : "Register on Blockchain"}
-                            </button>
-                            <button onClick={vCopyLink} className="px-3 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-900 inline-flex items-center gap-2">
-                              {vCopied ? <FiCheck className="text-emerald-300" /> : <FiCopy />}
-                              {vCopied ? "Copied!" : "Copy Verification Link"}
-                            </button>
-                          </div>
-                          {vResult.publicId && (
-                            <div className="mt-3 text-xs text-gray-600">
-                              Quick verify: <a className="text-blue-700 hover:underline" href={`/interview-prep/verify?code=${encodeURIComponent(vResult.publicId)}`}>Open verify page</a>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {vTxInfo && (
-                        <div className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                          <div className="font-medium mb-2">Registration Result</div>
-                          {vTxInfo.transactionHash && (
-                            <div>Tx: <span className="font-mono break-all">{vTxInfo.transactionHash}</span></div>
-                          )}
-                          {vTxInfo.blockNumber && (
-                            <div>Block: <span className="font-mono">{vTxInfo.blockNumber}</span></div>
-                          )}
-                          {vTxInfo.message && <div className="text-gray-600">{vTxInfo.message}</div>}
-                          {vTxInfo.counts && (
-                            <div className="mt-2 text-xs text-gray-600">
-                              Included: sessions {vTxInfo.counts.sessions ?? 0} • coding tests {vTxInfo.counts.codingTests ?? 0}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {vError && (
-                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{vError}</div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Portfolio Section - System Explanation & Guides */}
           <section className="py-16 md:py-20">

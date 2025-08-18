@@ -27,14 +27,42 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  // Validation helpers (inherited from signup)
+  function checkPasswordStrength(pwd) {
+    // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]).{8,}$/;
+    return strong.test(pwd);
+  }
+
+  function validateEmail(val) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(val).toLowerCase());
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    // Client-side validation (align with signup)
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("Name is required.");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!checkPasswordStrength(password)) {
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+      );
+      return;
+    }
     setLoading(true);
     try {
       const requestData = {
-        name: name,
+        name: trimmedName,
         email: email,
         password: password,
       };
@@ -80,7 +108,12 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
         const responseText = await res.text();
         try {
           const data = JSON.parse(responseText);
-          setError(data.message || `Error ${res.status}: ${res.statusText}`);
+          // Mirror signup behavior for duplicate email hint
+          if (data.message && String(data.message).toLowerCase().includes("email")) {
+            setError("Email already exists. Please use a different email.");
+          } else {
+            setError(data.message || `Error ${res.status}: ${res.statusText}`);
+          }
         } catch {
           setError(responseText || `Error ${res.status}: ${res.statusText}`);
         }
@@ -133,6 +166,9 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+              {email && !validateEmail(email) && (
+                <div className="text-xs text-red-500">Enter a valid email address.</div>
+              )}
             </div>
             <div className="grid gap-3">
               <Label htmlFor="password">Password</Label>
@@ -144,9 +180,25 @@ export function AdminManagementModal({ open, onOpenChange, triggerButton }) {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {password && !checkPasswordStrength(password) && (
+                <div className="text-xs text-red-500">
+                  Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-3">
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full !text-white"
+                disabled={
+                  loading ||
+                  !name.trim() ||
+                  !email ||
+                  !password ||
+                  !validateEmail(email) ||
+                  !checkPasswordStrength(password)
+                }
+              >
                 {loading ? "Creating Account..." : "Create Admin Account"}
               </Button>
             </div>

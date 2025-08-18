@@ -426,17 +426,27 @@ function RowActions({ row }) {
               Approve
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator className="opacity-80" />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => {
-              setOpenAction("ban");
-              setConfirmText("");
-              setBanReason("");
-            }}
-          >
-            Ban
-          </DropdownMenuItem>
+          {normalized !== "waiting_for_approval" && (
+            <>
+              <DropdownMenuSeparator className="opacity-80" />
+              {normalized === "banned" ? (
+                <DropdownMenuItem disabled className="text-red-600">
+                  Banned
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => {
+                    setOpenAction("ban");
+                    setConfirmText("");
+                    setBanReason("");
+                  }}
+                >
+                  Ban
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
