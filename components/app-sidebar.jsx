@@ -14,6 +14,8 @@ import {
   SquareTerminal,
   LayoutDashboard,
   Plus,
+  User,
+  Building2,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -61,13 +63,19 @@ const data = {
     {
       title: "Organizations",
       url: "/admin/dashboard/org-mgmt",
-      icon: LayoutDashboard,
+      icon: Building2,
       isSimpleButton: true,
     },
     {
       title: "CV Validation",
       url: "/admin/dashboard/cv-validation",
       icon: LayoutDashboard,
+      isSimpleButton: true,
+    },
+    {
+      title: "Account",
+      url: "/admin/dashboard/account",
+      icon: User,
       isSimpleButton: true,
     },
     {

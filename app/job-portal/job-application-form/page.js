@@ -71,6 +71,27 @@ function FormClient() {
     } catch {}
   }, [router, jobId]);
 
+  // Fetch profile name from backend once we have email and JWT
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!email) return;
+        const jwt = typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+        if (!jwt) return;
+        const res = await fetch(`http://localhost:8080/api/common/profileData?email=${encodeURIComponent(email)}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${jwt}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const name = (data?.name || "").trim();
+        if (!cancelled && name) setFullName(name);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [email]);
+
   const onFileSelect = (file) => {
     if (!file) return;
     const allowedMimes = [
@@ -275,7 +296,8 @@ function FormClient() {
               maxLength={30}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+              disabled
+              className="px-3 py-2 border border-gray-200 bg-gray-100 text-gray-700 rounded-lg outline-none hover:cursor-not-allowed disabled:cursor-not-allowed"
             />
           </label>
 
