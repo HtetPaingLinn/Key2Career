@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -26,13 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Briefcase,
@@ -43,15 +37,21 @@ import {
   XCircle,
   FileText,
   Download,
-  Search,
-  Filter,
   TrendingUp,
   User,
   ExternalLink,
+  Calendar,
+  Gift,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import SpinnerLoader from "../interview/Loader/SpinnerLoader";
 import { useAuth } from "@/lib/useAuth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function OrgApplicationsContent() {
   const {
@@ -74,10 +74,9 @@ export function OrgApplicationsContent() {
   const [error, setError] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isInsightDialogOpen, setIsInsightDialogOpen] = useState(false);
-  const [downloadingCv, setDownloadingCv] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [loadingButtons, setLoadingButtons] = useState({});
+  const [activeTab, setActiveTab] = useState("applications");
 
   const fetchApplicationsData = useCallback(async () => {
     try {
@@ -107,6 +106,10 @@ export function OrgApplicationsContent() {
       const data = await response.json();
 
       if (data.success) {
+        console.log("Applications data received:", data);
+        if (data.activeJobPosts && data.activeJobPosts.length > 0) {
+          console.log("First job post structure:", data.activeJobPosts[0]);
+        }
         setApplicationsData(data);
       } else {
         throw new Error(data.error || "Failed to fetch applications");
@@ -114,7 +117,9 @@ export function OrgApplicationsContent() {
     } catch (err) {
       console.error("Error fetching applications:", err);
       setError(err.message);
-      toast.error("Failed to fetch applications: " + err.message);
+      toast.error("Failed to load applications", {
+        description: err.message || "Please refresh the page to try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -124,11 +129,13 @@ export function OrgApplicationsContent() {
     if (userEmail && isAuthenticated) {
       fetchApplicationsData();
     }
-  }, [fetchApplicationsData, userEmail, isAuthenticated]);
+  }, [userEmail, isAuthenticated]);
 
   const handleStatusUpdate = async (applicationId, newStatus) => {
+    const buttonKey = `${applicationId}-${newStatus}`;
+
     try {
-      setUpdatingStatus(true);
+      setLoadingButtons((prev) => ({ ...prev, [buttonKey]: true }));
 
       const jwt = localStorage.getItem("jwt");
       const headers = { "Content-Type": "application/json" };
@@ -157,16 +164,33 @@ export function OrgApplicationsContent() {
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`Application ${newStatus} successfully!`);
+        const statusMessages = {
+          interview: "Interview offer sent successfully!",
+          offer: "Job offer sent successfully!",
+          accept: "Application accepted successfully!",
+          reject: "Application rejected successfully!",
+        };
+        toast.success(
+          statusMessages[newStatus] || `Application ${newStatus} successfully!`,
+          {
+            description:
+              "The candidate has been notified of the status change.",
+          }
+        );
         await fetchApplicationsData();
+        // Close the dialog after successful update
+        setIsInsightDialogOpen(false);
+        setSelectedJob(null);
       } else {
         throw new Error(result.error || "Failed to update status");
       }
     } catch (err) {
       console.error("Error updating status:", err);
-      toast.error("Failed to update status: " + err.message);
+      toast.error("Failed to update application status", {
+        description: err.message || "Please try again later.",
+      });
     } finally {
-      setUpdatingStatus(false);
+      setLoadingButtons((prev) => ({ ...prev, [buttonKey]: false }));
     }
   };
 
@@ -176,8 +200,10 @@ export function OrgApplicationsContent() {
   };
 
   const downloadCv = async (cvUrl, applicantName, application = null) => {
+    const downloadKey = `download-${application?._id || "unknown"}`;
+
     try {
-      setDownloadingCv(true);
+      setLoadingButtons((prev) => ({ ...prev, [downloadKey]: true }));
 
       // Use stored public_id if available, otherwise extract from URL
       let publicId = application?.cvPublicId || null;
@@ -249,9 +275,9 @@ export function OrgApplicationsContent() {
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    toast.success(
-                      `CV for ${applicantName} downloaded successfully!`
-                    );
+                    toast.success(`CV downloaded successfully!`, {
+                      description: `${applicantName}'s CV has been downloaded to your device.`,
+                    });
                     return;
                   } else {
                     console.warn(
@@ -340,13 +366,17 @@ export function OrgApplicationsContent() {
         console.error("Direct download failed:", error);
         // Final fallback: open in new tab
         window.open(cvUrl, "_blank");
-        toast.info(`CV for ${applicantName} opened in new tab`);
+        toast.info(`CV opened in new tab`, {
+          description: `${applicantName}'s CV has been opened in a new browser tab.`,
+        });
       }
     } catch (error) {
       console.error("Error downloading CV:", error);
-      toast.error(`Failed to download CV for ${applicantName}`);
+      toast.error(`Failed to download CV`, {
+        description: `Unable to download ${applicantName}'s CV. Please try again later.`,
+      });
     } finally {
-      setDownloadingCv(false);
+      setLoadingButtons((prev) => ({ ...prev, [downloadKey]: false }));
     }
   };
 
@@ -368,10 +398,12 @@ export function OrgApplicationsContent() {
   const getStatusColor = (status) => {
     switch (status) {
       case "applied":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      case "interview offer":
+        return "text-orange-600 bg-orange-50 border-orange-200";
+      case "interview":
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "offer":
+        return "text-purple-600 bg-purple-50 border-purple-200";
+      case "accept":
         return "text-green-600 bg-green-50 border-green-200";
       case "reject":
         return "text-red-600 bg-red-50 border-red-200";
@@ -379,19 +411,6 @@ export function OrgApplicationsContent() {
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
-
-  const filteredJobPosts = applicationsData.activeJobPosts.filter((jobData) => {
-    const job = jobData.jobPost;
-    const matchesSearch = job.job_title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "has-applications" && jobData.totalApplications > 0) ||
-      (statusFilter === "no-applications" && jobData.totalApplications === 0);
-
-    return matchesSearch && matchesStatus;
-  });
 
   if (authLoading) {
     return (
@@ -469,329 +488,266 @@ export function OrgApplicationsContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="relative overflow-hidden border-0 bg-white/10 backdrop-blur-xl before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-500/20 before:to-indigo-600/20 before:rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-600/5 rounded-xl"></div>
-          <CardHeader className="relative flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-blue-900">
-              <div className="p-2 rounded-lg bg-blue-500/10 backdrop-blur-sm">
-                <Briefcase className="w-4 h-4 text-blue-600" />
-              </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <Briefcase className="w-4 h-4" />
               Active Jobs
             </CardTitle>
-            <Badge className="text-blue-800 bg-blue-500/20 border-blue-200/50 backdrop-blur-sm">
+            <Badge variant="secondary">
               {applicationsData.totalActiveJobs}
             </Badge>
           </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold text-blue-900">
+          <CardContent>
+            <div className="text-2xl font-bold">
               {applicationsData.totalActiveJobs}
             </div>
-            <p className="text-sm font-medium text-blue-700/80">
-              Open positions
-            </p>
+            <p className="text-xs text-muted-foreground">Open positions</p>
           </CardContent>
         </Card>
-
-        <Card className="relative overflow-hidden border-0 bg-white/10 backdrop-blur-xl before:absolute before:inset-0 before:bg-gradient-to-br before:from-amber-500/20 before:to-orange-600/20 before:rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-600/5 rounded-xl"></div>
-          <CardHeader className="relative flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-amber-900">
-              <div className="p-2 rounded-lg bg-amber-500/10 backdrop-blur-sm">
-                <Clock className="w-4 h-4 text-amber-600" />
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <Clock className="w-4 h-4" />
               Applied
             </CardTitle>
-            <Badge className="bg-amber-500/20 text-amber-800 border-amber-200/50 backdrop-blur-sm">
-              {applicationsData.totalPending}
-            </Badge>
+            <Badge variant="destructive">{applicationsData.totalPending}</Badge>
           </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold text-amber-900">
+          <CardContent>
+            <div className="text-2xl font-bold">
               {applicationsData.totalPending}
             </div>
-            <p className="text-sm font-medium text-amber-700/80">
-              New applications
-            </p>
+            <p className="text-xs text-muted-foreground">New applications</p>
           </CardContent>
         </Card>
-
-        <Card className="relative overflow-hidden border-0 bg-white/10 backdrop-blur-xl before:absolute before:inset-0 before:bg-gradient-to-br before:from-emerald-500/20 before:to-green-600/20 before:rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-600/5 rounded-xl"></div>
-          <CardHeader className="relative flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
-              <div className="p-2 rounded-lg bg-emerald-500/10 backdrop-blur-sm">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <CheckCircle className="w-4 h-4" />
               Interview Offers
             </CardTitle>
-            <Badge className="bg-emerald-500/20 text-emerald-800 border-emerald-200/50 backdrop-blur-sm">
-              {applicationsData.totalAccepted}
-            </Badge>
+            <Badge variant="default">{applicationsData.totalAccepted}</Badge>
           </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold text-emerald-900">
+          <CardContent>
+            <div className="text-2xl font-bold">
               {applicationsData.totalAccepted}
             </div>
-            <p className="text-sm font-medium text-emerald-700/80">
-              Interview stage
-            </p>
+            <p className="text-xs text-muted-foreground">Interview stage</p>
           </CardContent>
         </Card>
-
-        <Card className="relative overflow-hidden border-0 bg-white/10 backdrop-blur-xl before:absolute before:inset-0 before:bg-gradient-to-br before:from-violet-500/20 before:to-purple-600/20 before:rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-600/5 rounded-xl"></div>
-          <CardHeader className="relative flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-violet-900">
-              <div className="p-2 rounded-lg bg-violet-500/10 backdrop-blur-sm">
-                <Users className="w-4 h-4 text-violet-600" />
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <Users className="w-4 h-4" />
               Total Applications
             </CardTitle>
-            <Badge className="bg-violet-500/20 text-violet-800 border-violet-200/50 backdrop-blur-sm">
+            <Badge variant="outline">
               {applicationsData.totalApplications}
             </Badge>
           </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold text-violet-900">
+          <CardContent>
+            <div className="text-2xl font-bold">
               {applicationsData.totalApplications}
             </div>
-            <p className="text-sm font-medium text-violet-700/80">
-              All applications
-            </p>
+            <p className="text-xs text-muted-foreground">All applications</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Modern Filters */}
-      <div className="space-y-6">
-        {/* Search and Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-3 flex-1 max-w-2xl">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-0">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
+      {/* Job Posts Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Briefcase className="w-5 h-5" />
+            Active Job Posts
+          </CardTitle>
+          <CardDescription>
+            Overview of all active job postings and their application statistics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {applicationsData.activeJobPosts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-muted">
+                <Briefcase className="w-8 h-8 text-muted-foreground" />
               </div>
-              <Input
-                placeholder="Search job posts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-11 h-11 bg-white/40 backdrop-blur-sm border-gray-200/40 focus:bg-white/60 focus:border-indigo-300/50 focus:ring-2 focus:ring-indigo-50 transition-all duration-200"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div className="sm:w-48">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-11 bg-white/40 backdrop-blur-sm border-gray-200/40 focus:bg-white/60 focus:border-indigo-300/50 focus:ring-2 focus:ring-indigo-50 transition-all duration-200">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent className="bg-white/70 backdrop-blur-xl border-gray-200/40 shadow-lg">
-                  <SelectItem value="all">All Jobs</SelectItem>
-                  <SelectItem value="has-applications">
-                    Has Applications
-                  </SelectItem>
-                  <SelectItem value="no-applications">
-                    No Applications
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Results Counter */}
-          <div className="flex items-center gap-3 px-4 py-2 bg-white/30 backdrop-blur-sm rounded-xl border border-gray-200/30">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-600">
-                {filteredJobPosts.length} of{" "}
-                {applicationsData.activeJobPosts.length} jobs
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Filters Display */}
-        {(searchTerm || statusFilter !== "all") && (
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-sm font-medium text-gray-500">
-              Active filters:
-            </span>
-            {searchTerm && (
-              <Badge
-                variant="secondary"
-                className="bg-indigo-25 text-indigo-600 border-indigo-150 hover:bg-indigo-50"
+              <h3 className="mb-2 text-lg font-semibold">
+                No active job posts found
+              </h3>
+              <p className="max-w-md mb-4 text-sm text-center text-muted-foreground">
+                Create job posts to start receiving applications
+              </p>
+              <Button
+                onClick={() =>
+                  (window.location.href = "/org/dashboard/job-postings")
+                }
+                variant="default"
               >
-                Search: "{searchTerm}"
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="ml-2 hover:text-indigo-800"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
-            {statusFilter !== "all" && (
-              <Badge
-                variant="secondary"
-                className="bg-purple-25 text-purple-600 border-purple-150 hover:bg-purple-50"
-              >
-                Status:{" "}
-                {statusFilter === "has-applications"
-                  ? "Has Applications"
-                  : "No Applications"}
-                <button
-                  onClick={() => setStatusFilter("all")}
-                  className="ml-2 hover:text-purple-800"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("all");
-              }}
-              className="text-gray-400 hover:text-gray-600 h-6 px-2"
-            >
-              Clear all
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Job Posts Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredJobPosts.length === 0 ? (
-          <div className="col-span-full">
-            <Card className="relative overflow-hidden border-0 bg-white/10 backdrop-blur-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-slate-600/5 rounded-xl"></div>
-              <CardContent className="relative flex flex-col items-center justify-center py-16">
-                <div className="flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-white/20 backdrop-blur-sm">
-                  <Briefcase className="w-10 h-10 text-gray-500" />
-                </div>
-                <h3 className="mb-3 text-xl font-semibold text-gray-900">
-                  No active job posts found
-                </h3>
-                <p className="max-w-md mb-6 text-center text-gray-600">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your search or filters"
-                    : "Create job posts to start receiving applications"}
-                </p>
-                {!searchTerm && statusFilter === "all" && (
-                  <Button
-                    onClick={() =>
-                      (window.location.href = "/org/dashboard/job-postings")
-                    }
-                    className="text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 backdrop-blur-sm"
-                  >
-                    Create Job Post
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          filteredJobPosts.map((jobData) => (
-            <Card
-              key={jobData.jobPost.id}
-              className="relative overflow-hidden transition-all duration-500 border-0 bg-white/10 backdrop-blur-xl group before:absolute before:inset-0 before:bg-gradient-to-br before:from-indigo-500/10 before:to-purple-600/10 before:rounded-xl before:opacity-0 before:transition-opacity before:duration-500 group-hover:before:opacity-100 flex flex-col h-full"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-600/5 rounded-xl"></div>
-
-              {/* Fixed height header to ensure consistent spacing */}
-              <CardHeader className="relative pb-4 flex-shrink-0 h-24">
-                <div className="flex items-start justify-between h-full">
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-900 transition-colors group-hover:text-indigo-600 line-clamp-2 leading-tight">
-                      {jobData.jobPost.job_title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-3 flex-wrap">
-                      <Badge className="text-xs text-indigo-800 bg-indigo-500/20 border-indigo-200/50 backdrop-blur-sm flex-shrink-0">
-                        {jobData.jobPost.job_level}
-                      </Badge>
-                      <Badge className="text-xs text-purple-800 bg-purple-500/20 border-purple-200/50 backdrop-blur-sm flex-shrink-0">
-                        {jobData.jobPost.working_type}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 to-green-500/20 backdrop-blur-sm border border-emerald-200/30 flex-shrink-0 ml-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-xs font-semibold text-emerald-700">
-                      Active
-                    </span>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="relative flex-1 flex flex-col">
-                {/* Application Stats - Fixed position from top */}
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="p-4 text-center border rounded-xl bg-blue-500/10 backdrop-blur-sm border-blue-200/30">
-                    <div className="text-xl font-bold text-blue-700">
-                      {jobData.totalApplications}
-                    </div>
-                    <div className="text-xs font-medium text-blue-600">
-                      Total
-                    </div>
-                  </div>
-                  <div className="p-4 text-center border rounded-xl bg-amber-500/10 backdrop-blur-sm border-amber-200/30">
-                    <div className="text-xl font-bold text-amber-700">
-                      {jobData.pendingApplications}
-                    </div>
-                    <div className="text-xs font-medium text-amber-600">
-                      Pending
-                    </div>
-                  </div>
-                  <div className="p-4 text-center border rounded-xl bg-emerald-500/10 backdrop-blur-sm border-emerald-200/30">
-                    <div className="text-xl font-bold text-emerald-700">
-                      {jobData.acceptedApplications}
-                    </div>
-                    <div className="text-xs font-medium text-emerald-600">
-                      Accepted
-                    </div>
-                  </div>
-                  <div className="p-4 text-center border rounded-xl bg-red-500/10 backdrop-blur-sm border-red-200/30">
-                    <div className="text-xl font-bold text-red-700">
-                      {jobData.rejectedApplications}
-                    </div>
-                    <div className="text-xs font-medium text-red-600">
-                      Rejected
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button - Always at bottom */}
-                <div className="flex-shrink-0 mt-auto">
-                  <Button
-                    onClick={() => openInsightDialog(jobData)}
-                    className="w-full text-white transition-all duration-300 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 backdrop-blur-sm"
-                    disabled={jobData.totalApplications === 0}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    {jobData.totalApplications === 0
-                      ? "No Applications"
-                      : "View Applications"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                Create Job Post
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Job Title</TableHead>
+                    <TableHead>Level</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-center">Applied</TableHead>
+                    <TableHead className="text-center">Interview</TableHead>
+                    <TableHead className="text-center">Offer</TableHead>
+                    <TableHead className="text-center">Accepted</TableHead>
+                    <TableHead className="text-center">Rejected</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {applicationsData.activeJobPosts.map((jobData) => (
+                    <TableRow key={jobData.jobPost.id}>
+                      <TableCell className="font-medium">
+                        {jobData.jobPost.job_title}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {jobData.jobPost.jobLevel ||
+                            jobData.jobPost.job_level ||
+                            jobData.jobPost.level ||
+                            "Not specified"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {jobData.jobPost.workingType ||
+                            jobData.jobPost.working_type ||
+                            jobData.jobPost.work_type ||
+                            jobData.jobPost.type ||
+                            "Not specified"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="font-semibold">
+                          <span
+                            className={
+                              (jobData.applications?.filter(
+                                (app) => app.status === "applied"
+                              ).length || 0) > 0
+                                ? "bg-yellow-300 px-2 py-1 rounded"
+                                : ""
+                            }
+                          >
+                            {jobData.applications?.filter(
+                              (app) => app.status === "applied"
+                            ).length || 0}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="font-semibold">
+                          <span
+                            className={
+                              (jobData.applications?.filter(
+                                (app) => app.status === "interview"
+                              ).length || 0) > 0
+                                ? "bg-yellow-300 px-2 py-1 rounded"
+                                : ""
+                            }
+                          >
+                            {jobData.applications?.filter(
+                              (app) => app.status === "interview"
+                            ).length || 0}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="font-semibold">
+                          <span
+                            className={
+                              (jobData.applications?.filter(
+                                (app) => app.status === "offer"
+                              ).length || 0) > 0
+                                ? "bg-yellow-300 px-2 py-1 rounded"
+                                : ""
+                            }
+                          >
+                            {jobData.applications?.filter(
+                              (app) => app.status === "offer"
+                            ).length || 0}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="font-semibold">
+                          <span
+                            className={
+                              (jobData.applications?.filter(
+                                (app) => app.status === "accept"
+                              ).length || 0) > 0
+                                ? "bg-yellow-300 px-2 py-1 rounded"
+                                : ""
+                            }
+                          >
+                            {jobData.applications?.filter(
+                              (app) => app.status === "accept"
+                            ).length || 0}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="font-semibold">
+                          <span
+                            className={
+                              (jobData.applications?.filter(
+                                (app) => app.status === "reject"
+                              ).length || 0) > 0
+                                ? "bg-yellow-300 px-2 py-1 rounded"
+                                : ""
+                            }
+                          >
+                            {jobData.applications?.filter(
+                              (app) => app.status === "reject"
+                            ).length || 0}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          onClick={() => openInsightDialog(jobData)}
+                          variant="outline"
+                          size="sm"
+                          disabled={jobData.totalApplications === 0}
+                          className="w-24"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          {jobData.totalApplications === 0 ? "No Apps" : "View"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Application Insights Dialog */}
-      <Dialog open={isInsightDialogOpen} onOpenChange={setIsInsightDialogOpen}>
-        <DialogContent className="min-w-[80vw] max-w-4xl max-h-[90vh] overflow-hidden border-0 bg-white/95 backdrop-blur-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-600/5 rounded-xl"></div>
+      <Dialog
+        open={isInsightDialogOpen}
+        onOpenChange={(open) => {
+          setIsInsightDialogOpen(open);
+          if (!open) {
+            setSelectedJob(null);
+          }
+        }}
+      >
+        <DialogContent className="min-w-[80vw] max-w-4xl h-[80vh] overflow-hidden border-0 bg-white backdrop-blur-xl flex flex-col">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/5 to-gray-600/5 rounded-xl"></div>
           <DialogHeader className="relative">
             <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-gray-900">
-              <div className="p-2 rounded-lg bg-indigo-500/10 backdrop-blur-sm">
-                <Briefcase className="w-6 h-6 text-indigo-600" />
+              <div className="p-2 rounded-lg bg-slate-500/10 backdrop-blur-sm">
+                <Briefcase className="w-6 h-6 text-slate-600" />
               </div>
               {selectedJob?.jobPost.job_title} - Applications
             </DialogTitle>
@@ -801,353 +757,821 @@ export function OrgApplicationsContent() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden">
-            <Tabs defaultValue="all-applications" className="h-full">
-              <TabsList className="grid w-full grid-cols-2 border bg-white/50 backdrop-blur-sm border-gray-200/50">
+          {/* Sticky Tab Bar */}
+          <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur-xl">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full h-12 grid-cols-4">
                 <TabsTrigger
-                  value="all-applications"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-indigo-700 data-[state=active]:font-semibold backdrop-blur-sm"
+                  value="applications"
+                  className="flex items-center gap-2"
                 >
-                  All Applications ({selectedJob?.totalApplications})
+                  Applications
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedJob?.applications.filter(
+                      (app) => app.status === "applied"
+                    ).length || 0}
+                  </Badge>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="interview-stage"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-green-500/20 data-[state=active]:text-emerald-700 data-[state=active]:font-semibold backdrop-blur-sm"
+                  value="interview-offered"
+                  className="flex items-center gap-2"
                 >
-                  Interview Stage (
-                  {
-                    selectedJob?.applications.filter(
-                      (app) => app.status === "interview offer"
-                    ).length
-                  }
-                  )
+                  Interview Offered
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedJob?.applications.filter(
+                      (app) => app.status === "interview"
+                    ).length || 0}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="offered"
+                  className="flex items-center gap-2"
+                >
+                  Offered
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedJob?.applications.filter(
+                      (app) => app.status === "offer"
+                    ).length || 0}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="accepted"
+                  className="flex items-center gap-2"
+                >
+                  Accepted
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedJob?.applications.filter(
+                      (app) => app.status === "accept"
+                    ).length || 0}
+                  </Badge>
                 </TabsTrigger>
               </TabsList>
-
-              <TabsContent
-                value="all-applications"
-                className="h-full overflow-y-auto"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mt-3">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      All Applications
-                    </h3>
-                    <Badge className="font-semibold text-indigo-800 bg-indigo-500/20 border-indigo-200/50 backdrop-blur-sm">
-                      {
-                        selectedJob?.applications.filter(
-                          (app) => app.status === "applied"
-                        ).length
-                      }{" "}
-                      candidates
-                    </Badge>
-                  </div>
-
-                  {selectedJob?.applications.filter(
-                    (app) => app.status === "applied"
-                  ).length === 0 ? (
-                    <div className="py-12 text-center">
-                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-sm">
-                        <Users className="w-8 h-8 text-gray-500" />
-                      </div>
-                      <p className="text-lg font-medium text-gray-600">
-                        No applications received yet
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-b bg-white/50 backdrop-blur-sm border-gray-200/50">
-                            <TableHead className="font-semibold text-gray-900">
-                              Candidate
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Experience
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Applied
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Status
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedJob?.applications
-                            .filter((app) => app.status === "applied")
-                            .map((application) => (
-                              <TableRow
-                                key={application._id}
-                                className="transition-colors duration-200 hover:bg-white/30"
-                              >
-                                <TableCell>
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-12 h-12 border rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border-indigo-200/30">
-                                      <User className="w-6 h-6 text-indigo-600" />
-                                    </div>
-                                    <div>
-                                      <div className="font-semibold text-gray-900">
-                                        {application.fullName}
-                                      </div>
-                                      <div className="text-sm font-medium text-gray-600">
-                                        {application.email}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm">
-                                    <span className="font-medium">
-                                      {application.experienceYears} years
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm text-gray-600">
-                                    {formatRelativeTime(application.createdAt)}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    className={getStatusColor(
-                                      application.status
-                                    )}
-                                  >
-                                    {application.status}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        downloadCv(
-                                          application.cvUrl,
-                                          application.fullName,
-                                          application
-                                        )
-                                      }
-                                      disabled={downloadingCv}
-                                      className="px-3 transition-all duration-200 h-9 bg-white/50 border-gray-200/50 backdrop-blur-sm hover:bg-white/70 hover:border-indigo-300/50"
-                                    >
-                                      {downloadingCv ? (
-                                        <SpinnerLoader
-                                          size="sm"
-                                          color="indigo"
-                                        />
-                                      ) : (
-                                        <Download className="w-4 h-4" />
-                                      )}
-                                    </Button>
-
-                                    {application.status === "applied" && (
-                                      <>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleStatusUpdate(
-                                              application._id,
-                                              "interview offer"
-                                            )
-                                          }
-                                          disabled={updatingStatus}
-                                          className="px-3 transition-all duration-200 h-9 bg-blue-500/10 text-blue-700 border-blue-200/50 backdrop-blur-sm hover:bg-blue-500/20 hover:border-blue-300/50"
-                                        >
-                                          <CheckCircle className="w-4 h-4" />
-                                          Accept
-                                        </Button>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleStatusUpdate(
-                                              application._id,
-                                              "rejected"
-                                            )
-                                          }
-                                          disabled={updatingStatus}
-                                          className="px-3 text-red-700 transition-all duration-200 h-9 bg-red-500/10 border-red-200/50 backdrop-blur-sm hover:bg-red-500/20 hover:border-red-300/50"
-                                        >
-                                          <XCircle className="w-4 h-4" />
-                                        </Button>
-                                      </>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value="interview-stage"
-                className="h-full overflow-y-auto"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mt-4">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Interview Stage
-                    </h3>
-                    <Badge className="font-semibold bg-emerald-500/20 text-emerald-800 border-emerald-200/50 backdrop-blur-sm">
-                      {
-                        selectedJob?.applications.filter(
-                          (app) => app.status === "interview offer"
-                        ).length
-                      }{" "}
-                      candidates
-                    </Badge>
-                  </div>
-
-                  {selectedJob?.applications.filter(
-                    (app) => app.status === "interview offer"
-                  ).length === 0 ? (
-                    <div className="py-12 text-center">
-                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-sm">
-                        <CheckCircle className="w-8 h-8 text-gray-500" />
-                      </div>
-                      <p className="text-lg font-medium text-gray-600">
-                        No candidates with interview offers yet
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-b bg-white/50 backdrop-blur-sm border-gray-200/50">
-                            <TableHead className="font-semibold text-gray-900">
-                              Candidate
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Experience
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Interview Offer Date
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Final Decision
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-900">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedJob?.applications
-                            .filter((app) => app.status === "interview offer")
-                            .map((application) => (
-                              <TableRow
-                                key={application._id}
-                                className="transition-colors duration-200 hover:bg-white/30"
-                              >
-                                <TableCell>
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-12 h-12 border rounded-full bg-gradient-to-br from-emerald-500/20 to-green-500/20 backdrop-blur-sm border-emerald-200/30">
-                                      <User className="w-6 h-6 text-emerald-600" />
-                                    </div>
-                                    <div>
-                                      <div className="font-semibold text-gray-900">
-                                        {application.fullName}
-                                      </div>
-                                      <div className="text-sm font-medium text-gray-600">
-                                        {application.email}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm">
-                                    <span className="font-medium">
-                                      {application.experienceYears} years
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm text-gray-600">
-                                    {formatRelativeTime(
-                                      application.updatedAt ||
-                                        application.createdAt
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleStatusUpdate(
-                                          application._id,
-                                          "offer"
-                                        )
-                                      }
-                                      disabled={updatingStatus}
-                                      className="px-3 transition-all duration-200 h-9 bg-green-500/10 text-green-700 border-green-200/50 backdrop-blur-sm hover:bg-green-500/20 hover:border-green-300/50"
-                                    >
-                                      <CheckCircle className="w-4 h-4" />
-                                      Hire
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleStatusUpdate(
-                                          application._id,
-                                          "reject"
-                                        )
-                                      }
-                                      disabled={updatingStatus}
-                                      className="px-3 text-red-700 transition-all duration-200 h-9 bg-red-500/10 border-red-200/50 backdrop-blur-sm hover:bg-red-500/20 hover:border-red-300/50"
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                      Reject
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        downloadCv(
-                                          application.cvUrl,
-                                          application.fullName,
-                                          application
-                                        )
-                                      }
-                                      disabled={downloadingCv}
-                                      className="px-3 transition-all duration-200 h-9 bg-white/50 border-gray-200/50 backdrop-blur-sm hover:bg-white/70 hover:border-emerald-300/50"
-                                    >
-                                      {downloadingCv ? (
-                                        <SpinnerLoader
-                                          size="sm"
-                                          color="emerald"
-                                        />
-                                      ) : (
-                                        <Download className="w-4 h-4" />
-                                      )}
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
             </Tabs>
+          </div>
+
+          {/* Scrollable Content Area */}
+          <div className="flex-1 min-h-0 px-4 py-1 overflow-y-auto">
+            {activeTab === "applications" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mt-3">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Applications
+                  </h3>
+                  <Badge className="font-semibold text-blue-800 bg-blue-500/20 border-blue-200/50 backdrop-blur-sm">
+                    {selectedJob?.applications?.filter(
+                      (app) => app.status === "applied"
+                    ).length || 0}{" "}
+                    candidates
+                  </Badge>
+                </div>
+
+                {selectedJob?.applications?.filter(
+                  (app) => app.status === "applied"
+                ).length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-sm">
+                      <Users className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <p className="text-lg font-medium text-gray-600">
+                      No applications received yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">
+                            Candidate
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Experience
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Applied
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedJob?.applications
+                          ?.filter((app) => app.status === "applied")
+                          .map((application) => (
+                            <TableRow key={application._id}>
+                              <TableCell className="text-xs sm:text-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                                    <User className="w-5 h-5 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">
+                                      {application.fullName}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {application.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <span className="font-medium">
+                                  {application.experienceYears} years
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {formatRelativeTime(application.createdAt)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={getStatusColor(application.status)}
+                                >
+                                  {application.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            downloadCv(
+                                              application.cvUrl,
+                                              application.fullName,
+                                              application
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `download-${application._id}`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 sm:h-9 sm:w-9"
+                                        >
+                                          {loadingButtons[
+                                            `download-${application._id}`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="blue"
+                                            />
+                                          ) : (
+                                            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Download CV</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              application._id,
+                                              "interview"
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `${application._id}-interview`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 text-orange-600 sm:h-9 sm:w-9 hover:text-orange-700 hover:bg-orange-50"
+                                        >
+                                          {loadingButtons[
+                                            `${application._id}-interview`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="orange"
+                                            />
+                                          ) : (
+                                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Send Interview Offer</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              application._id,
+                                              "reject"
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `${application._id}-reject`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 text-red-600 sm:h-9 sm:w-9 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          {loadingButtons[
+                                            `${application._id}-reject`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="red"
+                                            />
+                                          ) : (
+                                            <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Reject Application</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "interview-offered" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mt-4">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Interview Offered
+                  </h3>
+                  <Badge className="font-semibold text-orange-800 bg-orange-500/20 border-orange-200/50 backdrop-blur-sm">
+                    {
+                      selectedJob?.applications.filter(
+                        (app) => app.status === "interview"
+                      ).length
+                    }{" "}
+                    candidates
+                  </Badge>
+                </div>
+
+                {selectedJob?.applications.filter(
+                  (app) => app.status === "interview"
+                ).length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-sm">
+                      <Calendar className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <p className="text-lg font-medium text-gray-600">
+                      No interview offers sent yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">
+                            Candidate
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Experience
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Interview Date
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedJob?.applications
+                          .filter((app) => app.status === "interview")
+                          .map((application) => (
+                            <TableRow key={application._id}>
+                              <TableCell className="text-xs sm:text-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-10 h-10 bg-orange-100 rounded-full">
+                                    <User className="w-5 h-5 text-orange-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">
+                                      {application.fullName}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {application.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <span className="font-medium">
+                                  {application.experienceYears} years
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {formatRelativeTime(
+                                  application.updatedAt || application.createdAt
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={getStatusColor(application.status)}
+                                >
+                                  {application.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            downloadCv(
+                                              application.cvUrl,
+                                              application.fullName,
+                                              application
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `download-${application._id}`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 sm:h-9 sm:w-9"
+                                        >
+                                          {loadingButtons[
+                                            `download-${application._id}`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="orange"
+                                            />
+                                          ) : (
+                                            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Download CV</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              application._id,
+                                              "offer"
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `${application._id}-offer`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 text-purple-600 sm:h-9 sm:w-9 hover:text-purple-700 hover:bg-purple-50"
+                                        >
+                                          {loadingButtons[
+                                            `${application._id}-offer`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="purple"
+                                            />
+                                          ) : (
+                                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Send Job Offer</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              application._id,
+                                              "reject"
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `${application._id}-reject`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 text-red-600 sm:h-9 sm:w-9 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          {loadingButtons[
+                                            `${application._id}-reject`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="red"
+                                            />
+                                          ) : (
+                                            <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Reject Application</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "offered" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mt-4">
+                  <h3 className="text-xl font-bold text-gray-900">Offered</h3>
+                  <Badge className="font-semibold text-purple-800 bg-purple-500/20 border-purple-200/50 backdrop-blur-sm">
+                    {
+                      selectedJob?.applications.filter(
+                        (app) => app.status === "offer"
+                      ).length
+                    }{" "}
+                    candidates
+                  </Badge>
+                </div>
+
+                {selectedJob?.applications.filter(
+                  (app) => app.status === "offer"
+                ).length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-sm">
+                      <Gift className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <p className="text-lg font-medium text-gray-600">
+                      No offers sent yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">
+                            Candidate
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Experience
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Offer Date
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedJob?.applications
+                          .filter((app) => app.status === "offer")
+                          .map((application) => (
+                            <TableRow key={application._id}>
+                              <TableCell className="text-xs sm:text-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-full">
+                                    <User className="w-5 h-5 text-purple-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">
+                                      {application.fullName}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {application.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <span className="font-medium">
+                                  {application.experienceYears} years
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {formatRelativeTime(
+                                  application.updatedAt || application.createdAt
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={getStatusColor(application.status)}
+                                >
+                                  {application.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            downloadCv(
+                                              application.cvUrl,
+                                              application.fullName,
+                                              application
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `download-${application._id}`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 sm:h-9 sm:w-9"
+                                        >
+                                          {loadingButtons[
+                                            `download-${application._id}`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="purple"
+                                            />
+                                          ) : (
+                                            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Download CV</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              application._id,
+                                              "accept"
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `${application._id}-accept`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 text-green-600 sm:h-9 sm:w-9 hover:text-green-700 hover:bg-green-50"
+                                        >
+                                          {loadingButtons[
+                                            `${application._id}-accept`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="green"
+                                            />
+                                          ) : (
+                                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Accept Application</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleStatusUpdate(
+                                              application._id,
+                                              "reject"
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `${application._id}-reject`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 text-red-600 sm:h-9 sm:w-9 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          {loadingButtons[
+                                            `${application._id}-reject`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="red"
+                                            />
+                                          ) : (
+                                            <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Reject Application</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "accepted" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mt-4">
+                  <h3 className="text-xl font-bold text-gray-900">Accepted</h3>
+                  <Badge className="font-semibold text-green-800 bg-green-500/20 border-green-200/50 backdrop-blur-sm">
+                    {
+                      selectedJob?.applications.filter(
+                        (app) => app.status === "accept"
+                      ).length
+                    }{" "}
+                    candidates
+                  </Badge>
+                </div>
+
+                {selectedJob?.applications.filter(
+                  (app) => app.status === "accept"
+                ).length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-sm">
+                      <CheckCircle className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <p className="text-lg font-medium text-gray-600">
+                      No accepted candidates yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">
+                            Candidate
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Experience
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Accepted Date
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedJob?.applications
+                          .filter((app) => app.status === "accept")
+                          .map((application) => (
+                            <TableRow key={application._id}>
+                              <TableCell className="text-xs sm:text-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
+                                    <User className="w-5 h-5 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">
+                                      {application.fullName}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {application.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <span className="font-medium">
+                                  {application.experienceYears} years
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {formatRelativeTime(
+                                  application.updatedAt || application.createdAt
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={getStatusColor(application.status)}
+                                >
+                                  {application.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            downloadCv(
+                                              application.cvUrl,
+                                              application.fullName,
+                                              application
+                                            )
+                                          }
+                                          disabled={
+                                            loadingButtons[
+                                              `download-${application._id}`
+                                            ]
+                                          }
+                                          className="w-8 h-8 p-0 sm:h-9 sm:w-9"
+                                        >
+                                          {loadingButtons[
+                                            `download-${application._id}`
+                                          ] ? (
+                                            <SpinnerLoader
+                                              size="sm"
+                                              color="green"
+                                            />
+                                          ) : (
+                                            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Download CV</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

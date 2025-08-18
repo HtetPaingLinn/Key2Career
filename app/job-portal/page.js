@@ -44,6 +44,12 @@ export default function JobBoard() {
   // Server-backed saved jobs
   const [savedJobs, setSavedJobs] = useState([]);
   const [savedJobsLoading, setSavedJobsLoading] = useState(false);
+  // Recommended jobs state
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(false);
+  const [userSkills, setUserSkills] = useState([]);
+  const [showRecommended, setShowRecommended] = useState(false);
+  const [hasUserCV, setHasUserCV] = useState(false);
   // Notifications dropdown state and sample data
   const [notifOpen, setNotifOpen] = useState(false);
   const notifDropdownRef = useRef(null);
@@ -169,6 +175,142 @@ export default function JobBoard() {
   // Refresh when opening dropdown
   useEffect(() => { if (savedOpen) fetchSavedJobs(); }, [savedOpen]);
 
+  // Fetch user CV skills and check if user has CV data
+  const fetchUserSkills = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+      if (!token) {
+        setHasUserCV(false);
+        return;
+      }
+      
+      const res = await fetch('/api/cv-skills', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!res.ok) {
+        setHasUserCV(false);
+        return;
+      }
+      
+      const data = await res.json();
+      const technicalSkills = data.skills?.technical || [];
+      
+      if (technicalSkills.length > 0) {
+        setUserSkills(technicalSkills.map(skill => skill.name));
+        setHasUserCV(true);
+      } else {
+        setHasUserCV(false);
+      }
+    } catch (error) {
+      console.error('Error fetching user skills:', error);
+      setHasUserCV(false);
+    }
+  };
+
+  // Fetch recommended jobs from Java endpoint
+  const fetchRecommendedJobs = async () => {
+    if (!hasUserCV || userSkills.length === 0) return;
+    
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+      if (!token) return;
+      
+      const payload = parseJwt(token);
+      const email = payload?.sub;
+      if (!email) return;
+      
+      setRecommendedLoading(true);
+      
+      const requestBody = {
+        email: email,
+        tech_skill: userSkills
+      };
+      
+      const endpointUrl = 'http://localhost:8080/api/user/recommendedJobs';
+      
+      console.log('Calling recommended jobs endpoint (POST):', endpointUrl);
+      console.log('Request body:', requestBody);
+      console.log('User email:', email);
+      console.log('User skills:', userSkills);
+      
+      const response = await fetch(endpointUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to fetch recommended jobs: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      const recommendedArray = Array.isArray(data) ? data : [];
+      
+      // Normalize recommended jobs to match the same structure as regular jobs
+      const normalizedRecommended = recommendedArray.map((d, idx) => {
+        const safeArray = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+        const company = d.org_name || d.orgEmail || "";
+        const parseSalary = (v) => {
+          if (v == null) return 0;
+          if (typeof v === 'number') return v;
+          const n = parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+          return isNaN(n) ? 0 : n;
+        };
+        const rawSalaryStr = typeof d.salary_mmk === 'string' ? d.salary_mmk : '';
+        const isNegotiable = (typeof d.salary_mmk === 'string' && /nego/i.test(d.salary_mmk)) || (rawSalaryStr.trim().length > 0 && !/\d/.test(rawSalaryStr));
+        
+        return {
+          id: d.id ?? `recommended-${company}-${d.job_title || 'job'}-${idx}`,
+          orgEmail: (typeof d.orgEmail === 'string' && d.orgEmail.trim().length > 0) ? d.orgEmail.trim() : "[OrgEmail]",
+          job_title: (typeof d.job_title === 'string' && d.job_title.trim().length > 0) ? d.job_title.trim() : "[JobTitle]",
+          job_field: safeArray(d.job_field),
+          jobLevel: (typeof d.jobLevel === 'string' && d.jobLevel.trim().length > 0) ? d.jobLevel.trim() : "[JobLevel]",
+          workingType: d.workingType || d.working_type || '',
+          tags: safeArray(d.tag).length ? safeArray(d.tag) : safeArray(d.job_field),
+          work_time: d.work_time,
+          address: (typeof d.address === 'string' && d.address.trim().length > 0) ? d.address.trim() : "[Address]",
+          cv_email: (typeof d.cv_email === 'string' && d.cv_email.trim().length > 0) ? d.cv_email.trim() : "[CVEmail]",
+          contact_ph_number: (typeof d.contact_ph_number === 'string' && d.contact_ph_number.trim().length > 0) ? d.contact_ph_number.trim() : "[ContactPhNumber]",
+          responsibilities: safeArray(d.responsibility),
+          qualification: safeArray(d.qualification),
+          salary_mmk: parseSalary(d.salary_mmk),
+          salary_raw: d.salary_mmk,
+          negotiable: isNegotiable,
+          required_number: d.required_number,
+          tech_skill: safeArray(d.tech_skill),
+          due_date: (typeof d.due_date === 'string' && d.due_date.trim().length > 0) ? d.due_date.trim() : "[DueDate]",
+          posted_date: (typeof d.posted_date === 'string' && d.posted_date.trim().length > 0) ? d.posted_date.trim() : "[PostedDate]",
+          categoryKey: 'Recommended'
+        };
+      });
+      
+      setRecommendedJobs(normalizedRecommended);
+    } catch (error) {
+      console.error('Error fetching recommended jobs:', error);
+    } finally {
+      setRecommendedLoading(false);
+    }
+  };
+
+  // Fetch user skills on mount
+  useEffect(() => { fetchUserSkills(); }, []);
+  
+  // Fetch recommended jobs when user skills are available and recommended tab is active
+  useEffect(() => {
+    if (showRecommended && hasUserCV && userSkills.length > 0) {
+      fetchRecommendedJobs();
+    }
+  }, [showRecommended, hasUserCV, userSkills]);
+
   // Capsule handlers
   const handleCapsMouseDown = (e) => {
     const el = capsulesRef.current;
@@ -207,6 +349,7 @@ export default function JobBoard() {
     jwt = localStorage.getItem('jwt');
     if (jwt) user = parseJwt(jwt);
   }
+
   const handleLogout = () => {
     localStorage.removeItem('jwt');
     setDropdown(false);
@@ -229,6 +372,10 @@ export default function JobBoard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Get current jobs to display (either regular jobs or recommended jobs)
+  const currentJobs = showRecommended ? recommendedJobs : jobs;
+  const currentLoading = showRecommended ? recommendedLoading : loading;
   // Cache of org profiles by email: { [email]: { name, image_url, about, email } }
   const [orgProfiles, setOrgProfiles] = useState({});
 
@@ -839,7 +986,7 @@ export default function JobBoard() {
   };
   // Helpers for search and save (moved above)
 
-  let filteredJobs = jobs.filter(j => {
+  let filteredJobs = currentJobs.filter(j => {
     // exclude overdue jobs
     if (isOverdue(j.due_date)) return false;
     // category selection: if not all selected, restrict by selectedCategories
@@ -874,6 +1021,23 @@ export default function JobBoard() {
   } else {
     // default sort by recency desc if available
     filteredJobs = filteredJobs.sort((a,b) => new Date(b.posted_date).getTime() - new Date(a.posted_date).getTime());
+  }
+
+  // For recommended jobs, disable most filters except search
+  if (showRecommended) {
+    filteredJobs = recommendedJobs.filter(j => {
+      // Only apply search query filter for recommended jobs
+      if (!matchesQuery(j, searchQuery)) return false;
+      return true;
+    });
+    
+    // Apply search ranking if there's a query
+    if ((searchQuery || "").trim()) {
+      filteredJobs = filteredJobs
+        .map(j => ({ j, s: scoreJob(j, searchQuery) }))
+        .sort((a,b) => b.s - a.s)
+        .map(x => x.j);
+    }
   }
 
   // Cyclic background colors for job cards
@@ -2038,28 +2202,57 @@ export default function JobBoard() {
               {/* All capsule */}
               <button
                 type="button"
-                onClick={() => setSelectedCategories(allCategoryKeys)}
+                onClick={() => {
+                  setShowRecommended(false);
+                  setSelectedCategories(allCategoryKeys);
+                }}
                 className={
                   "whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors " +
-                  (allSelected
+                  (!showRecommended && allSelected
                     ? "bg-black text-white border-black"
                     : "bg-white text-gray-800 border-gray-300 hover:border-gray-500")
                 }
-                aria-pressed={allSelected}
+                aria-pressed={!showRecommended && allSelected}
                 title="Show all categories"
               >
                 All
               </button>
 
+              {/* Recommended capsule - only show if user has CV */}
+              {hasUserCV && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRecommended(true);
+                    setSelectedCategories([]);
+                  }}
+                  className={
+                    "whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors " +
+                    (showRecommended
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-gray-800 border-gray-300 hover:border-gray-500")
+                  }
+                  aria-pressed={showRecommended}
+                  title="Show jobs recommended based on your skills"
+                >
+                  Recommended {recommendedJobs.length > 0 && `(${recommendedJobs.length})`}
+                </button>
+              )}
+
               {JOB_CATEGORIES.map(c => {
                 const count = categoryCounts[c.key] || 0;
-                const isActive = !allSelected && selectedCategories.length === 1 && selectedCategories[0] === c.key;
+                const isActive = !showRecommended && !allSelected && selectedCategories.length === 1 && selectedCategories[0] === c.key;
                 const isDisabled = count === 0;
                 return (
                   <button
                     key={c.key}
                     type="button"
-                    onClick={() => !isDisabled && setSelectedCategories([c.key])}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        setShowRecommended(false);
+                        setSelectedCategories([c.key]);
+                      }
+                    }}
                     disabled={isDisabled}
                     aria-disabled={isDisabled}
                     aria-pressed={isActive}
@@ -2086,10 +2279,29 @@ export default function JobBoard() {
             data-hide-scrollbar="true"
             style={{ overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {loading ? (
-              <div className="flex items-center justify-center h-full text-slate-500">Loading jobs…</div>
+            {currentLoading ? (
+              <div className="flex items-center justify-center h-full text-slate-500">
+                {showRecommended ? 'Loading recommended jobs…' : 'Loading jobs…'}
+              </div>
             ) : error ? (
               <div className="flex items-center justify-center h-full text-red-500">{error}</div>
+            ) : showRecommended ? (
+              filteredJobs.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-slate-500">
+                  No recommended jobs found based on your skills.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-6 items-stretch">
+                  {filteredJobs.map((job, index) => (
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      bgColor={cardBgColors[index % cardBgColors.length]}
+                      onDetails={openJobModal}
+                    />
+                  ))}
+                </div>
+              )
             ) : selectedCategories.length === 0 ? (
               <div className="flex items-center justify-center h-full text-slate-500">Select at least one job category to fetch jobs.</div>
             ) : filteredJobs.length === 0 ? (
