@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -85,23 +84,6 @@ const data = {
       isSimpleButton: true,
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
 };
 
 export function AppSidebar({ ...props }) {
@@ -155,7 +137,7 @@ export function AppSidebar({ ...props }) {
           <SidebarMenuButton
             tooltip="Admin Management"
             onClick={() => setAdminModalOpen(true)}
-            className="bg-primary text-white hover:bg-primary/90 hover:text-white focus-visible:ring-2 focus-visible:ring-secondary cursor-pointer"
+            className="text-white cursor-pointer bg-primary hover:bg-primary/90 hover:text-white focus-visible:ring-2 focus-visible:ring-secondary"
           >
             <Plus />
             <span>Admin Management</span>
@@ -181,22 +163,19 @@ export function AppSidebar({ ...props }) {
         <SidebarHeader>
           <div className="flex flex-col gap-2 p-4 group-data-[collapsible=icon]:hidden">
             <div className="flex items-center gap-2">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <div className="flex items-center justify-center rounded-lg aspect-square size-8 bg-primary text-primary-foreground">
                 <Command className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Welcome back</span>
-                <span className="truncate text-xs text-muted-foreground">
+              <div className="grid flex-1 text-sm leading-tight text-left">
+                <span className="font-semibold truncate">Welcome back</span>
+                <span className="text-xs truncate text-muted-foreground">
                   {adminData.name || "Admin"}
                 </span>
               </div>
             </div>
           </div>
         </SidebarHeader>
-        <SidebarContent>
-          {customNavMain}
-          <NavProjects projects={data.projects} />
-        </SidebarContent>
+        <SidebarContent>{customNavMain}</SidebarContent>
         <SidebarFooter>
           <NavUser user={adminData} />
         </SidebarFooter>

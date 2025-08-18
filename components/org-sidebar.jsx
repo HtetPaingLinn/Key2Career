@@ -18,6 +18,9 @@ import {
   Briefcase,
   FileText,
   BarChart3,
+  Building2,
+  Code,
+  Database,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -76,39 +79,27 @@ const sidebarData = {
       isSimpleButton: true,
     },
     {
-      title: "Member Management",
-      url: "/org/dashboard/members",
-      icon: Users,
-      isSimpleButton: true,
-    },
-    {
-      title: "Analytics & Reports",
-      url: "/org/dashboard/analytics",
-      icon: BarChart3,
-      isSimpleButton: true,
-    },
-    {
       title: "Organization Settings",
       url: "/org/dashboard/settings",
       icon: Settings2,
       isSimpleButton: true,
     },
   ],
-  projects: [
+  recentJobs: [
     {
-      name: "Website Redesign",
-      url: "#",
-      icon: Frame,
+      name: "Senior Frontend Developer",
+      url: "/org/dashboard/applications",
+      icon: Code,
     },
     {
-      name: "Mobile App Development",
-      url: "#",
-      icon: PieChart,
+      name: "Backend Engineer",
+      url: "/org/dashboard/applications",
+      icon: Database,
     },
     {
-      name: "Database Migration",
-      url: "#",
-      icon: Map,
+      name: "Product Manager",
+      url: "/org/dashboard/applications",
+      icon: Building2,
     },
   ],
 };
@@ -194,7 +185,7 @@ export function OrgSidebar({ ...props }) {
             ))}
           </SidebarMenu>
         </SidebarGroup>
-        <NavProjects projects={sidebarData.projects} />
+        <NavProjects projects={sidebarData.recentJobs} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={orgData} />

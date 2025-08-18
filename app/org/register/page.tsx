@@ -4,21 +4,57 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+function checkPasswordStrength(password) {
+  // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+  const strong =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  return strong.test(password);
+}
+
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 export default function OrganizationRegistrationPage() {
   const [orgName, setOrgName] = useState("");
   const [orgEmail, setOrgEmail] = useState("");
   const [orgPassword, setOrgPassword] = useState("");
-  const [bio, setBio] = useState("");
-  const [description, setDescription] = useState("");
+  const [about, setAbout] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    // Validation checks
+    if (!orgName.trim()) {
+      setError("Organization name is required.");
+      return;
+    }
+
+    if (!validateEmail(orgEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!checkPasswordStrength(orgPassword)) {
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+      );
+      return;
+    }
+
+    if (!about.trim()) {
+      setError("About section is required.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -29,8 +65,7 @@ export default function OrganizationRegistrationPage() {
           org_name: orgName,
           org_email: orgEmail,
           org_password: orgPassword,
-          bio,
-          description,
+          about,
         }),
       });
 
@@ -66,16 +101,17 @@ export default function OrganizationRegistrationPage() {
       } else {
         try {
           const data = await res.json();
-          setError(data.message || `Error: ${res.status}. Please try again.`);
+          if (data.message && data.message.toLowerCase().includes("email")) {
+            setError("Email already exists. Please use a different email.");
+          } else {
+            setError(data.message || `Error: ${res.status}. Please try again.`);
+          }
         } catch (_) {
           setError("An unexpected server error occurred. Please try again.");
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Network error";
-      setError(
-        `Network error: ${errorMessage}. Please check your connection and try again.`
-      );
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -231,7 +267,12 @@ export default function OrganizationRegistrationPage() {
                     <input
                       type="password"
                       value={orgPassword}
-                      onChange={(e) => setOrgPassword(e.target.value)}
+                      onChange={(e) => {
+                        setOrgPassword(e.target.value);
+                        setShowPasswordStrength(e.target.value.length > 0);
+                      }}
+                      onFocus={() => setShowPasswordStrength(true)}
+                      onBlur={() => setShowPasswordStrength(false)}
                       placeholder="Password"
                       required
                       className="bg-transparent border-none outline-none text-white placeholder-[#898889] w-full"
@@ -249,54 +290,34 @@ export default function OrganizationRegistrationPage() {
                 </div>
               </div>
 
-              {/* Bio Field */}
-              <div
-                className="flex flex-col focus-within:ring-2 focus-within:ring-[#A9A5FD] focus-within:ring-opacity-50"
-                style={{
-                  width: "440px",
-                  height: "72px",
-                  borderRadius: "8px",
-                  background: "#222",
-                }}
-              >
-                <div
-                  className="flex flex-col justify-center h-full"
-                  style={{
-                    padding: "8px 0 8px 32px",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <div
-                    className="flex flex-col justify-center pr-8"
-                    style={{ height: "100%" }}
-                  >
-                    <textarea
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      placeholder="Bio"
-                      required
-                      className="bg-transparent border-none outline-none text-white placeholder-[#898889] w-full resize-none"
-                      style={{
-                        fontFamily:
-                          "Inter, -apple-system, Roboto, Helvetica, sans-serif",
-                        fontSize: "18px",
-                        fontWeight: "500",
-                        lineHeight: "24px",
-                        letterSpacing: "0.5px",
-                        outline: "none",
-                        height: "100%",
-                      }}
-                    />
+              {/* Password Strength Indicator */}
+              {showPasswordStrength && (
+                <div className="mt-2 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[#898889]">Password strength:</span>
+                    <span
+                      className={`font-medium ${
+                        checkPasswordStrength(orgPassword)
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {checkPasswordStrength(orgPassword) ? "Strong" : "Weak"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#898889]">
+                    Must contain at least 8 characters with uppercase,
+                    lowercase, number, and special character
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Description Field */}
+              {/* About Field */}
               <div
                 className="flex flex-col focus-within:ring-2 focus-within:ring-[#A9A5FD] focus-within:ring-opacity-50"
                 style={{
                   width: "440px",
-                  height: "72px",
+                  height: "120px",
                   borderRadius: "8px",
                   background: "#222",
                 }}
@@ -313,9 +334,9 @@ export default function OrganizationRegistrationPage() {
                     style={{ height: "100%" }}
                   >
                     <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Description"
+                      value={about}
+                      onChange={(e) => setAbout(e.target.value)}
+                      placeholder="About your organization"
                       required
                       className="bg-transparent border-none outline-none text-white placeholder-[#898889] w-full resize-none"
                       style={{

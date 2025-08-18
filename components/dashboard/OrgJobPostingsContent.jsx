@@ -92,6 +92,23 @@ export function OrgJobPostingsContent() {
   const [tempTechSkill, setTempTechSkill] = useState("");
   const [completedSections, setCompletedSections] = useState(new Set());
 
+  // Get tomorrow's date for deadline restriction
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
+
+  // Auto-fill email when component mounts or userEmail changes
+  useEffect(() => {
+    if (userEmail) {
+      setFormData((prev) => ({
+        ...prev,
+        cv_email: userEmail,
+      }));
+    }
+  }, [userEmail]);
+
   // Progress tracking functions
   const validateSection = (sectionId) => {
     switch (sectionId) {
@@ -953,14 +970,36 @@ export function OrgJobPostingsContent() {
                         <Input
                           id="salary_mmk"
                           required
+                          type="number"
+                          min="1"
                           value={formData.salary_mmk}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              salary_mmk: e.target.value,
-                            }))
-                          }
-                          placeholder="800,000 - 1,200,000 MMK"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow positive numbers
+                            if (value === "" || parseInt(value) > 0) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                salary_mmk: value,
+                              }));
+                            }
+                          }}
+                          onKeyPress={(e) => {
+                            // Prevent non-numeric characters except backspace, delete, arrow keys
+                            const allowedKeys = [
+                              "Backspace",
+                              "Delete",
+                              "ArrowLeft",
+                              "ArrowRight",
+                              "Tab",
+                            ];
+                            if (
+                              !/[0-9]/.test(e.key) &&
+                              !allowedKeys.includes(e.key)
+                            ) {
+                              e.preventDefault();
+                            }
+                          }}
+                          placeholder="800000"
                           className="text-gray-800 border-gray-300 h-11"
                         />
                       </div>
@@ -1001,14 +1040,9 @@ export function OrgJobPostingsContent() {
                             required
                             type="email"
                             value={formData.cv_email}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                cv_email: e.target.value,
-                              }))
-                            }
-                            placeholder="hr@company.com"
-                            className="text-gray-800 border-gray-300 h-11"
+                            disabled
+                            placeholder="Auto-filled with organization email"
+                            className="text-gray-600 border-gray-300 cursor-not-allowed h-11 bg-gray-50"
                           />
                         </div>
                         <div>
@@ -1242,15 +1276,26 @@ export function OrgJobPostingsContent() {
                           id="due_date"
                           required
                           type="date"
+                          min={getTomorrowDate()}
                           value={formData.due_date}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              due_date: e.target.value,
-                            }))
-                          }
+                          onChange={(e) => {
+                            const selectedDate = e.target.value;
+                            const tomorrow = getTomorrowDate();
+
+                            // Ensure selected date is not today or earlier
+                            if (selectedDate >= tomorrow) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                due_date: selectedDate,
+                              }));
+                            }
+                          }}
                           className="text-gray-800 border-gray-300 h-11"
                         />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Applications will close on the selected date. Must be
+                          tomorrow or later.
+                        </p>
                       </div>
                     </div>
 

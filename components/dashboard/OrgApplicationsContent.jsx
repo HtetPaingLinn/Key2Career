@@ -119,6 +119,8 @@ export function OrgApplicationsContent() {
       setError(err.message);
       toast.error("Failed to load applications", {
         description: err.message || "Please refresh the page to try again.",
+        duration: 5000,
+        className: "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
       });
     } finally {
       setLoading(false);
@@ -175,6 +177,8 @@ export function OrgApplicationsContent() {
           {
             description:
               "The candidate has been notified of the status change.",
+            duration: 3000,
+            className: "text-base px-6 py-3",
           }
         );
         await fetchApplicationsData();
@@ -188,6 +192,8 @@ export function OrgApplicationsContent() {
       console.error("Error updating status:", err);
       toast.error("Failed to update application status", {
         description: err.message || "Please try again later.",
+        duration: 5000,
+        className: "text-base px-4 py-3 bg-red-100 text-red-800 border-red-200",
       });
     } finally {
       setLoadingButtons((prev) => ({ ...prev, [buttonKey]: false }));
@@ -275,16 +281,15 @@ export function OrgApplicationsContent() {
                 continue; // Try next variation
               }
             } else {
-              // Handle API error response
-              const errorData = await response.json().catch(() => ({}));
-              console.error(
-                `CV Download API error (variation ${i + 1}):`,
-                response.status,
-                errorData
-              );
-
-              // If this is the last variation, throw the error
+              // Handle API error response - only log if this is the last variation
               if (i === publicIdVariations.length - 1) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error(
+                  `CV Download API error (all variations failed):`,
+                  response.status,
+                  errorData
+                );
+
                 if (response.status === 404) {
                   throw new Error(
                     "CV file not found. The file may have been deleted or moved."
@@ -301,18 +306,19 @@ export function OrgApplicationsContent() {
                   );
                 }
               }
-              // Otherwise, continue to next variation
+              // Otherwise, silently continue to next variation without logging
               continue;
             }
           } catch (error) {
-            console.error(
-              `Failed to get authenticated download URL (variation ${i + 1}):`,
-              error
-            );
+            // Only log and show error if this is the last variation
             if (i === publicIdVariations.length - 1) {
+              console.error(
+                `Failed to get authenticated download URL (all variations failed):`,
+                error
+              );
               toast.error(`CV download failed: ${error.message}`);
             }
-            // Continue to next variation
+            // Continue to next variation silently
           }
         }
       }
@@ -1323,43 +1329,6 @@ export function OrgApplicationsContent() {
                                       </TooltipTrigger>
                                       <TooltipContent>
                                         <p>Download CV</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleStatusUpdate(
-                                              application._id,
-                                              "accept"
-                                            )
-                                          }
-                                          disabled={
-                                            loadingButtons[
-                                              `${application._id}-accept`
-                                            ]
-                                          }
-                                          className="w-8 h-8 p-0 text-green-600 sm:h-9 sm:w-9 hover:text-green-700 hover:bg-green-50"
-                                        >
-                                          {loadingButtons[
-                                            `${application._id}-accept`
-                                          ] ? (
-                                            <SpinnerLoader
-                                              size="sm"
-                                              color="green"
-                                            />
-                                          ) : (
-                                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                          )}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Accept Application</p>
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>

@@ -51,72 +51,95 @@ export async function GET(req) {
     const notifications = [];
 
     for (const app of applications) {
-      // Get job details to include organization info
+      // Get job details - try local collection first, then Spring Boot backend
       let jobDetails = null;
-      try {
-        console.log(`Looking for job details for jobId: ${app.jobId}`);
 
-        // Try to convert jobId to ObjectId if it's a valid ObjectId string
-        let jobIdQuery = app.jobId;
-        if (ObjectId.isValid(app.jobId)) {
+      // Try to convert jobId to ObjectId for local search
+      let jobIdQuery = app.jobId;
+      if (ObjectId.isValid(app.jobId)) {
+        try {
           jobIdQuery = new ObjectId(app.jobId);
-          console.log(`Converted jobId to ObjectId: ${jobIdQuery}`);
+          jobDetails = await jobPostsCollection.findOne({
+            _id: jobIdQuery,
+          });
+        } catch (error) {
+          console.warn(
+            `Error converting jobId to ObjectId: ${app.jobId}`,
+            error
+          );
         }
+      } else {
+        console.log(
+          `JobId is not a valid ObjectId format: ${app.jobId}, trying Spring Boot backend directly`
+        );
+      }
 
-        // First try to find in local jobPosts collection
-        jobDetails = await jobPostsCollection.findOne({ _id: jobIdQuery });
+      if (!jobDetails) {
+        console.log(
+          `Job details not found in local collection for jobId: ${app.jobId}, trying Spring Boot backend...`
+        );
 
-        if (!jobDetails) {
-          // Try searching by string jobId as well
-          jobDetails = await jobPostsCollection.findOne({ _id: app.jobId });
-        }
-
-        if (!jobDetails) {
-          console.log(
-            `Job not found in local jobPosts collection, trying Spring Boot backend...`
+        // Try to fetch from Spring Boot backend as fallback
+        try {
+          const jobResponse = await fetch(
+            `http://localhost:8080/api/jobs/getPost?obj_id=${encodeURIComponent(app.jobId)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
           );
 
-          // If not found locally, try to fetch from Spring Boot backend
-          try {
-            const jobResponse = await fetch(
-              `http://localhost:8080/api/jobs/getPost?obj_id=${encodeURIComponent(app.jobId)}`,
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              }
+          if (jobResponse.ok) {
+            jobDetails = await jobResponse.json();
+            console.log(
+              `Found job details from Spring Boot backend for jobId: ${app.jobId}`
             );
-
-            if (jobResponse.ok) {
-              jobDetails = await jobResponse.json();
-              console.log(
-                `Found job details from Spring Boot backend:`,
-                jobDetails
-              );
-            } else if (jobResponse.status === 404) {
-              console.log(
-                `Job not found in Spring Boot backend (404): ${app.jobId}`
-              );
-            } else {
-              console.warn(
-                `Failed to fetch job from Spring Boot backend: ${jobResponse.status}`
-              );
-            }
-          } catch (backendError) {
+          } else if (jobResponse.status === 404) {
+            console.log(
+              `Job not found in Spring Boot backend (404): ${app.jobId}`
+            );
+          } else {
             console.warn(
-              `Error fetching from Spring Boot backend:`,
-              backendError
+              `Failed to fetch job from Spring Boot backend: ${jobResponse.status}`
             );
           }
-        } else {
-          console.log(`Found job details in local collection:`, jobDetails);
+        } catch (backendError) {
+          console.warn(
+            `Error fetching from Spring Boot backend:`,
+            backendError
+          );
         }
-      } catch (error) {
-        console.warn(
-          `Could not find job details for jobId: ${app.jobId}`,
-          error
+      } else {
+        console.log(
+          `Found job details in local collection for jobId: ${app.jobId}`
         );
+      }
+
+      if (!jobDetails) {
+        console.log(`Job details not found for jobId: ${app.jobId}`);
+        continue;
+      }
+
+      // For offer notifications, check if the job position is already filled
+      let isPositionFilled = false;
+      let canAcceptOffer = app.status === "offer" && !hasAcceptedOffer;
+
+      if (app.status === "offer") {
+        // Check if this job position is already filled by another user
+        const acceptedApplicationsForJob =
+          await applicationsCollection.countDocuments({
+            jobId: app.jobId,
+            status: "accept",
+            email: { $ne: email.toLowerCase() }, // Exclude current user
+          });
+
+        const requiredPositions = jobDetails.required_number || 1;
+        isPositionFilled = acceptedApplicationsForJob >= requiredPositions;
+
+        // User can only accept if they haven't accepted another offer AND the position isn't filled
+        canAcceptOffer = !hasAcceptedOffer && !isPositionFilled;
       }
 
       const notification = {
@@ -143,9 +166,11 @@ export async function GET(req) {
         ),
         createdAt: app.updatedAt || app.createdAt,
         type: app.status, // 'interview', 'offer', 'reject'
-        // Add flag to indicate if user can accept this offer
-        canAccept: app.status === "offer" && !hasAcceptedOffer,
+        // Add flags to indicate if user can accept this offer
+        canAccept: canAcceptOffer,
         hasAcceptedOffer: hasAcceptedOffer,
+        isPositionFilled: isPositionFilled,
+        requiredPositions: jobDetails.required_number || 1,
       };
 
       notifications.push(notification);
@@ -221,10 +246,11 @@ export async function PUT(req) {
 
     const { db } = await connectToDatabase();
     const applicationsCollection = db.collection("application");
+    const jobPostsCollection = db.collection("jobPosts");
 
-    // If trying to accept an offer, first check if user has already accepted another offer
+    // If trying to accept an offer, perform additional checks
     if (action === "accept") {
-      // Get the application to find the user's email
+      // Get the application to find the user's email and job details
       const application = await applicationsCollection.findOne({
         _id: new ObjectId(applicationId),
       });
@@ -249,6 +275,66 @@ export async function PUT(req) {
             success: false,
             error:
               "You have already accepted another job offer. You can only accept one offer at a time.",
+          },
+          { status: 409 }
+        );
+      }
+
+      // Check if the job position is already filled by another user
+      const acceptedApplicationsForJob =
+        await applicationsCollection.countDocuments({
+          jobId: application.jobId,
+          status: "accept",
+          email: { $ne: application.email }, // Exclude current user
+        });
+
+      // Get job details to check required positions
+      let jobDetails = null;
+      if (ObjectId.isValid(application.jobId)) {
+        try {
+          jobDetails = await jobPostsCollection.findOne({
+            _id: new ObjectId(application.jobId),
+          });
+        } catch (error) {
+          console.warn(
+            `Error converting jobId to ObjectId in PUT: ${application.jobId}`,
+            error
+          );
+        }
+      }
+
+      // If not found locally, try Spring Boot backend
+      if (!jobDetails) {
+        try {
+          const jobResponse = await fetch(
+            `http://localhost:8080/api/jobs/getPost?obj_id=${encodeURIComponent(application.jobId)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (jobResponse.ok) {
+            jobDetails = await jobResponse.json();
+          }
+        } catch (backendError) {
+          console.warn(
+            `Error fetching job from Spring Boot backend in PUT:`,
+            backendError
+          );
+        }
+      }
+
+      const requiredPositions = jobDetails?.required_number || 1;
+
+      if (acceptedApplicationsForJob >= requiredPositions) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "This position has already been filled by another candidate. You can only decline this offer.",
           },
           { status: 409 }
         );

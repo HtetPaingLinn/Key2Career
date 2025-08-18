@@ -338,6 +338,15 @@ export default function JobTrackerPage() {
             alert(
               "You have already accepted another job offer. You can only accept one offer at a time."
             );
+          } else if (
+            errorData.error &&
+            errorData.error.includes("already been filled")
+          ) {
+            alert(
+              "This position has already been filled by another candidate. You can only decline this offer."
+            );
+          } else {
+            alert(errorData.error || `Failed to ${action} application`);
           }
         }
       }
@@ -1119,8 +1128,8 @@ export default function JobTrackerPage() {
                       You have accepted a job offer
                     </div>
                     <div className="text-xs text-green-600">
-                      You can only accept one job. Other offers can
-                      still be declined.
+                      You can only accept one job. Other offers can still be
+                      declined.
                     </div>
                   </div>
                 )}
@@ -1194,9 +1203,21 @@ export default function JobTrackerPage() {
                                     >
                                       Accept
                                     </button>
-                                  ) : (
+                                  ) : n.hasAcceptedOffer ? (
                                     <span className="px-2.5 py-1.5 text-xs rounded-md bg-gray-100 text-gray-500">
                                       Already accepted another offer
+                                    </span>
+                                  ) : n.isPositionFilled ? (
+                                    <button
+                                      className="px-2.5 py-1.5 text-xs rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                                      disabled
+                                      title={`This position has already been filled by another candidate. Only ${n.requiredPositions} position${n.requiredPositions > 1 ? "s" : ""} available.`}
+                                    >
+                                      Position Filled
+                                    </button>
+                                  ) : (
+                                    <span className="px-2.5 py-1.5 text-xs rounded-md bg-gray-100 text-gray-500">
+                                      Cannot accept
                                     </span>
                                   )}
                                   <button
