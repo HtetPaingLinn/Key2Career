@@ -262,40 +262,12 @@ export function OrgApplicationsContent() {
             if (response.ok) {
               const data = await response.json();
               if (data.url) {
-                // Test if the URL is accessible before triggering download
-                try {
-                  const testResponse = await fetch(data.url, {
-                    method: "HEAD",
-                  });
-                  if (testResponse.ok) {
-                    // Trigger download
-                    const link = document.createElement("a");
-                    link.href = data.url;
-                    link.download = `${applicantName}_CV.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    toast.success(`CV downloaded successfully!`, {
-                      description: `${applicantName}'s CV has been downloaded to your device.`,
-                    });
-                    return;
-                  } else {
-                    console.warn(
-                      "CV Download - Generated URL not accessible:",
-                      testResponse.status
-                    );
-                    if (i === publicIdVariations.length - 1) {
-                      throw new Error("Generated URL not accessible");
-                    }
-                    continue; // Try next variation
-                  }
-                } catch (urlError) {
-                  console.error("CV Download - URL test failed:", urlError);
-                  if (i === publicIdVariations.length - 1) {
-                    throw new Error("Generated URL test failed");
-                  }
-                  continue; // Try next variation
-                }
+                // Open the PDF in a new tab for viewing
+                window.open(data.url, "_blank", "noopener,noreferrer");
+                toast.success(`Opening CV in a new tab...`, {
+                  description: `Now viewing ${applicantName}'s CV.`,
+                });
+                return;
               } else {
                 if (i === publicIdVariations.length - 1) {
                   throw new Error("No URL returned from API");
