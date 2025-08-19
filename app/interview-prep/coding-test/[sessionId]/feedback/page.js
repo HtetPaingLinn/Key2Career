@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import moment from "moment";
 
 const navItems = [
-  { name: "Job Tracker", link: "/job-portal/job-tracker" },
+  { name: "Job Portal", link: "/job-portal" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "/pdf-verification" },
   { name: "Interview Q&A", link: "/interview-prep" },

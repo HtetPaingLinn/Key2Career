@@ -27,7 +27,7 @@ import DeleteAlertContent from "@/components/interview/DeleteAlertContent";
 
 
 const navItems = [
-  { name: "Job Tracker", link: "/job-portal/job-tracker" },
+  { name: "Job Portal", link: "/job-portal" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "/pdf-verification" },
   { 

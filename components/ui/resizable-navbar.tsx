@@ -75,7 +75,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         duration: 0.2,
       }}
       style={{
-        minWidth: "800px",
+        minWidth: "900px",
       }}
       className={cn(
         "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-6 lg:flex",
@@ -168,7 +168,7 @@ export const NavItems = ({
                 className="absolute inset-0 h-full w-full rounded-full bg-gray-100"
               />
             )}
-            <span className="relative z-20 flex items-center gap-1">
+            <span className="relative z-20 flex items-center gap-1 text-nowrap">
               {item.name}
               {item.dropdown && (
                 <svg

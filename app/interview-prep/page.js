@@ -20,7 +20,7 @@ import {
 import AnimatedSphere3D from "@/components/interview/AnimatedSphere3D";
 
 const navItems = [
-  { name: "Job Tracker", link: "/job-portal/job-tracker" },
+  { name: "Job Portal", link: "/job-portal" },
   { name: "Resume Builder", link: "/resume-builder" },
   { name: "CV Verification", link: "/pdf-verification" },
   { 
@@ -32,6 +32,7 @@ const navItems = [
       { name: "Coding Page", link: "" }
     ]
   },
+  { name: "Voice Interview", link: "/voice-interview" },
   { name: "Career Roadmap", link: "/roadmap" },
 ];
 
