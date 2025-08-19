@@ -380,3 +380,27 @@ form * {
   width: 3rem;
   transition: width 0.3s ease-in-out !important;
 }
+
+/* Org Register page overrides: ensure white input text on dark background */
+.org-register input,
+.org-register textarea,
+.org-register select {
+  color: #ffffff !important; /* override global black form styles */
+  caret-color: #ffffff;
+}
+
+/* Keep placeholder subtle gray for readability */
+.org-register input::placeholder,
+.org-register textarea::placeholder,
+.org-register select::placeholder {
+  color: #898889 !important;
+}
+
+/* WebKit autofill fix: keep text white and background transparent/dark */
+.org-register input:-webkit-autofill,
+.org-register textarea:-webkit-autofill,
+.org-register select:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 9999s ease-in-out 0s;
+}

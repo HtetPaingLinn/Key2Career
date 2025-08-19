@@ -119,7 +119,7 @@ export default function OrganizationRegistrationPage() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden"
+      className="relative min-h-screen overflow-hidden org-register"
       style={{
         width: "100vw",
         height: "100vh",
@@ -201,6 +201,7 @@ export default function OrganizationRegistrationPage() {
                         lineHeight: "24px",
                         letterSpacing: "0.5px",
                         outline: "none",
+                        color: "#FFFFFF",
                       }}
                     />
                   </div>
@@ -240,6 +241,7 @@ export default function OrganizationRegistrationPage() {
                         lineHeight: "24px",
                         letterSpacing: "0.5px",
                         outline: "none",
+                        color: "#FFFFFF",
                       }}
                     />
                   </div>
@@ -284,6 +286,7 @@ export default function OrganizationRegistrationPage() {
                         lineHeight: "24px",
                         letterSpacing: "0.5px",
                         outline: "none",
+                        color: "#FFFFFF",
                       }}
                     />
                   </div>
@@ -348,6 +351,7 @@ export default function OrganizationRegistrationPage() {
                         letterSpacing: "0.5px",
                         outline: "none",
                         height: "100%",
+                        color: "#FFFFFF",
                       }}
                     />
                   </div>
